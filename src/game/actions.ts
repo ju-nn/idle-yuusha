@@ -6,6 +6,58 @@ import { addAchievement, addItems, announceJobUnlocks } from './progression';
 import { isAreaUnlocked, isJobUnlocked } from './requirements';
 import { CROPS, getCropRewards, type CropId } from './farming';
 
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function previousDateKey(date = new Date()) {
+  const previous = new Date(date);
+  previous.setDate(previous.getDate() - 1);
+  return localDateKey(previous);
+}
+
+export function canClaimDailyBonus(state: GameState) {
+  return state.dailyBonus?.lastClaimDate !== localDateKey();
+}
+
+export function claimDailyBonus(prev: GameState): GameState {
+  const today = localDateKey();
+  if (prev.dailyBonus?.lastClaimDate === today) return prev;
+  const yesterday = previousDateKey();
+  const streak = prev.dailyBonus?.lastClaimDate === yesterday ? (prev.dailyBonus?.streak || 0) + 1 : 1;
+  const goldGain = 25 + Math.min(75, streak * 5);
+  const stampGain = streak % 3 === 0 ? 2 : 1;
+  const eventLog = [
+    `生活スタンプ：${streak}日目 / +${goldGain}G / 生活スタンプ+${stampGain}。来ただけで少し進む、かなり優しい制度。`,
+    ...prev.eventLog,
+  ].slice(0, 24);
+  let achievements = addAchievement(prev, 'first_daily', eventLog);
+  if (streak >= 3) achievements = addAchievement({ ...prev, achievements }, 'daily_streak_3', eventLog);
+  const next: GameState = {
+    ...prev,
+    gold: prev.gold + goldGain,
+    items: { ...(prev.items || {}), life_stamp: (prev.items?.life_stamp || 0) + stampGain },
+    dailyBonus: { lastClaimDate: today, streak },
+    combo: { ...(prev.combo || { streak: 0, boons: {} }), boons: { ...(prev.combo?.boons || {}), daily_rhythm: Math.max(prev.combo?.boons?.daily_rhythm || 0, 3) } },
+    achievements,
+    eventLog,
+  };
+  return enqueueMusing(next, {
+    id: `daily-bonus-${today}`,
+    job: '勇者',
+    area: '今日の生活',
+    text: `勇者は生活スタンプを押した。\n\n勇者「ログインしただけで褒められる制度、現実にも標準搭載してほしい」`,
+    rewardItems: [],
+    category: 'daily',
+    eventType: 'daily',
+    eventSubType: 'daily_bonus',
+    once: true,
+  }, { prepend: true }).state;
+}
+
 export function advanceMusing(prev: GameState): GameState {
   const readAt = Date.now();
   const queue = prev.musingQueue || [];
@@ -107,6 +159,7 @@ export function harvestCrop(prev: GameState): GameState {
   const bonusText = bonusCount > 0 ? ` 完熟おまけ+${bonusCount}段階。` : '';
   const eventLog = [`出来事報酬：${rewardText(rewards)}`, `${crop.name}を収穫した。畑が静かに勝っていた。${bonusText}`, ...prev.eventLog].slice(0, 24);
   let achievements = addAchievement(prev, 'first_daikon', eventLog);
+  achievements = addAchievement({ ...prev, achievements }, 'first_combo', eventLog);
   if (crop.growthMs >= 2 * 60 * 60_000) {
     achievements = addAchievement({ ...prev, achievements }, 'first_long_crop', eventLog);
   }
@@ -127,6 +180,7 @@ export function harvestCrop(prev: GameState): GameState {
     ...prev,
     farming: { plantedAt: null, readyAt: null, cropId: null },
     items: addItems(prev.items, rewards),
+    combo: { ...(prev.combo || { streak: 0, boons: {} }), boons: { ...(prev.combo?.boons || {}), home_meal: Math.max(prev.combo?.boons?.home_meal || 0, 5) } },
     achievements,
     eventLog,
   };

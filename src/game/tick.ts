@@ -1,11 +1,13 @@
 import { itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import type { GameState, ResourceKey } from '../types';
+import { simulateMonsterBattle } from './combat';
+import { getAdventureEntryCost, getChestLimit, getEquipmentBonus, getResourceGainMultiplier, getSellPriceMultiplier, maybeDropChest } from './equipment';
 import { formatResourceName, rewardText } from './formatters';
 import { enqueueMusing } from './musings';
 import { getActiveArea, isJobUnlocked } from './requirements';
-import { countOwnedUpgrades, getEffectiveDurationTicks } from './timing';
-import { addAchievement, announceJobUnlocks, clamp, getFailChance, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
+import { countOwnedUpgrades, getEffectiveDurationTicksForState } from './timing';
+import { addAchievement, announceJobUnlocks, clamp, getFailChance, grantItemRewards, isUniqueItem, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
 
 const IDLE_MUSINGS = [
   '時間だけは定時退勤せず進む。見習いたくはない。',
@@ -21,7 +23,7 @@ const IDLE_MUSINGS = [
   '放置の芸術。審査員がいたら寝たふりで通したい。',
   '時間が経つ。俺はそれを見守る係。責任は軽い。',
   '何もしないで得たものがある。何もしなかった記録だ。',
-  '床を見ている。床は散らかりを責めない。器が大きい。',
+  '床を見ている。散らかっていても何も言わない。床、かなり寛容だ。',
   '放置が終わるのを待っている。待つ仕事なら履歴書に書ける。',
   '空を見ている。雲の勤務形態、かなり自由そうだ。',
   '放置が進む音はしない。静かな成果、性格がいい。',
@@ -29,9 +31,9 @@ const IDLE_MUSINGS = [
   '何もしない技術が上がっている。資格名はまだない。',
   '存在確認をした。いた。今日の最低ラインは越えた。',
   '壁を見ている。壁は静かだ。俺の予定表より頼れる。',
-  '放置中。今だけは時間に雇われている気分だ。',
+  '放置中。今だけは時間が少し働いてくれている。',
   '窓の外は動いている。俺は動かない。分業ができている。',
-  '進捗バーを見守っている。育児に近いが、泣かない。',
+  '進捗バーを見守っている。伸びるだけで褒めたくなる。',
   '見えない進捗を信じる。見えない筋肉よりは役に立つ。',
   '何もしないのに慣れてきた。問題は元から得意だったことだ。',
   '財布は静かだ。静かな財布ほど、あとで大声を出す。',
@@ -43,14 +45,14 @@ const DAILY_MUSINGS = [
   'がんばらない技術にも熟練度がある。熟練度が上がると、がんばらないのが上手くなる。',
   '生活を整えるとは床を少し見せることかもしれない。全面公開はまだ早い。',
   '勇者は今日も生きている。難易度表示がないゲームほど手強い。',
-  '世界は回っている。勇者は回転に乗っているだけだ。でも回転に酔う。',
+  '世界は今日も動いている。俺は座っている。役割分担としては悪くない。',
   '今日も何も起きない。それが一番平和な出来事かもしれない。でも平和は退屈。',
   '窓の外は俺の悩みを知らない。知らないまま晴れている。強い。',
   '生活は続く。確認するだけの日も、いちおうログインボーナス扱いにしたい。',
   '何も変わらない日もある。セーブデータが壊れてない証拠だ。',
   '勇者は今日を生き抜いた。明日も生き抜けるかは明日の勇者に聞いて。今日の勇者はもう寝たい。',
   '日常は特別なことをしない特別な時間だ。特別なことをしないのが一番難しい。',
-  '勇者は呼吸をしている。呼吸は無料でできる唯一の魔法。でも魔法使いは給料が高い。',
+  '勇者は呼吸をしている。無料でできる行動としては、かなり長持ちする。',
   '今日も終わる。閉店作業だけ妙に上手くなっていく。',
   '今日を振り返る。反省より先に、首の角度が悪かった。',
   '明日を考える。考えすぎると明日が前借りで疲れる。',
@@ -130,16 +132,18 @@ export function runTick(prev: GameState): GameState {
   const data = prev.jobData[prev.activeJob] || { level: 1, xp: 0, seenMusings: [] };
   const ownedUpgradeCount = countOwnedUpgrades(job.upgrades.map((u) => u.id), prev.items || {});
   const nextTick = prev.tick + 1;
-  const durationTicks = getEffectiveDurationTicks(area.seconds, data.level, ownedUpgradeCount);
-  const recoveredHp = clamp(prev.hp + 1, 0, prev.maxHp);
-  const recoveredMp = clamp(prev.mp + 1, 0, prev.maxMp);
+  const durationTicks = getEffectiveDurationTicksForState(area.seconds, data.level, ownedUpgradeCount, prev, prev.activeJob);
+  const hpRegen = 1 + Math.floor(getEquipmentBonus(prev, 'hpRegen') / 25);
+  const mpRegen = 1 + Math.floor(getEquipmentBonus(prev, 'mpRegen') / 25);
+  const recoveredHp = clamp(prev.hp + hpRegen, 0, prev.maxHp);
+  const recoveredMp = clamp(prev.mp + mpRegen, 0, prev.maxMp);
   if (nextTick % durationTicks !== 0) return maybeAmbientMusing({ ...prev, tick: nextTick, hp: recoveredHp, mp: recoveredMp, progressBreaking: false }, now);
   if (job.type === 'combat' && (recoveredHp < 3 || recoveredMp < 2)) {
-    const next = { ...prev, tick: nextTick, hp: recoveredHp, mp: recoveredMp, progressBreaking: false, eventLog: ['HP/MPが足りないので一旦ふんわり休んだ。勇者、急に現実的。', ...prev.eventLog].slice(0, 24) };
+    const next = { ...prev, tick: nextTick, hp: recoveredHp, mp: recoveredMp, progressBreaking: false, feedbackEvents: [...(prev.feedbackEvents || []), { id: `failure-${now}`, type: 'failure' as const }].slice(-24), eventLog: ['HP/MPが足りないので一旦ふんわり休んだ。勇者、急に現実的。', ...prev.eventLog].slice(0, 24) };
     return enqueueMusing(next, { id: 'failure-combat-stamina', job: job.name, area: area.name, text: 'HP/MPが足りない。勇者は戦う前に、まず自分の残量と戦っている。', category: 'failure', eventType: 'failure', eventSubType: 'not_enough_stamina', conditionKey: 'failure-stamina', cooldownSec: 5 }, { now }).state;
   }
   if (job.type === 'adventure' && (recoveredHp < 5 || recoveredMp < 3)) {
-    const next = { ...prev, tick: nextTick, hp: recoveredHp, mp: recoveredMp, progressBreaking: false, eventLog: ['HP/MPが足りないので一旦ふんわり休んだ。冒険も体力が必要だ。', ...prev.eventLog].slice(0, 24) };
+    const next = { ...prev, tick: nextTick, hp: recoveredHp, mp: recoveredMp, progressBreaking: false, feedbackEvents: [...(prev.feedbackEvents || []), { id: `failure-${now}`, type: 'failure' as const }].slice(-24), eventLog: ['HP/MPが足りないので一旦ふんわり休んだ。冒険も体力が必要だ。', ...prev.eventLog].slice(0, 24) };
     return enqueueMusing(next, { id: 'failure-adventure-stamina', job: job.name, area: area.name, text: 'HP/MPが足りない。冒険の前に、生活の基礎体力が足りていない。', category: 'failure', eventType: 'failure', eventSubType: 'not_enough_stamina', conditionKey: 'failure-stamina', cooldownSec: 5 }, { now }).state;
   }
 
@@ -153,6 +157,7 @@ export function runTick(prev: GameState): GameState {
       hp: recoveredHp,
       mp: recoveredMp,
       progressBreaking: true,
+      feedbackEvents: [...(prev.feedbackEvents || []), { id: `failure-${now}`, type: 'failure' as const }].slice(-24),
       eventLog: [`⚡ 失敗：${failText}`, ...prev.eventLog].slice(0, 24),
     };
     return enqueueMusing(next, {
@@ -172,6 +177,8 @@ export function runTick(prev: GameState): GameState {
   let adventureXp = 0;
   let adventureHpCost = 0;
   let adventureMpCost = 0;
+  const adventureEntryCost = job.type === 'adventure' ? getAdventureEntryCost(prev, area.adventureCost || 0) : 0;
+  let bonusGold = 0;
   let level = data.level;
   let xp = data.xp + (area.rewards.xp || 0) + adventureXp;
   const eventLog: string[] = [];
@@ -180,36 +187,117 @@ export function runTick(prev: GameState): GameState {
   let musingState = prev;
   const nextItems = { ...(prev.items || {}) };
   const resources = { ...prev.resources };
-  const gainedDrops = rollDrops(area.drops);
+  const gainedDrops = rollDrops(area.drops).filter((d) => !isUniqueItem(d.item) || !prev.items?.[d.item]);
   const newItems = gainedDrops.filter((d) => !prev.items?.[d.item]).map((d) => d.item);
   let achievements = prev.achievements || [];
   let defeatedMonsters = prev.defeatedMonsters || [];
+  let treasureChests = [...(prev.treasureChests || [])];
+  const feedbackEvents = [...(prev.feedbackEvents || [])];
+  const combo = prev.combo || { streak: 0, boons: {} };
+  const nextBoons = { ...(combo.boons || {}) };
+  const nextStreak = combo.lastJob === prev.activeJob ? (combo.streak || 0) + 1 : 1;
+  const comboLogs: string[] = [];
+  const consumeBoon = (key: string) => {
+    if (!nextBoons[key]) return false;
+    nextBoons[key] -= 1;
+    if (nextBoons[key] <= 0) delete nextBoons[key];
+    return true;
+  };
+  const addFeedback = (type: typeof feedbackEvents[number]['type'], label?: string) => {
+    feedbackEvents.push({ id: `${type}-${now}-${feedbackEvents.length}-${Math.floor(Math.random() * 10000)}`, type, label });
+  };
+
+  if (adventureEntryCost > 0) {
+    if (prev.gold < adventureEntryCost) {
+      const next = {
+        ...prev,
+        tick: nextTick - (durationTicks - 1),
+        hp: recoveredHp,
+        mp: recoveredMp,
+        progressBreaking: true,
+        feedbackEvents: [...(prev.feedbackEvents || []), { id: `failure-adventure-gold-${now}`, type: 'failure' as const }].slice(-24),
+        eventLog: [`冒険費用不足：${area.name}には${adventureEntryCost}G必要。財布が先に撤退した。`, ...prev.eventLog].slice(0, 24),
+      };
+      return enqueueMusing(next, {
+        id: `failure-adventure-gold-${area.id}`,
+        job: job.name,
+        area: area.name,
+        text: `冒険に出るGが足りない。\n\n勇者「勇気はある。たぶんある。でも交通費がない。冒険、急に現実的だな」`,
+        category: 'failure',
+        eventType: 'failure',
+        eventSubType: 'not_enough_gold_for_adventure',
+        conditionKey: `failure-adventure-gold-${area.id}`,
+        cooldownSec: 5,
+      }, { now }).state;
+    }
+    addFeedback('adventureStart');
+    eventLog.unshift(`冒険出発：${area.name}へ-${adventureEntryCost}G。冒険もまず経費から始まる。`);
+  }
 
   const grantMusingRewards = (musing: { rewardItems?: Array<{ item: string; amount: number }> }) => {
     if (!musing.rewardItems?.length) return;
-    musing.rewardItems.forEach((rewardItem) => {
-      nextItems[rewardItem.item] = (nextItems[rewardItem.item] || 0) + rewardItem.amount;
-    });
-    eventLog.unshift(`出来事報酬：${rewardText(musing.rewardItems)}`);
+    const result = grantItemRewards(nextItems, musing.rewardItems);
+    Object.keys(nextItems).forEach((key) => delete nextItems[key]);
+    Object.assign(nextItems, result.items);
+    if (result.granted.length) eventLog.unshift(`出来事報酬：${rewardText(result.granted)}`);
   };
   const addMusing = (rawMusing: Parameters<typeof enqueueMusing>[1], options: { prepend?: boolean } = {}) => {
-    const result = enqueueMusing({ ...prev, ...musingState, musingQueue: queue }, rawMusing, { ...options, now });
+    const rewardItems = rawMusing.rewardItems?.filter((rewardItem) => !isUniqueItem(rewardItem.item) || !nextItems[rewardItem.item]);
+    const musingForQueue = rawMusing.rewardItems ? { ...rawMusing, rewardItems } : rawMusing;
+    const result = enqueueMusing({ ...prev, ...musingState, musingQueue: queue }, musingForQueue, { ...options, now });
     musingState = result.state;
     queue.splice(0, queue.length, ...(result.state.musingQueue || []));
     if (result.accepted) grantMusingRewards(result.musing);
     return result.accepted;
   };
 
-  gainedDrops.forEach((d) => { nextItems[d.item] = (nextItems[d.item] || 0) + d.amount; });
+  gainedDrops.forEach((d) => {
+    nextItems[d.item] = isUniqueItem(d.item) ? 1 : (nextItems[d.item] || 0) + d.amount;
+  });
+  if (Math.random() < 0.022) {
+    const bonusResource = (Object.keys(resources) as ResourceKey[]).find((key) => Boolean(area.rewards[key]));
+    const luckyType = Math.random();
+    let luckyLog = '';
+    let luckyText = '';
+    if (bonusResource && luckyType < 0.42) {
+      const amount = randInt(2, 5);
+      resources[bonusResource] += amount;
+      luckyLog = `手応えあり：${formatResourceName(bonusResource)}+${amount}。進捗が急に機嫌を直した。`;
+      luckyText = `作業の手応えがいつもより大きい。\n\n勇者「同じことをしたのに成果が増えた。こういう偶然だけ定期便にしてほしい」`;
+    } else if (luckyType < 0.76 && job.type !== 'adventure') {
+      bonusGold = randInt(10, 24) + Math.floor((data.level || 1) * 2.5);
+      luckyLog = `小さな幸運：+${bonusGold}G。こういう日だけ日記に残したい。`;
+      luckyText = `小さな幸運が転がり込んだ。\n\n勇者「努力より先に運が来た。順番はどうあれ、来たものは受け取る」`;
+    } else {
+      const luckyXp = randInt(5, 12) + Math.floor((data.level || 1) / 2);
+      xp += luckyXp;
+      luckyLog = `コツを掴んだ：XP+${luckyXp}。急に分かる瞬間、たまにある。`;
+      luckyText = `作業のコツが少し見えた。\n\n勇者「分かった気がする。気のせいでも、進むなら採用でいい」`;
+    }
+    eventLog.unshift(luckyLog);
+    addFeedback(bonusResource || bonusGold > 0 ? 'multiReward' : 'rareDrop');
+    addMusing({
+      id: `lucky-${prev.activeJob}-${area.id}-${now}`,
+      job: job.name,
+      area: area.name,
+      text: luckyText,
+      category: 'event',
+      eventType: 'event',
+      eventSubType: 'lucky_break',
+      conditionKey: 'lucky-break',
+      cooldownSec: 100,
+    });
+  }
   let sellGold = 0;
   let soldText = '';
   if (area.sell) {
     const owned = resources[area.sell.resource] || 0;
     const sellAmount = Math.min(owned, randInt(area.sell.amount[0], area.sell.amount[1]));
     if (sellAmount > 0) {
-      sellGold = sellAmount * area.sell.price;
+      sellGold = Math.max(1, Math.floor(sellAmount * area.sell.price * getSellPriceMultiplier(prev)));
       resources[area.sell.resource] = Math.max(0, owned - sellAmount);
       soldText = `${formatResourceName(area.sell.resource)}-${sellAmount} / +${sellGold}G`;
+      addFeedback('sale');
       achievements = addAchievement({ ...prev, achievements }, 'first_sale', eventLog);
       addMusing({
         id: 'first-sale',
@@ -221,6 +309,35 @@ export function runTick(prev: GameState): GameState {
         eventSubType: 'first_sale',
         once: true,
       });
+      nextBoons.market_sense = Math.max(nextBoons.market_sense || 0, 3);
+      achievements = addAchievement({ ...prev, achievements }, 'first_combo', eventLog);
+    }
+  }
+  if (area.sellItems?.length) {
+    const sellTarget = area.sellItems.find((candidate) => (nextItems[candidate.item] || 0) > 0);
+    if (sellTarget) {
+      const owned = nextItems[sellTarget.item] || 0;
+      const sellAmount = Math.min(owned, randInt(sellTarget.amount[0], sellTarget.amount[1]));
+      if (sellAmount > 0) {
+        const itemGold = Math.max(1, Math.floor(sellAmount * sellTarget.price * getSellPriceMultiplier(prev)));
+        sellGold += itemGold;
+        nextItems[sellTarget.item] = Math.max(0, owned - sellAmount);
+        soldText = `${soldText ? `${soldText} / ` : ''}${itemName(sellTarget.item)}-${sellAmount} / +${itemGold}G`;
+        addFeedback('sale');
+        achievements = addAchievement({ ...prev, achievements }, 'first_sale', eventLog);
+        addMusing({
+          id: 'first-item-sale',
+          job: job.name,
+          area: area.name,
+          text: `勇者は初めて戦利品を売った。\n\n勇者「思い出より収納場所が大事な日もある。今日はその日だ」`,
+          category: 'firstTime',
+          eventType: 'firstTime',
+          eventSubType: 'first_item_sale',
+          once: true,
+        });
+        nextBoons.market_sense = Math.max(nextBoons.market_sense || 0, 3);
+        achievements = addAchievement({ ...prev, achievements }, 'first_combo', eventLog);
+      }
     }
   }
 
@@ -243,6 +360,9 @@ export function runTick(prev: GameState): GameState {
   }
 
   if (prev.activeJob === 'rest') {
+    nextBoons.rested = Math.max(nextBoons.rested || 0, 4);
+    comboLogs.push('生活コンボ：休憩で「よく休んだ」を得た。次の数回、戦闘と冒険の消耗が軽くなる。');
+    achievements = addAchievement({ ...prev, achievements }, 'first_combo', eventLog);
     addMusing({
       id: 'first-rest',
       job: job.name,
@@ -258,17 +378,34 @@ export function runTick(prev: GameState): GameState {
   if (job.type === 'adventure') {
     if (area.encounterChance && area.monsters && Math.random() < area.encounterChance) {
       const monster = area.monsters[Math.floor(Math.random() * area.monsters.length)];
-      combatEvents.push(`⚔️ ${monster.name}が現れた！`);
-      combatEvents.push(`勇者の攻撃：ひのきのぼうで現実的な一撃。`);
-      combatEvents.push(`${monster.name}の反撃：HP${monster.attack} / MP${Math.floor(monster.attack / 2)}を消耗。`);
-      const monsterDrops = rollDrops(monster.drops);
+      const battle = simulateMonsterBattle({ ...prev, hp: recoveredHp, mp: recoveredMp }, job, monster, data.level);
+      combatEvents.push(...battle.logs);
+      if (!battle.won) {
+        addMusing({
+          id: `failure-monster-${monster.id}-${now}`,
+          job: job.name,
+          area: area.name,
+          text: `勇者は${monster.name}から撤退した。\n\n勇者「勝てない戦いを避けた。これは敗北じゃなくて、明日の俺への引き継ぎだ」`,
+          category: 'failure',
+          eventType: 'failure',
+          eventSubType: 'battle_retreat',
+          conditionKey: `battle-retreat-${monster.id}`,
+          cooldownSec: 8,
+        });
+        adventureHpCost = Math.min(recoveredHp, Math.ceil(battle.hpCost * 0.7) + 1);
+        adventureMpCost = Math.min(recoveredMp, Math.max(1, Math.ceil(battle.mpCost * 0.7)));
+      } else {
+      const monsterDrops = rollDrops(monster.drops).filter((d) => !isUniqueItem(d.item) || !nextItems[d.item]);
       if (monsterDrops.length) combatEvents.push(`戦利品：${monsterDrops.map((d) => `${itemName(d.item)}+${d.amount}`).join(' / ')}`);
-      monsterDrops.forEach((d) => { nextItems[d.item] = (nextItems[d.item] || 0) + d.amount; });
-      adventureGold = monster.rewards.gold ? randInt(monster.rewards.gold[0], monster.rewards.gold[1]) : 0;
+      monsterDrops.forEach((d) => {
+        nextItems[d.item] = isUniqueItem(d.item) ? 1 : (nextItems[d.item] || 0) + d.amount;
+      });
+      adventureGold = 0;
       adventureXp = monster.rewards.xp || 0;
-      adventureHpCost = monster.attack;
-      adventureMpCost = Math.floor(monster.attack / 2);
-      combatEvents.push(`戦闘結果：+${adventureGold}G / +${adventureXp}XP`);
+      adventureHpCost = battle.hpCost;
+      adventureMpCost = battle.mpCost;
+      combatEvents.push(`戦闘結果：+${adventureXp}XP。Gは落ちない。冒険を財布で永久機関にしないための現実。`);
+      addFeedback('adventureSuccess');
       achievements = addAchievement({ ...prev, achievements }, 'first_battle', eventLog);
       addMusing({
         id: 'first-battle',
@@ -286,6 +423,7 @@ export function runTick(prev: GameState): GameState {
         const monsterMusing = {
           id: `new-monster-${monster.id}`,
           job: job.name,
+          area: area.name,
           text: `勇者は${monster.name}を倒した。\n\n勇者「初めての${monster.name}。勝てたけど、次からは事前予約制にしてほしい」`,
           category: 'event',
           eventType: 'event' as const,
@@ -296,9 +434,37 @@ export function runTick(prev: GameState): GameState {
         addMusing(monsterMusing);
         defeatedMonsters = [...defeatedMonsters, monster.id];
       }
+      }
+      if (adventureHpCost || adventureMpCost) {
+        const costMultiplier = Math.max(0.5, 1 - getEquipmentBonus(prev, 'adventureCost') / 100);
+        adventureHpCost = Math.floor(adventureHpCost * costMultiplier);
+        adventureMpCost = Math.floor(adventureMpCost * costMultiplier);
+        if (consumeBoon('rested')) {
+          adventureHpCost = Math.floor(adventureHpCost * 0.75);
+          adventureMpCost = Math.floor(adventureMpCost * 0.75);
+          combatEvents.push('生活コンボ：よく休んでいたので消耗が少し軽い。休息、ちゃんと防具。');
+        }
+        if (consumeBoon('home_meal')) {
+          adventureHpCost = Math.floor(adventureHpCost * 0.85);
+          adventureMpCost = Math.floor(adventureMpCost * 0.85);
+          combatEvents.push('生活コンボ：収穫飯が効いた。腹持ちは戦闘力。');
+        }
+      }
     } else {
       combatEvents.push(`探索：${area.name}を静かに歩いた。何も出なかった。平和だ。`);
     }
+  }
+  xp += adventureXp;
+  if (nextStreak >= 3) {
+    const streakXp = Math.min(8, Math.floor(nextStreak / 3));
+    xp += streakXp;
+    comboLogs.push(`連続作業：${job.name}${nextStreak}周目。慣れでXP+${streakXp}。反復、地味に強い。`);
+    achievements = addAchievement({ ...prev, achievements }, 'work_streak', eventLog);
+  }
+  if (consumeBoon('daily_rhythm')) {
+    const rhythmXp = 3 + Math.min(6, Math.floor((data.level || 1) / 2));
+    xp += rhythmXp;
+    comboLogs.push(`生活コンボ：生活リズムでXP+${rhythmXp}。来ただけの日にも、ちゃんと余熱がある。`);
   }
 
   if (Math.random() < 0.75 && area.musings.length) {
@@ -343,22 +509,58 @@ export function runTick(prev: GameState): GameState {
   }
 
   const reward = area.rewards;
-  const goldGain = (reward.gold ? randInt(reward.gold[0], reward.gold[1]) : 0) + sellGold + adventureGold;
+  const baseGoldGain = job.type === 'adventure' || !reward.gold ? 0 : randInt(reward.gold[0], reward.gold[1]);
+  let goldGain = baseGoldGain + sellGold + adventureGold + bonusGold - adventureEntryCost;
+  if (goldGain > 0 && prev.activeJob !== 'merchant' && consumeBoon('market_sense')) {
+    const marketBonus = Math.max(1, Math.floor(goldGain * 0.12));
+    goldGain += marketBonus;
+    comboLogs.push(`生活コンボ：相場勘で+${marketBonus}G。売った経験が、次の小銭を呼んだ。`);
+  }
   Object.keys(resources).forEach((key) => {
     const k = key as ResourceKey;
-    if (reward[k]) resources[k] += randInt(reward[k]![0], reward[k]![1]);
+    if (reward[k]) resources[k] += Math.max(1, Math.floor(randInt(reward[k]![0], reward[k]![1]) * getResourceGainMultiplier(prev, k)));
   });
   const resourceText = Object.keys(resources).filter((key) => reward[key as ResourceKey]).map((key) => `${formatResourceName(key)}+${resources[key as ResourceKey] - prev.resources[key as ResourceKey]}`).join(' / ');
   const itemText = gainedDrops.map((d) => `${itemName(d.item)}+${d.amount}${itemKind(d.item) === '重要' ? '★' : ''}`).join(' / ');
+  const chestDrop = maybeDropChest({ ...prev, treasureChests }, prev.activeJob, job.type, area.id);
+  let chestText = '';
+  if (chestDrop) {
+    treasureChests = [chestDrop, ...treasureChests].slice(0, getChestLimit(prev));
+    chestText = chestDrop.name;
+    addFeedback('rareDrop', chestDrop.name);
+    eventLog.unshift(`宝箱発見：${chestDrop.name}。帰ってから開ける楽しみが増えた。`);
+    achievements = addAchievement({ ...prev, achievements }, 'first_chest', eventLog);
+    addMusing({
+      id: 'first-chest-drop',
+      job: job.name,
+      area: area.name,
+      text: `勇者は宝箱を拾った。\n\n勇者「開ける前が一番楽しい。予定と宝箱だけは、未開封のうちが少し輝く」`,
+      category: 'firstTime',
+      eventType: 'firstTime',
+      eventSubType: 'chest_drop',
+      eventTarget: chestDrop.type,
+      once: true,
+    });
+  }
+  const goldText = goldGain > 0 ? `+${goldGain}G` : goldGain < 0 ? `${goldGain}G` : '';
 
-  if (area.sell) eventLog.push(`商人売却：${soldText || '売る素材がない。看板だけが今日も働いている。'}`);
-  else if (job.type === 'combat') eventLog.push(`戦闘結果：+${goldGain}G${itemText ? ` / ${itemText}` : ''}`);
-  else if (job.type === 'adventure') eventLog.push(`探索結果：+${goldGain}G${itemText ? ` / ${itemText}` : ''}`);
-  else if (goldGain || resourceText || itemText) eventLog.push(`作業獲得：${goldGain ? `+${goldGain}G` : ''}${goldGain && (resourceText || itemText) ? ' / ' : ''}${resourceText}${resourceText && itemText ? ' / ' : ''}${itemText}`);
+  if (area.sell || area.sellItems?.length) eventLog.push(`商人売却：${soldText || '売る素材がない。看板だけが今日も働いている。'}`);
+  else if (job.type === 'combat') eventLog.push(`戦闘結果：${goldText || '+0G'}${itemText ? ` / ${itemText}` : ''}${chestText ? ` / ${chestText}` : ''}`);
+  else if (job.type === 'adventure') eventLog.push(`探索収支：${goldText || '±0G'}${itemText ? ` / ${itemText}` : ''}${chestText ? ` / ${chestText}` : ''}`);
+  else if (goldGain || resourceText || itemText || chestText) eventLog.push(`作業獲得：${goldText}${goldText && (resourceText || itemText || chestText) ? ' / ' : ''}${resourceText}${resourceText && (itemText || chestText) ? ' / ' : ''}${itemText}${itemText && chestText ? ' / ' : ''}${chestText}`);
   if (newItems.length) eventLog.unshift(`新発見：${newItems.map(itemName).join(' / ')}。図鑑の？？？がひとつ減った。`);
+  eventLog.unshift(...comboLogs);
 
   if (nextItems.small_fish) achievements = addAchievement({ ...prev, achievements }, 'first_fish', eventLog);
   if (nextItems.hinoki_stick) achievements = addAchievement({ ...prev, achievements }, 'unlock_combat', eventLog);
+  if (nextItems.rusty_armor_plate || nextItems.overdue_notice) achievements = addAchievement({ ...prev, achievements }, 'first_castle', eventLog);
+  if (nextItems.castle_key_fragment || nextItems.quiet_crown) achievements = addAchievement({ ...prev, achievements }, 'first_inner_castle', eventLog);
+  if (nextItems.pebble_ore) achievements = addAchievement({ ...prev, achievements }, 'first_ore', eventLog);
+  if (nextItems.employee_badge) achievements = addAchievement({ ...prev, achievements }, 'first_office', eventLog);
+  if (nextItems.mute_button) achievements = addAchievement({ ...prev, achievements }, 'first_remote', eventLog);
+  if (nextItems.red_flag) achievements = addAchievement({ ...prev, achievements }, 'first_shady', eventLog);
+  if (nextItems.delivery_app) achievements = addAchievement({ ...prev, achievements }, 'first_delivery', eventLog);
+  if (nextItems.webcam || nextItems.mic) achievements = addAchievement({ ...prev, achievements }, 'first_streaming', eventLog);
   if (isJobUnlocked('merchant', { ...prev, jobData: { ...prev.jobData, [prev.activeJob]: { level, xp, seenMusings } } })) achievements = addAchievement({ ...prev, achievements }, 'unlock_merchant', eventLog);
   const progressState = {
     ...prev,
@@ -389,6 +591,9 @@ export function runTick(prev: GameState): GameState {
       cooldownSec: 60,
     });
   }
+  if (!feedbackEvents.some((event) => event.id.includes(`-${now}-`))) {
+    addFeedback((goldGain > 0 || resourceText || itemText) && (goldGain > 15 || gainedDrops.length > 1) ? 'multiReward' : 'workComplete');
+  }
 
   const nextState: GameState = {
     ...prev,
@@ -403,8 +608,16 @@ export function runTick(prev: GameState): GameState {
     musingQueue: queue.slice(-20),
     combatLog: combatEvents.length ? [...combatEvents, ...(prev.combatLog || [])].slice(0, 12) : (prev.combatLog || []),
     achievements,
+    equipmentInventory: prev.equipmentInventory || [],
+    equipped: prev.equipped || {},
+    seenEquipmentBaseIds: prev.seenEquipmentBaseIds || [],
+    equipmentDropLog: prev.equipmentDropLog || [],
+    treasureChests,
+    openedChestLog: prev.openedChestLog || [],
+    feedbackEvents: feedbackEvents.slice(-24),
     eventLog: [...eventLog, ...prev.eventLog].slice(0, 24),
     defeatedMonsters,
+    combo: { lastJob: prev.activeJob, streak: nextStreak, boons: nextBoons },
     seenMusingIds: musingState.seenMusingIds,
     recentMusingIds: musingState.recentMusingIds,
     musingCooldowns: musingState.musingCooldowns,

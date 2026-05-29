@@ -4,6 +4,69 @@ export type JobType = 'idle' | 'farming' | 'combat' | 'adventure';
 
 export type MusingType = 'event' | 'firstTime' | 'failure' | 'milestone' | 'state' | 'idle' | 'daily';
 
+export type EquipmentSlot = 'weapon' | 'armor' | 'charm';
+
+export type EquipmentRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export type EquipmentOptionTarget =
+  | 'jobSpeed'
+  | 'resourceGain'
+  | 'sellPrice'
+  | 'attack'
+  | 'defense'
+  | 'hpRegen'
+  | 'mpRegen'
+  | 'adventureCost'
+  | 'dropRate';
+
+export type EquipmentOption = {
+  id: string;
+  target: EquipmentOptionTarget;
+  scope?: string;
+  value: number;
+};
+
+export type EquipmentItem = {
+  uid: string;
+  baseId: string;
+  name: string;
+  description: string;
+  slot: EquipmentSlot;
+  rarity: EquipmentRarity;
+  options: EquipmentOption[];
+  obtainedAt: number;
+  locked?: boolean;
+};
+
+export type TreasureChestType = 'worn' | 'life' | 'adventure' | 'castle' | 'legendary';
+
+export type TreasureChest = {
+  uid: string;
+  type: TreasureChestType;
+  name: string;
+  description: string;
+  obtainedAt: number;
+  sourceJob?: string;
+  sourceArea?: string;
+};
+
+export type FeedbackEventType =
+  | 'workComplete'
+  | 'multiReward'
+  | 'sale'
+  | 'rareDrop'
+  | 'equipmentDrop'
+  | 'legendaryDrop'
+  | 'adventureStart'
+  | 'adventureSuccess'
+  | 'failure';
+
+export type FeedbackEvent = {
+  id: string;
+  type: FeedbackEventType;
+  label?: string;
+};
+
 export type Requirement =
   | { type: 'start' }
   | { type: 'item'; item: string; amount: number }
@@ -52,9 +115,11 @@ export type Area = {
     hp?: number;
     mp?: number;
   };
+  adventureCost?: number;
   drops: Array<{ item: string; chance: number; amount: [number, number] }>;
   musings: Musing[];
   sell?: { resource: ResourceKey; amount: [number, number]; price: number };
+  sellItems?: Array<{ item: string; amount: [number, number]; price: number }>;
   failChance?: number;
   failMusings?: string[];
   encounterChance?: number;
@@ -82,6 +147,24 @@ export type Job = {
 };
 
 export type GameState = {
+  saveVersion?: number;
+  offlineSummary?: {
+    elapsedText: string;
+    goldGain: number;
+    resourceGains: Partial<Record<ResourceKey, number>>;
+    itemGains: Record<string, number>;
+    chestGain?: number;
+    cycles: number;
+  } | null;
+  combo?: {
+    lastJob?: string;
+    streak: number;
+    boons: Record<string, number>;
+  };
+  dailyBonus?: {
+    lastClaimDate?: string;
+    streak: number;
+  };
   activeJob: string;
   activeArea: string;
   tick: number;
@@ -101,6 +184,13 @@ export type GameState = {
   farming: { plantedAt: number | null; cropId: string | null; readyAt: number | null };
   tutorialStep: string;
   achievements: string[];
+  equipmentInventory: EquipmentItem[];
+  equipped: Partial<Record<EquipmentSlot, string>>;
+  seenEquipmentBaseIds: string[];
+  equipmentDropLog: string[];
+  treasureChests: TreasureChest[];
+  openedChestLog: string[];
+  feedbackEvents: FeedbackEvent[];
   progressBreaking: boolean;
   inCombat: boolean;
   currentMonster: Monster | null;

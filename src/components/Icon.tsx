@@ -5,6 +5,7 @@ import {
   BriefcaseBusiness,
   ChevronRight,
   CircleDot,
+  Compass,
   Coins,
   Fish,
   Gift,
@@ -27,6 +28,8 @@ import {
   Swords,
   Sun,
   TreePine,
+  Truck,
+  Video,
   Volume2,
   X,
   Zap,
@@ -43,6 +46,7 @@ const icons = {
   briefcase: BriefcaseBusiness,
   chevronRight: ChevronRight,
   coin: Coins,
+  compass: Compass,
   fish: Fish,
   gift: Gift,
   heart: Heart,
@@ -65,6 +69,8 @@ const icons = {
   sun: Sun,
   target: CircleDot,
   tree: TreePine,
+  truck: Truck,
+  video: Video,
   volume: Volume2,
   x: X,
   zap: Zap,
@@ -79,6 +85,8 @@ export function Icon({ name, className = '', 'aria-hidden': ariaHidden = true, .
 
 const jobIcons: Record<string, IconName> = {
   combat: 'swords',
+  adventure: 'compass',
+  delivery: 'truck',
   farming: 'sprout',
   fishing: 'fish',
   merchant: 'shoppingCart',
@@ -87,6 +95,7 @@ const jobIcons: Record<string, IconName> = {
   remote: 'home',
   rest: 'moon',
   shady: 'shieldAlert',
+  streaming: 'video',
   woodcutting: 'tree',
 };
 

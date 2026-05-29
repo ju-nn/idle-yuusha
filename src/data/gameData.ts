@@ -26,7 +26,7 @@ const jobs: Record<string, Job> = {
         M('水面は静かだった。魚も静かだった。つまり釣れていない。\n\n勇者「何もしてないよりは釣り糸が働いてる。たぶん」\n\n勇者は池の畔に座り込んだ。糸を垂らして何もしない。それが仕事だと言われてもまだ実感がない。\n\n勇者「休憩の許可証を手に入れた。これで休めるのか。いや休むための許可が必要な時点でもう休めてない」\n\n勇者は立ち上がった。休憩の準備をする。それは休むことへの準備でもあり休めないことへの準備でもあった。', [{ item: 'permission_to_rest', amount: 1 }], 'unlock', 'unlock'),
         M('勇者「小魚一匹でも、今日の食費が少し減る。大きな成功じゃなくても、生活はこういうので耐えるんだよな」', [{ item: 'small_fish', amount: 1 }]),
       ] },
-      { id: 'river', name: '大きな川', summary: '効率は上がる。人も増える。静けさは減る。', unlock: { type: 'jobLevel', job: 'fishing', level: 3 }, seconds: 6, rewards: { gold: [5, 12], fish: [2, 4], xp: 12 }, drops: [D('small_fish', 0.8, [2, 4])], failChance: 0.30, failMusings: ['流れが強くて魚を持っていかれた。川、急に上司みたいな顔をする', '大物だと思ったら流木だった。期待だけ先に釣れていた', '釣り糸が対岸の木に絡まった。これは釣りではなく問題だ', '隣の人に先に釣られた。魚にも順番待ち文化があるらしい', '川の流れが変わった。魚も変わった。俺は変わらない', '隣の人の糸が俺の糸に絡まった。他人との距離感が難しい'], musings: [M(`大きな川に来た。魚影は増えた。人影も増えた。\n\n勇者「効率のいい場所って、だいたい他人もいるんだよな。魚より先に距離感を釣られそうだ」`, [{ item: 'quiet_scale', amount: 1 }]), M('大きな川で釣りをした。魚は釣れた。でも静けさは釣れなかった。\n\n勇者「効率と静けさは同じバケツに入らないらしい。こぼれた方が、だいたい俺の休日だ」', [{ item: 'quiet_scale', amount: 1 }])] },
+      { id: 'river', name: '大きな川', summary: '効率は上がる。人も増える。静けさは減る。', unlock: { type: 'jobLevel', job: 'fishing', level: 3 }, seconds: 6, rewards: { gold: [5, 12], fish: [2, 4], xp: 12 }, drops: [D('small_fish', 0.8, [2, 4])], failChance: 0.30, failMusings: ['流れが強くて魚を持っていかれた。川、急に上司みたいな顔をする', '大物だと思ったら流木だった。期待だけ先に釣れていた', '釣り糸が対岸の木に絡まった。これは釣りではなく問題だ', '隣の人に先に釣られた。魚にも順番待ち文化があるらしい', '川の流れが変わった。魚も変わった。俺は変わらない', '隣の人の糸が俺の糸に絡まった。他人との距離感が難しい'], musings: [M(`大きな川に来た。魚影は増えた。人影も増えた。\n\n勇者「効率のいい場所って、だいたい他人もいるんだよな。魚より先に空いてる場所を探している」`, [{ item: 'quiet_scale', amount: 1 }]), M('大きな川で釣りをした。魚は釣れた。でも静けさは釣れなかった。\n\n勇者「効率は上がった。静けさは下がった。休日の収支としては微妙だな」', [{ item: 'quiet_scale', amount: 1 }])] },
     ],
     upgrades: [
       { id: 'fishing_better_rod', name: '中古の釣り竿', description: '釣れる気が少しする。現実でも"気がする"は大事。', cost: { gold: 30, resources: { fish: 4 } }, effects: { maxMp: 5, failReduction: 0.08 }, log: '釣りへの心理的抵抗が少し減った。失敗も少し減った。', level: 2 },
@@ -35,7 +35,7 @@ const jobs: Record<string, Job> = {
     ],
     levelMusings: {
       1: [
-        M('釣りLv1：勇者は釣りを始めた。\n\n勇者「魚が釣れる気がする。でも魚も俺を釣る気がする。相互捕食だ。俺が魚を釣るか、魚が俺の時間を釣るか。どっちが勝つかは、魚次第」', [{ item: 'small_fish', amount: 1 }], 'level_up'),
+        M('釣りLv1：勇者は釣りを始めた。\n\n勇者「魚は釣れないが、俺の時間だけは順調に釣られている。まずは一匹でいいんだが」', [{ item: 'small_fish', amount: 1 }], 'level_up'),
       ],
       2: [
         M('釣りLv2：糸の感覚が少しわかってきた。\n\n勇者「魚がかかった重みと、予定が増えた重みは似てる。どっちも急に現実になる」', [{ item: 'small_fish', amount: 2 }], 'level_up'),
@@ -44,25 +44,25 @@ const jobs: Record<string, Job> = {
         M('釣りLv3：川の流れを読めるようになった。\n\n勇者「流れを読む力がついた。人生にも浮きを付けたい。沈んだらすぐ分かるやつ」', [{ item: 'quiet_scale', amount: 1 }], 'level_up'),
       ],
       4: [
-        M('釣りLv4：魚の習性が少しわかってきた。\n\n勇者「魚はえさに騙される。俺も給料に騙される。似てる。どっちも騙されやすい。でも魚はえさを食べても生きてる。俺は給料に騙されても生きてる気がする。生きてることは勝利」', [{ item: 'small_fish', amount: 3 }], 'level_up'),
+        M('釣りLv4：魚の習性が少しわかってきた。\n\n勇者「魚はえさを見ると寄ってくる。俺も給料日には元気になる。生き物として大差ないな」', [{ item: 'small_fish', amount: 3 }], 'level_up'),
       ],
       5: [
-        M('釣りLv5：釣り師としての自信がついた。\n\n勇者「釣れない時間の扱いが上手くなった。これは釣りなのか、諦めの資格講座なのか」', [{ item: 'quiet_scale', amount: 2 }], 'level_up'),
+        M('釣りLv5：釣り師としての自信がついた。\n\n勇者「釣れない時間に慣れてきた。履歴書には書けないが、生活には地味に効く」', [{ item: 'quiet_scale', amount: 2 }], 'level_up'),
       ],
       6: [
         M('釣りLv6：天候との戦い方を覚えた。\n\n勇者「雨の日は魚より先に俺のやる気が深場へ潜る。釣り上げる道具がない」', [{ item: 'small_fish', amount: 4 }], 'level_up'),
       ],
       7: [
-        M('釣りLv7：釣り場の見極めがついた。\n\n勇者「場所選びが8割。残りは運と諦め。人生もそう。諦めが8割。でも諦めが8割でも、残りの2割が釣れる時がある。2割が釣れると財布が重くなる。2割は大事」', [{ item: 'quiet_scale', amount: 3 }], 'level_up'),
+        M('釣りLv7：釣り場の見極めがついた。\n\n勇者「場所選びが8割。残りは運と待ち時間。人生にも釣れやすい岸辺が欲しい」', [{ item: 'quiet_scale', amount: 3 }], 'level_up'),
       ],
       8: [
-        M('釣りLv8：釣りが生活の一部になった。\n\n勇者「竿を持つと自然に体が動く。自動運転みたいなもんだ。でも財布は助かる。習慣は財布を助ける。でも習慣がつくと、釣りがない生活が不安になる」', [{ item: 'small_fish', amount: 5 }], 'level_up'),
+        M('釣りLv8：釣りが生活の一部になった。\n\n勇者「竿を持つと自然に体が動く。働くより先に釣りが習慣化したの、順番としては正しい」', [{ item: 'small_fish', amount: 5 }], 'level_up'),
       ],
       9: [
-        M('釣りLv9：釣り師としての誇りが生まれた。\n\n勇者「釣れる時は釣れる。釣れない時は休む。それがプロ。でも財布は待ってくれない。財布はプロじゃない。財布は現実主義者」', [{ item: 'quiet_scale', amount: 4 }], 'level_up'),
+        M('釣りLv9：釣り師としての誇りが生まれた。\n\n勇者「釣れる時は釣る。釣れない時は座る。財布だけが休憩を認めてくれない」', [{ item: 'quiet_scale', amount: 4 }], 'level_up'),
       ],
       10: [
-        M('釣りLv10：釣りの達人になった。\n\n勇者「魚と対話できる気がする。魚は無言だけど。無言の方が誠実かも。魚は嘘をつかない。でも魚は俺の財布を気にしてない。魚は無責任。でも無責任は平和」', [{ item: 'small_fish', amount: 6 }], 'level_up'),
+        M('釣りLv10：釣りの達人になった。\n\n勇者「魚の気配が少し分かる。分かったところで魚は家賃を払ってくれない。そこだけ惜しい」', [{ item: 'small_fish', amount: 6 }], 'level_up'),
       ],
     },
   },
@@ -81,58 +81,60 @@ const jobs: Record<string, Job> = {
       M('休憩Lv3：休憩が習慣になった。\n\n勇者「休む前に謝らなくなってきた。誰に謝ってたんだ、俺」', [{ item: 'field_note', amount: 2 }], 'level_up'),
     ],
     4: [
-      M('休憩Lv4：休憩の芸術がわかってきた。\n\n勇者「何もしないにも姿勢がある。今の俺は、かなり完成度の高い横たわりだ」', [{ item: 'field_note', amount: 2 }], 'level_up'),
+      M('休憩Lv4：休憩のコツがわかってきた。\n\n勇者「何もしないのが少し上手くなった。横になっているだけなのに、今日は妙に手応えがある」', [{ item: 'field_note', amount: 2 }], 'level_up'),
     ],
     5: [
-      M('休憩Lv5：休憩の達人になった。\n\n勇者「休むのが仕事より大事だと気づいた。でも仕事を休むと家賃が減る。進歩と後退はセット。セットはバランス。バランスは平和」', [{ item: 'field_note', amount: 3 }], 'level_up'),
+      M('休憩Lv5：休憩の達人になった。\n\n勇者「休むのが上手くなった。問題は、休んでいる間も家賃は休んでくれないことだ」', [{ item: 'field_note', amount: 3 }], 'level_up'),
     ],
   },
 },
-  woodcutting: { name: '木こり', type: 'idle', description: '考えることが少なくて楽。成果は見える。手首は別意見。', unlock: { type: 'jobLevel', job: 'fishing', level: 2 }, areas: [{ id: 'backyard_tree', name: '裏庭の細い木', summary: '近い。簡単。あまり稼げない。', seconds: 6, rewards: { gold: [1, 4], wood: [2, 4], xp: 9 }, drops: [D('twig', 0.7, [1, 3]), D('hinoki_stick', 0.08), D('old_pickaxe', 0.06)], failChance: 0.15, failMusings: ['斧を木に挟まれた。道具に反撃された。貸した覚えはない', '刃の角度を間違えた。木は無言で採点が厳しい', '振りかぶりすぎて転んだ。敵がいないのに敗北演出が出た', '木が予想外の方向に倒れた。物理、たまに連絡なしで裏切る', '斧が滑った。木が逃げた。俺も逃げた。全員判断が早い', '木の硬さを舐めていた。手首が議事録を残している'], musings: [M('裏庭の木を切った。\n\n勇者「頭を使わない作業はありがたい。手首だけが会議を開いて反対している」', [{ item: 'twig', amount: 1 }]), M('勇者は『ひのきのぼう』を手に入れた。\n\n勇者「棒だ。どう見ても棒だ。でも手に持つと、なぜか\"何か倒せる側\"になった気がする。危ない自己肯定感だな」\n\n勇者は棒を振ってみた。空を切る。でも、空を切った感覚がある。\n\n勇者「武器を持つって、こういうことか。相手がいなくても、自分が少し物騒になる」\n\n勇者は棒を腰に差した。まだ戦う相手はいない。でも、戦う準備はできた。それは、逃げる判断を少し遅らせる準備でもあった。', [{ item: 'hinoki_stick', amount: 1 }], 'unlock', 'unlock'), M('木の根元から古びたツルハシが出てきた。\n\n勇者「道具が出ると、やれる仕事が増える。便利って、だいたい面倒の招待状なんだよな」', [{ item: 'old_pickaxe', amount: 1 }], 'unlock')] }], upgrades: [
+  woodcutting: { name: '木こり', type: 'idle', description: '考えることが少なくて楽。成果は見える。手首は別意見。', unlock: { type: 'jobLevel', job: 'fishing', level: 2 }, areas: [{ id: 'backyard_tree', name: '裏庭の細い木', summary: '近い。簡単。あまり稼げない。', seconds: 6, rewards: { gold: [1, 4], wood: [2, 4], xp: 9 }, drops: [D('twig', 0.7, [1, 3]), D('hinoki_stick', 0.08), D('old_pickaxe', 0.06)], failChance: 0.15, failMusings: ['斧を木に挟まれた。道具に反撃された。貸した覚えはない', '刃の角度を間違えた。木は無言で採点が厳しい', '振りかぶりすぎて転んだ。敵がいないのに敗北演出が出た', '木が予想外の方向に倒れた。物理、たまに連絡なしで裏切る', '斧が滑った。木が逃げた。俺も逃げた。全員判断が早い', '木の硬さを舐めていた。手首だけが今日の成果を覚えている'], musings: [M('裏庭の木を切った。\n\n勇者「頭を使わない作業はありがたい。手首だけは、はっきり反対している」', [{ item: 'twig', amount: 1 }]), M('勇者は『ひのきのぼう』を手に入れた。\n\n勇者「棒だ。どう見ても棒だ。でも手に持つと、なぜか\"何か倒せる側\"になった気がする。危ない自己肯定感だな」\n\n勇者は棒を振ってみた。空を切る。でも、空を切った感覚がある。\n\n勇者「武器を持つって、こういうことか。相手がいなくても、自分が少し物騒になる」\n\n勇者は棒を腰に差した。まだ戦う相手はいない。でも、戦う準備はできた。それは、逃げる判断を少し遅らせる準備でもあった。', [{ item: 'hinoki_stick', amount: 1 }], 'unlock', 'unlock'), M('木の根元から古びたツルハシが出てきた。\n\n勇者「道具が出ると、やれる仕事が増える。便利って、だいたい面倒の招待状なんだよな」', [{ item: 'old_pickaxe', amount: 1 }], 'unlock')] }], upgrades: [
     { id: 'woodcutting_wrist_care', name: '手首ケアセット', description: '木こりのあとに手首へ謝罪するための道具。', cost: { gold: 45, resources: { wood: 10 } }, effects: { maxHp: 10, failReduction: 0.08 }, log: '身体コストを無視しない勇者になった。斧の扱いも少し慣れた。', level: 2 },
     { id: 'woodcutting_axe', name: 'まともな斧', description: '裏庭の木にはオーバースペック。でも安心感は別。', cost: { gold: 80, resources: { wood: 15, ore: 5 } }, effects: { maxHp: 15, failReduction: 0.07 }, log: '切るという行為が、少し楽になった。失敗も少し減った。', level: 4 },
   ],
   levelMusings: {
     1: [
-      M('木こりLv1：勇者は木を切り始めた。\n\n勇者「頭を使わない作業はありがたい。手首だけが会議を開いて反対している」', [{ item: 'twig', amount: 1 }], 'level_up'),
+      M('木こりLv1：勇者は木を切り始めた。\n\n勇者「頭を使わない作業はありがたい。手首だけは、はっきり反対している」', [{ item: 'twig', amount: 1 }], 'level_up'),
     ],
     2: [
-      M('木こりLv2：斧の振り方が少しわかってきた。\n\n勇者「力任せよりタイミング。仕事もそうかも。でもタイミングが合わない時も多い。タイミングは読めない。タイミングが読めないと給料が減る気がする」', [{ item: 'twig', amount: 2 }], 'level_up'),
+      M('木こりLv2：斧の振り方が少しわかってきた。\n\n勇者「力任せよりタイミング。仕事もそうなら、俺はもっと早く斧から学ぶべきだった」', [{ item: 'twig', amount: 2 }], 'level_up'),
     ],
     3: [
       M('木こりLv3：木の倒れる方向が読めるようになった。\n\n勇者「木は倒れる前にちゃんと気配を出す。俺の予定も見習ってほしい」', [{ item: 'twig', amount: 3 }], 'level_up'),
     ],
     4: [
-      M('木こりLv4：木こり師としての自信がついた。\n\n勇者「切るのが上手くなった。でも切るものが増えると疲れる。給料もそう。増えると疲れる。でも疲れると給料が減る気がする」', [{ item: 'hinoki_stick', amount: 1 }], 'level_up'),
+      M('木こりLv4：木こり師としての自信がついた。\n\n勇者「切るのは上手くなった。問題は、上手い人ほど次の木を任されることだ」', [{ item: 'hinoki_stick', amount: 1 }], 'level_up'),
     ],
     5: [
-      M('木こりLv5：木こりの達人になった。\n\n勇者「斧が体の一部になった。手首は労災申請の顔をしている」', [{ item: 'twig', amount: 5 }], 'level_up'),
+      M('木こりLv5：木こりの達人になった。\n\n勇者「斧が体になじんできた。手首だけは、まだ契約内容に納得していない」', [{ item: 'twig', amount: 5 }], 'level_up'),
     ],
   },
 },
   merchant: { name: '商人', type: 'idle', description: '集めた素材を自動で売ってGに変える。夢は薄利多売、現実は在庫管理。', unlock: { type: 'jobLevel', job: 'woodcutting', level: 2 }, areas: [
-    { id: 'fish_stall', name: '魚の露店', summary: '魚を少しずつ売る。釣り人から急に個人事業主へ。', seconds: 5, rewards: { xp: 8 }, sell: { resource: 'fish', amount: [1, 2], price: 3 }, drops: [D('merchant_license', 0.1)], failChance: 0.10, failMusings: ['値段交渉で折れた。客の圧が強かった', '売れると思っていた魚が売れなかった。市場は気分屋だ', '看板を見て来た客が何も買わなかった。宣伝の限界だ', '値下げしたら客が来た。でも利益が消えた', '魚が腐った。時間が商品を食べた', '客が値切った。俺の時間も値切られた'], musings: [M('勇者は魚を並べて売り始めた。\n\n勇者「さっきまで食料だった魚が、値札を付けた瞬間に在庫になった。商売、急に怖いな」\n\n勇者は露店の前に立った。客が来るのを待つ。待つ時間が、釣りの時間より長い気がする。\n\n勇者「自分で集めたものを、自分で売る。それが商売だ。でも、売れるかどうかは自分じゃ決められない」\n\n勇者は値札を見た。3G。安いのか高いのか、わからない。でも、これが今の市場価格だ。\n\n勇者「市場が決めた値段で売る。それが商売のルール。ルールに従うなら、自分の価値も市場が決めるのか……」', [{ item: 'merchant_license', amount: 1 }], 'unlock', 'unlock')] },
+    { id: 'fish_stall', name: '魚の露店', summary: '魚を少しずつ売る。釣り人から急に個人事業主へ。', seconds: 5, rewards: { xp: 8 }, sell: { resource: 'fish', amount: [1, 2], price: 3 }, drops: [D('merchant_license', 0.1)], failChance: 0.10, failMusings: ['値段交渉で折れた。客の圧が強かった', '売れると思っていた魚が売れなかった。市場は気分屋だ', '看板を見て来た客が何も買わなかった。宣伝の限界だ', '値下げしたら客が来た。でも利益が消えた', '魚が腐った。時間が商品を食べた', '客が値切った。俺の時間も値切られた'], musings: [M('勇者は魚を並べて売り始めた。\n\n勇者「さっきまで食料だった魚が、値札を付けた瞬間に在庫になった。商売、急に現実だな」\n\n勇者は露店の前に立った。客が来るのを待つ。待つ時間が、釣りの時間より長い気がする。\n\n勇者「自分で集めたものを、自分で売る。自由っぽいけど、売れるかどうかは通行人の気分だ」\n\n勇者は値札を見た。3G。安いのか高いのか、わからない。でも、夕飯には近づいた気がした。', [{ item: 'merchant_license', amount: 1 }], 'unlock', 'unlock')] },
     { id: 'wood_bundle', name: '木材の束売り', summary: '木材をまとめて売る。重いものは利益も腰も重い。', seconds: 6, unlock: { type: 'jobLevel', job: 'woodcutting', level: 1 }, rewards: { xp: 9 }, sell: { resource: 'wood', amount: [2, 4], price: 2 }, drops: [], failChance: 0.10, failMusings: ['重すぎて運ぶ途中で落とした。腰が先に請求書を出した', '束がばらけた。結び方が甘かった', '客が値切った。木材も値切られた', '雨に濡れて木材が膨れた。商品が太った', '客が品定めをして買わなかった。俺の時間も品定めされた'], musings: [M('勇者は木材を束にして売った。\n\n勇者「木を切って、束ねて、売る。これもう労働のフルコースでは？」')] },
-    { id: 'ore_buyer', name: '鉱石の買い取り', summary: '鉱石を高く売る。単価はいいが、そもそも掘るのがしんどい。', seconds: 7, unlock: { type: 'item', item: 'old_pickaxe', amount: 1 }, rewards: { xp: 10 }, sell: { resource: 'ore', amount: [1, 2], price: 8 }, drops: [], failChance: 0.10, failMusings: ['買い取り価格が下がっていた。市場は約束しない', '鉱石の品質を指摘された。掘るより選別が大事らしい', '客が値切った。鉱石も値切られた', '鉱石が混ざっていた。選別が甘かった', '客が品定めをして買わなかった。俺の時間も品定めされた'], musings: [M('鉱石はいい値で売れた。\n\n勇者「高く売れる素材は、だいたい集める過程で体が先に請求書を出してくる')] },
+    { id: 'ore_buyer', name: '鉱石の買い取り', summary: '鉱石を高く売る。単価はいいが、そもそも掘るのがしんどい。', seconds: 7, unlock: { type: 'item', item: 'old_pickaxe', amount: 1 }, rewards: { xp: 10 }, sell: { resource: 'ore', amount: [1, 2], price: 8 }, drops: [], failChance: 0.10, failMusings: ['買い取り価格が下がっていた。市場は約束しない', '鉱石の品質を指摘された。掘るより選別が大事らしい', '客が値切った。鉱石も値切られた', '鉱石が混ざっていた。選別が甘かった', '客が品定めをして買わなかった。俺の時間も品定めされた'], musings: [M('鉱石はいい値で売れた。\n\n勇者「高く売れる素材は、だいたい集めるまでに腰が先払いしている」')] },
+    { id: 'adventure_salvage', name: '冒険素材の買い取り', summary: '戦利品を売る。戦ったあとに値札を付けると急に現実。', unlock: { type: 'jobLevel', job: 'adventure', level: 2 }, seconds: 8, rewards: { xp: 12 }, sellItems: [{ item: 'slime_jelly', amount: [1, 3], price: 7 }, { item: 'goblin_ear', amount: [1, 1], price: 16 }, { item: 'wolf_fang', amount: [1, 1], price: 22 }], drops: [D('merchant_license', 0.04)], failChance: 0.14, failMusings: ['戦利品の説明に困った。正直に言うと売れにくい', '買い取り表にないと言われた。世界にも対象外がある', '状態が悪いと言われた。戦闘後のものに新品感を求めないでほしい', '鑑定待ちで時間が溶けた。価値判断も労働だ'], musings: [M('冒険素材を売った。戦利品が生活費に変わる瞬間、勇者は少しだけ商売を信じた。\n\n勇者「倒した相手の素材で夕飯を買う。倫理は後で考える。今は米だ」')] },
+    { id: 'castle_salvage', name: '城跡骨董市', summary: '古い鎧片を売る。歴史的価値と生活費が同じ箱に入る。', unlock: { type: 'jobLevel', job: 'adventure', level: 6 }, seconds: 10, rewards: { xp: 16 }, sellItems: [{ item: 'rusty_armor_plate', amount: [1, 2], price: 28 }, { item: 'castle_key_fragment', amount: [1, 1], price: 42 }, { item: 'quiet_crown', amount: [1, 1], price: 90 }], drops: [D('overdue_notice', 0.03)], failChance: 0.18, failMusings: ['骨董商に長い顔をされた。価値の顔が読めない', '錆び具合を褒められた。褒め方にも種類がある', '由来を聞かれて黙った。拾った、は弱い', '値段が思ったより渋い。歴史にも相場がある'], musings: [M('城跡の古い鎧片を売った。伝説の残骸にも値札は付く。\n\n勇者「歴史的価値って、腹が減ってる時はだいたい売却価格に翻訳される」', [{ item: 'overdue_notice', amount: 1 }], 'unlock')] },
   ], upgrades: [
     { id: 'merchant_sign', name: '看板', description: '店の存在をアピールする。客が来るかは別問題。', cost: { gold: 55, resources: { wood: 12 } }, effects: { maxMp: 8, failReduction: 0.05 }, log: '店の看板を掲げた。客の流れが少し変わった。', level: 2 },
     { id: 'merchant_cart', name: '手押し車', description: '在庫を運べる。腰への負担も運べる。', cost: { gold: 100, resources: { wood: 25, ore: 8 } }, effects: { maxHp: 12, failReduction: 0.05 }, log: '運搬の負担が少し減った。値段交渉の負担は減っていない。', level: 4 },
   ],
   levelMusings: {
     1: [
-      M('商人Lv1：勇者は商売を始めた。\n\n勇者「自分で集めたものを自分で売る。売れるかは別。でも売れないと財布が軽くなる。財布が軽くなると夕飯が減る。夕飯が減ると魚も釣れない。魚が釣れないと夕飯が減る。悪循環だ」', [{ item: 'merchant_license', amount: 1 }], 'level_up'),
+      M('商人Lv1：勇者は商売を始めた。\n\n勇者「自分で集めたものを自分で売る。急に魚が食料じゃなくて在庫に見えてきた」', [{ item: 'merchant_license', amount: 1 }], 'level_up'),
     ],
     2: [
-      M('商人Lv2：市場の動きが少しわかってきた。\n\n勇者「市場は気分屋。昨日売れたものが今日売れない。昨日の俺は賢かった。今日の俺は賢くない。賢いと賢くないはセット。セットはバランス」', [{ item: 'merchant_license', amount: 1 }], 'level_up'),
+      M('商人Lv2：市場の動きが少しわかってきた。\n\n勇者「昨日売れた魚が今日は売れない。市場、気分で献立を変えないでほしい」', [{ item: 'merchant_license', amount: 1 }], 'level_up'),
     ],
     3: [
-      M('商人Lv3：値段交渉が少し上手くなった。\n\n勇者「安く買って高く売る。でも自分の労働は安く買われる。労働の価値は市場が決める。でも市場は俺を知らない。市場は俺を知らないと、俺の価値もわからない気がする」', [{ item: 'merchant_license', amount: 2 }], 'level_up'),
+      M('商人Lv3：値段交渉が少し上手くなった。\n\n勇者「値切られても少し粘れるようになった。俺の小声に値札が付いてきたな」', [{ item: 'merchant_license', amount: 2 }], 'level_up'),
     ],
     4: [
-      M('商人Lv4：商人としての自信がついた。\n\n勇者「売るのが上手くなった。売れるほど在庫を探す。商売、輪っかの形をしている」', [{ item: 'merchant_license', amount: 2 }], 'level_up'),
+      M('商人Lv4：商人としての自信がついた。\n\n勇者「売るのが上手くなった。売れるほど在庫を探す。商売、片付けても散らかる部屋に似てる」', [{ item: 'merchant_license', amount: 2 }], 'level_up'),
     ],
     5: [
-      M('商人Lv5：商人の達人になった。\n\n勇者「市場の流れが見える。でも俺の財布はまだ見えない。財布は隠れ上手だ。隠れ上手はスキル。でも隠れ上手がスキルだと、家賃も隠れる気がする」', [{ item: 'merchant_license', amount: 3 }], 'level_up'),
+      M('商人Lv5：商人の達人になった。\n\n勇者「売れる品が読めてきた。自分の財布だけは、相変わらず中身が読めない」', [{ item: 'merchant_license', amount: 3 }], 'level_up'),
     ],
   },
 },
@@ -154,63 +156,87 @@ const jobs: Record<string, Job> = {
       M('農業Lv4：収穫のタイミングがわかってきた。\n\n勇者「早すぎても遅すぎてもダメ。大根の方が俺より締め切りに厳しい」', [{ item: 'daikon_seed', amount: 2 }], 'level_up'),
     ],
     5: [
-      M('農業Lv5：農業の達人になった。\n\n勇者「野菜と対話できるようになった。返事はない。でも収穫で返すタイプ、嫌いじゃない」', [{ item: 'daikon_seed', amount: 3 }], 'level_up'),
+      M('農業Lv5：農業の達人になった。\n\n勇者「野菜の様子が分かるようになった。返事はないけど、収穫で結果を出すタイプだ」', [{ item: 'daikon_seed', amount: 3 }], 'level_up'),
     ],
   },
 },
-  mining: { name: '採掘', type: 'idle', description: '一発当てたい気持ちで掘る。素材は強いが体力消耗も強い。', unlock: { type: 'jobLevel', job: 'woodcutting', level: 3 }, areas: [{ id: 'loose_rocks', name: '崩れかけの岩場', summary: '初歩の採掘場。腰に来る。', seconds: 7, rewards: { gold: [3, 9], ore: [1, 3], xp: 11 }, drops: [D('pebble_ore', 0.75, [1, 3])], failChance: 0.25, failMusings: ['岩が崩れた。採掘というより逃走だった', '鉱脈を外した。勘は信頼できない', 'ツルハシが跳ね返った。岩が思ったより硬かった', '掘った穴が埋まった。自然は仕事を戻してくる', '岩粉が目に入った。採掘は目も掘る', '腰が悲鳴を上げた。岩は無言だ'], musings: [M('崩れかけの岩場で鉱石を掘った。\n\n勇者「一発当てたい気持ちが、ツルハシに出てるな」', [{ item: 'pebble_ore', amount: 1 }]), M('勇者は崩れかけの岩場に立った。\n\n勇者「採掘だ。岩を掘って、鉱石を手に入れる。木こりより体力が要りそうだけど、報酬もいいらしい」\n\n勇者はツルハシを構えた。岩に向かって振り下ろす。岩が砕ける音が響く。\n\n勇者「新しい仕事は、新しい疲れをくれる。でも、新しい報酬もくれる。天秤に乗せるなら、どっちが重いか……」\n\n勇者は鉱石を拾い上げた。重い。でも、この重さが、報酬の重さだ。\n\n勇者「採掘の準備ができた。腰への覚悟も、できた」', [{ item: 'pebble_ore', amount: 1 }], 'unlock', 'unlock')] }], upgrades: [
+  mining: { name: '採掘', type: 'idle', description: '一発当てたい気持ちで掘る。素材は強いが体力消耗も強い。', unlock: { type: 'jobLevel', job: 'woodcutting', level: 3 }, areas: [{ id: 'loose_rocks', name: '崩れかけの岩場', summary: '初歩の採掘場。腰に来る。', seconds: 7, rewards: { gold: [3, 9], ore: [1, 3], xp: 11 }, drops: [D('pebble_ore', 0.75, [1, 3])], failChance: 0.25, failMusings: ['岩が崩れた。採掘というより逃走だった', '鉱脈を外した。勘は信頼できない', 'ツルハシが跳ね返った。岩が思ったより硬かった', '掘った穴が埋まった。自然は仕事を戻してくる', '岩粉が目に入った。採掘は目も掘る', '腰が悲鳴を上げた。岩は無言だ'], musings: [M('崩れかけの岩場で鉱石を掘った。\n\n勇者「一発当てたい気持ちが、ツルハシに出てるな」', [{ item: 'pebble_ore', amount: 1 }]), M('勇者は崩れかけの岩場に立った。\n\n勇者「採掘だ。岩を掘って鉱石を手に入れる。木こりより体力が要りそうだけど、報酬もいいらしい」\n\n勇者はツルハシを構えた。岩に向かって振り下ろす。岩が砕ける音が響く。\n\n勇者「新しい仕事は、新しい疲れを連れてくる。報酬がいいぶん、腰への説明が難しい」\n\n勇者は鉱石を拾い上げた。重い。でも、この重さは少しだけ生活費に近い。', [{ item: 'pebble_ore', amount: 1 }], 'unlock', 'unlock')] }], upgrades: [
     { id: 'mining_helmet', name: '採掘用ヘルメット', description: '頭を守る。思考は守らない。', cost: { gold: 65, resources: { ore: 10 } }, effects: { maxHp: 15, failReduction: 0.10 }, log: '頭の安全が確保された。崩れた岩にも少し対応できるようになった。', level: 2 },
     { id: 'mining_pickaxe', name: '新しいツルハシ', description: '掘る効率が上がる。腰の悲鳴も上がる。', cost: { gold: 90, resources: { wood: 20, ore: 15 } }, effects: { maxHp: 20, failReduction: 0.10 }, log: '道具が進化した。鉱脈を外す回数が少し減った。', level: 4 },
   ],
   levelMusings: {
     1: [
-      M('採掘Lv1：勇者は採掘を始めた。\n\n勇者「岩を掘って鉱石を手に入れる。木こりより体力が要る。でも腰への請求書は同じ。請求書は平等。平等は公正。公正は平和」', [{ item: 'pebble_ore', amount: 1 }], 'level_up'),
+      M('採掘Lv1：勇者は採掘を始めた。\n\n勇者「岩を掘ると鉱石が出る。ついでに腰から抗議も出る。採掘、出るものが多い」', [{ item: 'pebble_ore', amount: 1 }], 'level_up'),
     ],
     2: [
-      M('採掘Lv2：岩の硬さが少しわかってきた。\n\n勇者「硬い岩は硬い労働をくれる。でもいい鉱石がある。でも腰への請求書も硬い。請求書は硬い。硬い請求書は破れない。破れないは安心」', [{ item: 'pebble_ore', amount: 2 }], 'level_up'),
+      M('採掘Lv2：岩の硬さが少しわかってきた。\n\n勇者「硬い岩ほどいい鉱石がある。つまり腰痛は高単価のサイン。嬉しくはない」', [{ item: 'pebble_ore', amount: 2 }], 'level_up'),
     ],
     3: [
-      M('採掘Lv3：鉱脈の見つけ方が少しわかってきた。\n\n勇者「勘は信頼できない。でも当たった時の快感は信頼できる。でも当たらない時の腰への請求書も信頼できる。請求書は信頼できる」', [{ item: 'pebble_ore', amount: 3 }], 'level_up'),
+      M('採掘Lv3：鉱脈の見つけ方が少しわかってきた。\n\n勇者「勘は外れる。でも当たると鉱石が出る。外れると腰だけが成果を出す」', [{ item: 'pebble_ore', amount: 3 }], 'level_up'),
     ],
     4: [
-      M('採掘Lv4：採掘師としての自信がついた。\n\n勇者「掘るのが上手くなった。でも掘る場所が増えると腰が来る。腰は請求書を送り続ける。請求書は送り続ける。送り続けるは継続。継続は力」', [{ item: 'pebble_ore', amount: 4 }], 'level_up'),
+      M('採掘Lv4：採掘師としての自信がついた。\n\n勇者「掘るのが上手くなった。上手い分だけ、腰への説明責任も増えた」', [{ item: 'pebble_ore', amount: 4 }], 'level_up'),
     ],
     5: [
-      M('採掘Lv5：採掘の達人になった。\n\n勇者「岩と対話できる気がする。岩は無言だけど。無言の方が誠実かも。でも岩は鉱石を隠してる。岩は隠れ上手。隠れ上手はスキル。でも隠れ上手がスキルだと、家賃も隠れる気がする」', [{ item: 'pebble_ore', amount: 5 }], 'level_up'),
+      M('採掘Lv5：採掘の達人になった。\n\n勇者「岩の割れやすい場所が分かる。俺の腰の割れやすい場所も、だいたい分かってきた」', [{ item: 'pebble_ore', amount: 5 }], 'level_up'),
     ],
   },
 },
   adventure: { name: '冒険', type: 'adventure', description: 'エリアを探索して、たまにモンスターと出会う。自動戦闘で勝利を目指す。', unlock: { type: 'jobLevel', job: 'mining', level: 2 }, areas: [
-    { id: 'forest', name: '薄暗い森', summary: '安全な探索場所。たまにスライムが出る。', seconds: 6, rewards: { gold: [3, 8], xp: 10 }, drops: [D('field_note', 0.08), D('twig', 0.15, [1, 2])], failChance: 0.10, failMusings: ['道に迷った。森は方向音痴の敵だ', '足元の木の根に躓いた。自然は意地悪だ', 'スライムに逃げられた。スライムは速い', '木の枝に引っかかった。森は俺を捕まえてる'], encounterChance: 0.25, monsters: [
+    { id: 'forest', name: '薄暗い森', summary: '安全な探索場所。たまにスライムが出る。', seconds: 6, adventureCost: 8, rewards: { xp: 10 }, drops: [D('field_note', 0.08), D('twig', 0.15, [1, 2])], failChance: 0.10, failMusings: ['道に迷った。森は方向音痴の敵だ', '足元の木の根に躓いた。自然は意地悪だ', 'スライムに逃げられた。スライムは速い', '木の枝に引っかかった。森は俺を捕まえてる'], encounterChance: 0.25, monsters: [
       { id: 'slime', name: 'スライム', hp: 15, attack: 3, rewards: { gold: [5, 12], xp: 14 }, drops: [D('slime_jelly', 0.85, [1, 2])] },
-    ], musings: [M('勇者は森を探索した。\n\n勇者「静かな森。でも何か出る気がする。予感は当たることが多い」', [{ item: 'field_note', amount: 1 }]), M('勇者は薄暗い森に足を踏み入れた。\n\n勇者「冒険だ。エリアを探索してモンスターと戦う。釣りや木こりとは違う労働」\n\n勇者は棒を握りしめた。武器だ。戦うための道具。\n\n勇者「戦うってどういうことか。相手を倒して生き残る。それが冒険のルール」\n\n勇者は森の奥を見た。暗い。でも進むしかない。\n\n勇者「前に進むしかない。それが勇者のすること」', [{ item: 'field_note', amount: 1 }], 'unlock', 'unlock')] },
-    { id: 'mountain', name: '山道', summary: '少し危険。ゴブリンが出るかもしれない。', unlock: { type: 'jobLevel', job: 'adventure', level: 2 }, seconds: 8, rewards: { gold: [8, 15], xp: 14 }, drops: [D('pebble_ore', 0.12, [1, 2])], failChance: 0.15, failMusings: ['岩が滑って落ちた。山は急だ', '霧が濃くなって迷った。視界は頼りにならない', 'ゴブリンに逃げられた。ゴブリンは賢い', '岩に躓いた。山は俺を落とそうとしてる'], encounterChance: 0.35, monsters: [
+    ], musings: [M('勇者は森を探索した。\n\n勇者「静かな森ほど、何か出そうで落ち着かない。静けさにも種類がある」', [{ item: 'field_note', amount: 1 }]), M('勇者は薄暗い森に足を踏み入れた。\n\n勇者「冒険だ。釣りや木こりと違って、向こうから面倒が歩いてくる」\n\n勇者は棒を握りしめた。武器だ。戦うための道具。\n\n勇者「勝てば報酬。負ければ痛い。説明は短いのに、全然楽じゃないな」\n\n勇者は森の奥を見た。暗い。帰り道の位置だけは、何度も確認した。', [{ item: 'field_note', amount: 1 }], 'unlock', 'unlock')] },
+    { id: 'mountain', name: '山道', summary: '少し危険。ゴブリンが出るかもしれない。', unlock: { type: 'jobLevel', job: 'adventure', level: 2 }, seconds: 8, adventureCost: 18, rewards: { xp: 14 }, drops: [D('pebble_ore', 0.12, [1, 2])], failChance: 0.15, failMusings: ['岩が滑って落ちた。山は急だ', '霧が濃くなって迷った。視界は頼りにならない', 'ゴブリンに逃げられた。ゴブリンは賢い', '岩に躓いた。山は俺を落とそうとしてる'], encounterChance: 0.35, monsters: [
       { id: 'slime', name: 'スライム', hp: 15, attack: 3, rewards: { gold: [5, 12], xp: 14 }, drops: [D('slime_jelly', 0.85, [1, 2])] },
       { id: 'goblin', name: 'ゴブリン', hp: 25, attack: 5, rewards: { gold: [10, 20], xp: 18 }, drops: [D('goblin_ear', 0.7, [1, 1])] },
     ], musings: [M('勇者は山道を歩いた。\n\n勇者「空気が薄い。敵も薄いといいけど」'), M('山道を登った。足元が不安定。敵も不安定。\n\n勇者「高いところに行くほど、落ちる時の痛みが増す。家賃もそう」', [{ item: 'pebble_ore', amount: 1 }])] },
-    { id: 'cave', name: '洞窟', summary: '危険。強い敵が出る。', unlock: { type: 'jobLevel', job: 'adventure', level: 4 }, seconds: 10, rewards: { gold: [15, 25], xp: 18 }, drops: [D('pebble_ore', 0.2, [2, 4])], failChance: 0.20, failMusings: ['暗すぎて壁にぶつかった。光が必要だ', '足元が崩れた。洞窟は予告なしに攻撃してくる', 'オオカミに逃げられた。オオカミは速い', '暗闇で迷った。洞窟は俺を捕まえてる'], encounterChance: 0.50, monsters: [
+    { id: 'cave', name: '洞窟', summary: '危険。強い敵が出る。', unlock: { type: 'jobLevel', job: 'adventure', level: 4 }, seconds: 10, adventureCost: 32, rewards: { xp: 18 }, drops: [D('pebble_ore', 0.2, [2, 4])], failChance: 0.20, failMusings: ['暗すぎて壁にぶつかった。光が必要だ', '足元が崩れた。洞窟は予告なしに攻撃してくる', 'オオカミに逃げられた。オオカミは速い', '暗闇で迷った。洞窟は俺を捕まえてる'], encounterChance: 0.50, monsters: [
       { id: 'goblin', name: 'ゴブリン', hp: 25, attack: 5, rewards: { gold: [10, 20], xp: 18 }, drops: [D('goblin_ear', 0.7, [1, 1])] },
       { id: 'wolf', name: 'オオカミ', hp: 35, attack: 8, rewards: { gold: [15, 25], xp: 22 }, drops: [D('wolf_fang', 0.6, [1, 1])] },
-    ], musings: [M('勇者は洞窟に入った。\n\n勇者「暗い。でも暗いからこそ、光が欲しくなる。そんなもんだ」', [{ item: 'pebble_ore', amount: 2 }]), M('洞窟を探索した。暗い。でも暗いからこそ、自分の足音が聞こえる。\n\n勇者「暗闇は自分の存在を確認する場所だ。給料もそう」', [{ item: 'pebble_ore', amount: 2 }])] },
+    ], musings: [M('勇者は洞窟に入った。\n\n勇者「暗い。まず明かりが欲しい。勇気より先に足元だ」', [{ item: 'pebble_ore', amount: 2 }]), M('洞窟を探索した。暗いせいで、自分の足音だけがやけに聞こえる。\n\n勇者「誰もいないのに気まずい。洞窟、部屋より静かすぎる」', [{ item: 'pebble_ore', amount: 2 }])] },
+    { id: 'old_castle_gate', name: '古い城門', summary: '終盤の探索地。歴史と請求書の気配が同居している。', unlock: { type: 'jobLevel', job: 'adventure', level: 6 }, seconds: 12, adventureCost: 55, rewards: { xp: 24 }, drops: [D('rusty_armor_plate', 0.24, [1, 2]), D('overdue_notice', 0.05)], failChance: 0.24, failMusings: ['門が重すぎた。歴史は開閉にもコストがある', '床石が抜けた。古い建物のレビューは信用できない', '風の音にびびった。音響だけなら魔王城級だ', '古い張り紙を読んだら気分が沈んだ。文字にも攻撃力がある'], encounterChance: 0.58, monsters: [
+      { id: 'rust_armor', name: '錆びた鎧', hp: 50, attack: 10, rewards: { gold: [24, 40], xp: 28 }, drops: [D('rusty_armor_plate', 0.75, [1, 2])] },
+      { id: 'bill_wraith', name: '督促状の影', hp: 62, attack: 12, rewards: { gold: [30, 52], xp: 34 }, drops: [D('overdue_notice', 0.55, [1, 1]), D('rusty_armor_plate', 0.35, [1, 2])] },
+    ], musings: [M('古い城門に着いた。伝説の入口というより、閉店後の役所みたいな圧がある。\n\n勇者「城ってもっと夢がある場所だと思ってた。掲示板に督促状が貼ってあると急に現実だな」', [{ item: 'rusty_armor_plate', amount: 1 }], 'unlock'), M('城門の影を歩いた。足音が妙に大きく返ってくる。\n\n勇者「誰もいない場所ほど、自分の生活音がうるさい。俺、存在感だけはある」', [{ item: 'field_note', amount: 1 }])] },
+    { id: 'inner_courtyard', name: '静かな中庭', summary: '城の奥。魔王より先に管理費の気配がする。', unlock: { type: 'jobLevel', job: 'adventure', level: 8 }, seconds: 14, adventureCost: 80, rewards: { xp: 32 }, drops: [D('castle_key_fragment', 0.18, [1, 1]), D('rusty_armor_plate', 0.22, [1, 2])], failChance: 0.26, failMusings: ['噴水が止まっていた。水道代の気配がする', '中庭で迷った。広い家は掃除も広い', '古い王冠の絵に見下ろされた。視線だけ高級だ', '石畳が微妙に沈んだ。歴史、足腰に来る'], encounterChance: 0.62, monsters: [
+      { id: 'tax_mimic', name: '税箱ミミック', hp: 72, attack: 13, rewards: { gold: [38, 66], xp: 38 }, drops: [D('castle_key_fragment', 0.62, [1, 1]), D('overdue_notice', 0.28, [1, 1])] },
+      { id: 'quiet_king', name: '静かな王の影', hp: 86, attack: 15, rewards: { gold: [48, 82], xp: 46 }, drops: [D('quiet_crown', 0.38, [1, 1]), D('castle_key_fragment', 0.44, [1, 1])] },
+    ], musings: [M('静かな中庭に入った。ラスボスの前室というより、誰も掃除していない高級物件だ。\n\n勇者「広い家に憧れたこともある。でも掃除範囲を見たら、急にワンルームが王国に見える」', [{ item: 'castle_key_fragment', amount: 1 }], 'unlock'), M('城の奥は静かだった。静かすぎて、財布の中身まで聞こえそうだった。\n\n勇者「静けさは好きだけど、ここまで静かだと請求の足音が目立つな」', [{ item: 'field_note', amount: 1 }])] },
   ], upgrades: [
     { id: 'adventure_shield', name: '木の盾', description: '攻撃を少し防ぐ。不安は防がない。', cost: { gold: 70, resources: { wood: 15, ore: 5 } }, effects: { maxHp: 18, failReduction: 0.10 }, log: '盾を手に入れた。モンスターの攻撃を少し受け流せるようになった。', level: 2 },
     { id: 'adventure_potion', name: '回復薬セット', description: '戦闘後の回復が少し楽になる。', cost: { gold: 85, resources: { ore: 12 } }, effects: { maxMp: 15, maxHp: 10, failReduction: 0.10 }, log: '回復の準備ができた。戦闘での生存率が少し上がった。', level: 4 },
+    { id: 'adventure_return_charm', name: '折りたたみ帰還札', description: '帰る判断を早くする札。逃げ道があると、前に出る勇気も少し出る。', cost: { gold: 180, resources: { ore: 24, wood: 18 } }, effects: { maxHp: 18, maxMp: 12, failReduction: 0.08 }, log: '帰り道を畳んで持てるようになった。危険な探索の失敗も少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
-      M('冒険Lv1：勇者は冒険を始めた。\n\n勇者「エリアを探索してモンスターと戦う。釣りとは違う労働。でもHP/MPを消費する。財布も消費する。消費は経験。経験は成長」', [{ item: 'field_note', amount: 1 }], 'level_up'),
+      M('冒険Lv1：勇者は冒険を始めた。\n\n勇者「モンスターと戦う仕事が始まった。給料日より先にHPが減るタイプの仕事だ」', [{ item: 'field_note', amount: 1 }], 'level_up'),
     ],
     2: [
       M('冒険Lv2：森の探索に慣れてきた。\n\n勇者「静かな森ほど何か出る。静かにしている敵、接客態度としては最悪だ」', [{ item: 'field_note', amount: 1 }], 'level_up'),
     ],
     3: [
-      M('冒険Lv3：戦闘が少し安定してきた。\n\n勇者「生き残る手順が分かってきた。分かっても心拍数は別部署で暴れている」', [{ item: 'field_note', amount: 2 }], 'level_up'),
+      M('冒険Lv3：戦闘が少し安定してきた。\n\n勇者「生き残る手順が分かってきた。分かっても心臓だけは毎回新人みたいに慌てる」', [{ item: 'field_note', amount: 2 }], 'level_up'),
     ],
     4: [
       M('冒険Lv4：冒険者としての自信がついた。\n\n勇者「前に進むしかない日もある。せめて帰り道だけは自動で出てほしい」', [{ item: 'field_note', amount: 2 }], 'level_up'),
     ],
     5: [
       M('冒険Lv5：冒険の達人になった。\n\n勇者「モンスターの間合いが読める。読めたところで近寄ってくるのはやめてほしい」', [{ item: 'field_note', amount: 3 }], 'level_up'),
+    ],
+    6: [
+      M('冒険Lv6：城跡へ向かう準備ができた。\n\n勇者「古い城って、宝箱より修繕費の匂いがする。夢の耐震基準が低い」', [{ item: 'field_note', amount: 3 }], 'level_up'),
+    ],
+    7: [
+      M('冒険Lv7：危険な場所の歩き方が身についた。\n\n勇者「足音を消せるようになった。生活音も消せたら、もっと静かに生きられるのに」', [{ item: 'rusty_armor_plate', amount: 1 }], 'level_up'),
+    ],
+    8: [
+      M('冒険Lv8：冒険を生活に組み込めるようになった。\n\n勇者「危険を予定表に入れるのは嫌だ。でも予定に入れた危険は、少しだけ管理できる」', [{ item: 'overdue_notice', amount: 1 }], 'level_up'),
+    ],
+    9: [
+      M('冒険Lv9：城の奥の空気に慣れてきた。\n\n勇者「静かな中庭まで来た。魔王より、帰宅後の洗濯物が気になるあたり俺はまだ生活者だ」', [{ item: 'castle_key_fragment', amount: 1 }], 'level_up'),
+    ],
+    10: [
+      M('冒険Lv10：勇者は危険との距離感を覚えた。\n\n勇者「勝てる相手が増えた。だからこそ、戦わない日を選べるのが一番の成長かもしれない」', [{ item: 'quiet_crown', amount: 1 }], 'level_up'),
     ],
   },
 },
@@ -220,7 +246,7 @@ const jobs: Record<string, Job> = {
   ],
   levelMusings: {
     1: [
-      M('王国勤務Lv1：勇者は出勤した。\n\n勇者「決まった時間に決まった場所へ行けた。えらい。帰りたい気持ちまで punctual だ」', [{ item: 'employee_badge', amount: 1 }], 'level_up'),
+      M('王国勤務Lv1：勇者は出勤した。\n\n勇者「決まった時間に決まった場所へ行けた。えらい。帰りたい気持ちも時間通りだ」', [{ item: 'employee_badge', amount: 1 }], 'level_up'),
     ],
     2: [
       M('王国勤務Lv2：雑務に慣れてきた。\n\n勇者「安定収入はありがたい。拘束感まで安定しているのは、サービス過剰だと思う」', [{ item: 'employee_badge', amount: 1 }], 'level_up'),
@@ -245,16 +271,16 @@ const jobs: Record<string, Job> = {
       M('在宅作業Lv1：勇者は在宅作業を始めた。\n\n勇者「通勤時間は消えた。代わりに机が職場を名乗り始めた」', [{ item: 'mute_button', amount: 1 }], 'level_up'),
     ],
     2: [
-      M('在宅作業Lv2：在宅のリズムがわかってきた。\n\n勇者「家で仕事すると休憩の境界がにじむ。コップの輪染みみたいにじわじわ来る」', [{ item: 'mute_button', amount: 1 }], 'level_up'),
+      M('在宅作業Lv2：在宅のリズムがわかってきた。\n\n勇者「家で仕事すると休憩の境目が薄くなる。気づくと台所まで職場だ」', [{ item: 'mute_button', amount: 1 }], 'level_up'),
     ],
     3: [
       M('在宅作業Lv3：集中力の管理が少し上手くなった。\n\n勇者「集中すると時間が溶ける。せめて溶けた分だけカップ麺も完成してほしい」', [{ item: 'mute_button', amount: 2 }], 'level_up'),
     ],
     4: [
-      M('在宅作業Lv4：在宅作業師としての自信がついた。\n\n勇者「家で仕事できる。できるから頼まれる。便利さはたまに罠の顔をする」', [{ item: 'mute_button', amount: 2 }], 'level_up'),
+      M('在宅作業Lv4：在宅作業師としての自信がついた。\n\n勇者「家で仕事できる。できるから頼まれる。便利になるほど、頼まれごとも増えるんだな」', [{ item: 'mute_button', amount: 2 }], 'level_up'),
     ],
     5: [
-      M('在宅作業Lv5：在宅作業の達人になった。\n\n勇者「仕事と生活の境界線を引いた。消しゴムを持った通知が近づいてくる」', [{ item: 'mute_button', amount: 3 }], 'level_up'),
+      M('在宅作業Lv5：在宅作業の達人になった。\n\n勇者「仕事と生活の境界線を引いた。通知ひとつで、すぐ踏み越えられる細いやつだ」', [{ item: 'mute_button', amount: 3 }], 'level_up'),
     ],
   },
 },
@@ -271,7 +297,7 @@ const jobs: Record<string, Job> = {
       M('闇クエストLv1：勇者は闇クエストを始めた。\n\n勇者「高い報酬には理由がある。理由を言わないなら、たぶん領収書に書けない理由だ」', [{ item: 'red_flag', amount: 1 }], 'level_up'),
     ],
     2: [
-      M('闇クエストLv2：怪しい依頼の見分け方が少しわかってきた。\n\n勇者「条件が曖昧な仕事ほど責任だけ鮮明だ。解像度の使い方が間違ってる」', [{ item: 'red_flag', amount: 1 }], 'level_up'),
+      M('闇クエストLv2：怪しい依頼の見分け方が少しわかってきた。\n\n勇者「条件が曖昧な仕事ほど、責任だけははっきり押しつけてくるんだな」', [{ item: 'red_flag', amount: 1 }], 'level_up'),
     ],
     3: [
       M('闇クエストLv3：逃げるタイミングが少しわかってきた。\n\n勇者「怖くなって引き返した。これは失敗ではなく、生存への投資ということにする」', [{ item: 'red_flag', amount: 2 }], 'level_up'),
@@ -280,7 +306,7 @@ const jobs: Record<string, Job> = {
       M('闇クエストLv4：怪しい依頼のリスク管理が少し上手くなった。\n\n勇者「逃げ道を先に見る癖がついた。景色より非常口に詳しい勇者になっている」', [{ item: 'red_flag', amount: 2 }], 'level_up'),
     ],
     5: [
-      M('闇クエストLv5：闇クエストの達人になった。\n\n勇者「怪しい依頼の匂いが分かる。だいたい報酬欄だけ香水が強い」', [{ item: 'red_flag', amount: 3 }], 'level_up'),
+      M('闇クエストLv5：闇クエストの達人になった。\n\n勇者「怪しい依頼は、報酬だけ妙に元気だ。そこがもう怪しい」', [{ item: 'red_flag', amount: 3 }], 'level_up'),
     ],
   },
 },
@@ -326,13 +352,13 @@ const jobs: Record<string, Job> = {
       M('動画投稿者Lv2：動画編集が少し上手くなった。\n\n勇者「視聴維持率って言葉、こっちの精神維持率も測ってほしい。低め安定だ」', [{ item: 'mic', amount: 1 }], 'level_up'),
     ],
     3: [
-      M('動画投稿者Lv3：トレンドの読み方が少しわかってきた。\n\n勇者「伸びた理由がわからない。伸びない理由もわからない。神託より説明不足だ」', [{ item: 'webcam', amount: 1 }], 'level_up'),
+      M('動画投稿者Lv3：トレンドの読み方が少しわかってきた。\n\n勇者「伸びた理由がわからない。伸びない理由もわからない。数字、もう少し日本語で説明してほしい」', [{ item: 'webcam', amount: 1 }], 'level_up'),
     ],
     4: [
-      M('動画投稿者Lv4：動画投稿者としての自信がついた。\n\n勇者「好きって言うだけなら簡単。値段が付くと声の姿勢まで正座する」', [{ item: 'mic', amount: 1 }], 'level_up'),
+      M('動画投稿者Lv4：動画投稿者としての自信がついた。\n\n勇者「好きって言うだけなら簡単。案件になると、急に声がよそ行きになる」', [{ item: 'mic', amount: 1 }], 'level_up'),
     ],
     5: [
-      M('動画投稿者Lv5：動画投稿の達人になった。\n\n勇者「再生数と対話できるようになった。返事は数字だけ。無口な商人みたいだ」', [{ item: 'webcam', amount: 2 }], 'level_up'),
+      M('動画投稿者Lv5：動画投稿の達人になった。\n\n勇者「再生数を見るのに慣れた。慣れたのに、少ない日はちゃんと刺さる」', [{ item: 'webcam', amount: 2 }], 'level_up'),
     ],
   },
 },

@@ -1,7 +1,7 @@
-import { ACHIEVEMENTS } from '../data/catalog';
+import { ACHIEVEMENTS, itemKind } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import { checkRequirement, isJobUnlocked } from './requirements';
-import type { Area, GameState, Musing } from '../types';
+import type { Area, GameState, Musing, Requirement, ResourceKey, Upgrade } from '../types';
 import { enqueueMusing } from './musings';
 
 export { describeUpgradeEffects, formatResourceName, rewardText } from './formatters';
@@ -13,7 +13,33 @@ export function randInt(min: number, max: number) { return Math.floor(Math.rando
 export function clamp(value: number, min: number, max: number) { return Math.max(min, Math.min(max, value)); }
 export function xpToNext(level: number) { return Math.floor(45 + level * level * 12); }
 function pick<T>(arr: T[]) { return arr[Math.floor(Math.random() * arr.length)]; }
-export function addItems(base: Record<string, number>, rewards: Musing['rewardItems'] = []) { const next = { ...(base || {}) }; rewards.forEach((r) => { next[r.item] = (next[r.item] || 0) + r.amount; }); return next; }
+export function isUniqueItem(item: string) {
+  return itemKind(item) === '重要';
+}
+
+export function addItems(base: Record<string, number>, rewards: Musing['rewardItems'] = []) {
+  const next = { ...(base || {}) };
+  rewards.forEach((r) => {
+    next[r.item] = isUniqueItem(r.item) ? Math.max(next[r.item] || 0, 1) : (next[r.item] || 0) + r.amount;
+  });
+  return next;
+}
+
+export function grantItemRewards(base: Record<string, number>, rewards: Musing['rewardItems'] = []) {
+  const next = { ...(base || {}) };
+  const granted: NonNullable<Musing['rewardItems']> = [];
+  rewards.forEach((r) => {
+    if (isUniqueItem(r.item)) {
+      if (next[r.item]) return;
+      next[r.item] = 1;
+      granted.push({ ...r, amount: 1 });
+      return;
+    }
+    next[r.item] = (next[r.item] || 0) + r.amount;
+    granted.push(r);
+  });
+  return { items: next, granted };
+}
 export function rollDrops(drops: Area['drops'] = []) { return drops.filter((d) => Math.random() <= d.chance).map((d) => ({ ...d, amount: randInt(d.amount[0], d.amount[1]) })); }
 export function pickFreshMusing(area: Area, seen: string[] = []) { const indexed = area.musings.map((m, i) => ({ ...m, key: `${area.id}::${i}` })); const unseen = indexed.filter((m) => !seen.includes(m.key)); const selected = unseen.length ? pick(unseen) : pick(indexed); return { ...selected, fresh: !seen.includes(selected.key) }; }
 export function getGoal(state: GameState) {
@@ -40,6 +66,197 @@ export function getGoal(state: GameState) {
   if ((state.achievements || []).length < 10) return `実績 ${(state.achievements || []).length}/10。勇者の人生ログをもう少し厚くする。`;
   return 'リリース版の生活目標は目前。長時間作物、拠点整備、図鑑の穴を埋めて「そこそこ安心」を作る。';
 }
+
+export function getReleaseTasks(state: GameState) {
+  const unlockedJobs = Object.keys(jobs).filter((key) => isJobUnlocked(key, state));
+  const totalJobs = Object.keys(jobs).length;
+  const ownedUpgrades = Object.values(jobs).flatMap((job) => job.upgrades).filter((upgrade) => state.items?.[upgrade.id]).length;
+  const totalUpgrades = Object.values(jobs).reduce((sum, job) => sum + job.upgrades.length, 0);
+  const highestLevel = Math.max(...Object.values(state.jobData || {}).map((data) => data.level || 1));
+  const achievementCount = (state.achievements || []).length;
+  const tasks = [
+    { label: '仕事をすべて解禁', done: unlockedJobs.length >= totalJobs, progress: `${unlockedJobs.length}/${totalJobs}` },
+    { label: '拠点整備を6割以上導入', done: ownedUpgrades >= Math.ceil(totalUpgrades * 0.6), progress: `${ownedUpgrades}/${Math.ceil(totalUpgrades * 0.6)}` },
+    { label: '得意な仕事をLv8へ', done: highestLevel >= 8, progress: `Lv${highestLevel}/8` },
+    { label: '実績を10個集める', done: achievementCount >= 10, progress: `${achievementCount}/10` },
+  ];
+  return tasks;
+}
+
+function requirementProgress(requirement: Requirement, state: GameState) {
+  if (requirement.type === 'start') return { percent: 100, current: 1, target: 1, label: 'すぐ開始できます' };
+  if (requirement.type === 'item') {
+    const current = state.items?.[requirement.item] || 0;
+    return {
+      percent: Math.min(100, Math.floor((current / requirement.amount) * 100)),
+      current,
+      target: requirement.amount,
+      label: `${current}/${requirement.amount}`,
+    };
+  }
+  const current = state.jobData?.[requirement.job]?.level || 0;
+  return {
+    percent: Math.min(100, Math.floor((current / requirement.level) * 100)),
+    current,
+    target: requirement.level,
+    label: `Lv${current}/${requirement.level}`,
+  };
+}
+
+function upgradeReadiness(upgrade: Upgrade, state: GameState, jobKey: string) {
+  if (state.items?.[upgrade.id]) return 100;
+  const jobLevel = state.jobData?.[jobKey]?.level || 1;
+  const levelRatio = upgrade.level ? Math.min(1, jobLevel / upgrade.level) : 1;
+  const goldRatio = upgrade.cost.gold > 0 ? Math.min(1, (state.gold || 0) / upgrade.cost.gold) : 1;
+  const resourceRatios = Object.entries(upgrade.cost.resources || {}).map(([key, value]) => {
+    if (!value) return 1;
+    return Math.min(1, ((state.resources || {})[key as ResourceKey] || 0) / value);
+  });
+  return Math.floor(Math.min(levelRatio, goldRatio, ...resourceRatios, 1) * 100);
+}
+
+function todayKey() {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export function getNextTarget(state: GameState) {
+  const lockedJob = Object.entries(jobs).find(([key, job]) => !isJobUnlocked(key, state) && job.unlock.type !== 'start');
+  if (lockedJob) {
+    const [key, job] = lockedJob;
+    const progress = requirementProgress(job.unlock, state);
+    return {
+      title: `次の解禁：${job.name}`,
+      detail: `${job.description}`,
+      progress: progress.percent,
+      meta: progress.label,
+      cta: progress.percent >= 85 ? 'もう少しで生活の選択肢が増える' : 'まずは解禁条件を育てる',
+      key,
+    };
+  }
+
+  const currentJob = jobs[state.activeJob] || jobs.fishing;
+  const lockedArea = currentJob.areas.find((area) => area.unlock && !checkRequirement(area.unlock, state));
+  if (lockedArea?.unlock) {
+    const progress = requirementProgress(lockedArea.unlock, state);
+    return {
+      title: `次のエリア：${lockedArea.name}`,
+      detail: lockedArea.summary,
+      progress: progress.percent,
+      meta: progress.label,
+      cta: '新しい場所は、新しい報酬とぼやきを連れてくる',
+      key: lockedArea.id,
+    };
+  }
+
+  const upgradeCandidates = Object.entries(jobs).flatMap(([jobKey, job]) => job.upgrades
+    .filter((upgrade) => !state.items?.[upgrade.id] && isJobUnlocked(jobKey, state))
+    .map((upgrade) => ({ jobKey, job, upgrade, readiness: upgradeReadiness(upgrade, state, jobKey) })))
+    .sort((a, b) => b.readiness - a.readiness);
+  const nextUpgrade = upgradeCandidates[0];
+  if (nextUpgrade) {
+    return {
+      title: `次の拠点整備：${nextUpgrade.upgrade.name}`,
+      detail: `${nextUpgrade.job.name}が少し楽になる。${nextUpgrade.upgrade.description}`,
+      progress: nextUpgrade.readiness,
+      meta: `${nextUpgrade.readiness}%`,
+      cta: nextUpgrade.readiness >= 80 ? '財布が導入ボタンの近くまで来ている' : '素材とGを少しずつ積む',
+      key: nextUpgrade.upgrade.id,
+    };
+  }
+
+  const releaseTasks = getReleaseTasks(state);
+  const releaseTask = releaseTasks.find((task) => !task.done);
+  if (releaseTask) {
+    return {
+      title: `リリース目標：${releaseTask.label}`,
+      detail: 'ここを埋めると、生活が「そこそこ安心」に近づく。',
+      progress: 75,
+      meta: releaseTask.progress,
+      cta: '完成度をもう一段だけ押し上げる',
+      key: releaseTask.label,
+    };
+  }
+  return {
+    title: '次の自由：図鑑と生活ログを埋める',
+    detail: 'まだ読んでいないぼやき、倒していない相手、植えていない作物が生活の余白に残っています。',
+    progress: 100,
+    meta: '継続中',
+    cta: '遊ぶほど、勇者の部屋に生活の厚みが出る',
+    key: 'free-life',
+  };
+}
+
+export function getLifePlan(state: GameState) {
+  const currentJob = jobs[state.activeJob] || jobs.fishing;
+  const currentArea = currentJob.areas.find((area) => area.id === state.activeArea) || currentJob.areas[0];
+
+  if (state.currentMusing && !state.currentMusing.readAt) {
+    return {
+      kicker: '今すぐ',
+      title: 'ぼやきの「次へ」を読む',
+      detail: '新しい出来事が起きています。まずは勇者の内心を確認して、生活ログに残しましょう。',
+      progress: 100,
+      meta: '未読あり',
+      key: 'read-musing',
+    };
+  }
+
+  if (state.tutorialStep === 'select_fishing') {
+    return {
+      kicker: '最初の一手',
+      title: '仕事から「釣り」を選ぶ',
+      detail: '無料で食料と小銭を拾うところから開始。勇者、まずは水辺で人生を薄く立て直します。',
+      progress: 0,
+      meta: '開始',
+      key: 'select-fishing',
+    };
+  }
+
+  if (state.dailyBonus?.lastClaimDate !== todayKey()) {
+    return {
+      kicker: '本日の一手',
+      title: '生活スタンプを受け取る',
+      detail: 'ログインだけで少し進む枠です。Gと生活リズムをもらって、次の作業に余熱を残します。',
+      progress: 100,
+      meta: `${state.dailyBonus?.streak || 0}日継続`,
+      key: 'daily-bonus',
+    };
+  }
+
+  if (state.farming?.readyAt && Date.now() >= state.farming.readyAt) {
+    return {
+      kicker: '収穫待ち',
+      title: '畑を収穫する',
+      detail: '長く待ったぶん、生活にちゃんと戻ってきます。放置時間が罪悪感ではなく成果になる瞬間です。',
+      progress: 100,
+      meta: '収穫可',
+      key: 'harvest-crop',
+    };
+  }
+
+  const target = getNextTarget(state);
+  if (target.key !== 'free-life') {
+    return {
+      kicker: '次の目標',
+      title: target.title,
+      detail: target.detail || target.cta,
+      progress: target.progress,
+      meta: target.meta,
+      key: target.key,
+    };
+  }
+
+  return {
+    kicker: '今の進行',
+    title: currentArea ? `${currentArea.name}を進める` : '仕事を選ぶ',
+    detail: currentArea ? `${currentJob.name}を一周ずつ回して、素材・経験・ぼやきの穴を埋めていきます。` : 'まずは仕事を選んで、今日を回しましょう。',
+    progress: currentArea ? 65 : 0,
+    meta: currentJob.name,
+    key: currentArea?.id || 'choose-job',
+  };
+}
+
 export function addAchievement(prev: GameState, id: string, logs: string[]) {
   if (!ACHIEVEMENTS[id] || prev.achievements.includes(id)) return prev.achievements;
   logs.unshift(`実績解除：${ACHIEVEMENTS[id].name} — ${ACHIEVEMENTS[id].description}`);
@@ -88,14 +305,27 @@ function jobUnlockMusing(key: string): Musing {
 export function announceJobUnlocks(prev: GameState, next: GameState, now = Date.now()): GameState {
   const before = prev.unlockedJobs?.length ? prev.unlockedJobs : unlockedJobKeys(prev);
   const after = unlockedJobKeys(next);
-  const newlyUnlocked = after.filter((key) => !before.includes(key));
+  const seenUnlockIds = new Set([
+    ...(prev.seenMusingIds || []),
+    ...(next.seenMusingIds || []),
+    ...(prev.readMusings || []).map((musing) => musing.id || ''),
+    ...(next.readMusings || []).map((musing) => musing.id || ''),
+    prev.currentMusing?.id || '',
+    next.currentMusing?.id || '',
+    ...(prev.musingQueue || []).map((musing) => musing.id || ''),
+    ...(next.musingQueue || []).map((musing) => musing.id || ''),
+  ]);
+  const newlyUnlocked = after.filter((key) => !before.includes(key) && !seenUnlockIds.has(`job-unlock-${key}`));
   let state: GameState = { ...next, unlockedJobs: after };
   newlyUnlocked.forEach((key) => {
-    state = {
-      ...state,
-      eventLog: [`仕事解禁：${jobs[key].name}。物語の区切りぼやきが届いた。`, ...state.eventLog].slice(0, 24),
-    };
-    state = enqueueMusing(state, jobUnlockMusing(key), { prepend: true, now }).state;
+    const result = enqueueMusing(state, jobUnlockMusing(key), { prepend: true, now });
+    state = result.state;
+    if (result.accepted) {
+      state = {
+        ...state,
+        eventLog: [`仕事解禁：${jobs[key].name}。物語の区切りぼやきが届いた。`, ...state.eventLog].slice(0, 24),
+      };
+    }
   });
   return state;
 }

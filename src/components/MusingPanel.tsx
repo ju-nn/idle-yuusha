@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { rewardText } from '../game/formatters';
 import type { GameState } from '../types';
 import { Icon } from './Icon';
@@ -18,10 +18,23 @@ export function MusingPanel({ state, totalMusings, musingCount, canAdvance, adva
   const displayText = activeMusing ? activeMusing.text : idleText;
   const unreadCount = state.musingQueue.length;
   const hasReward = Boolean(activeMusing?.rewardItems?.length);
-  const isUnlock = activeMusing?.eventSubType === 'unlock' || (activeMusing?.eventType as string | undefined) === 'unlock';
+  const isJobUnlock = Boolean(activeMusing?.id?.startsWith('job-unlock-'));
+  const unlockPreview = displayText.length > 220 ? `${displayText.slice(0, 220).trim()}...` : displayText;
 
-  if (isUnlock) {
-    return <div className="unlockModal"><div className="unlockModalContent"><p className="unlockKicker"><Icon name="key" /> Story Gate</p><h2>新しい仕事が解禁されました</h2><p className="unlockJobName">{activeMusing?.job}</p><p className="unlockText">{displayText}</p>{hasReward && <p className="reward">出来事で手に入った：{rewardText(activeMusing?.rewardItems)}</p>}<button className="primary" onClick={advanceMusing}><Icon name="play" /> 読み終えた</button></div></div>;
+  useEffect(() => {
+    if (!isJobUnlock) return;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [isJobUnlock]);
+
+  if (isJobUnlock) {
+    return <div className="unlockModal" role="dialog" aria-modal="true" aria-labelledby="unlockTitle"><div className="unlockModalContent"><div className="unlockHero"><span className="unlockKicker"><Icon name="key" /> 仕事解禁</span><h2 id="unlockTitle">新しい生活ルートが増えました</h2><p className="unlockJobName">{activeMusing?.job}</p></div><p className="unlockText">{unlockPreview}</p>{hasReward && <p className="reward">出来事で手に入った：{rewardText(activeMusing?.rewardItems)}</p>}<button className="primary" onClick={advanceMusing}><Icon name="play" /> 確認する</button></div></div>;
   }
 
   return <Card tone="musing"><div className="musingTop"><div className="musingMeta"><span><Icon name="message" /> ぼやきノベル</span><span>{activeMusing ? activeMusing.job : '勇者'}</span><span>{activeMusing ? activeMusing.area : '作業中'}</span><span>収集 {musingCount}/{totalMusings}</span>{unreadCount > 0 && <span className="unreadPill">未読 {unreadCount}</span>}</div><button className="primary musingNext" onClick={advanceMusing} disabled={!canAdvance}><Icon name="play" /> 次へ{unreadCount > 0 && <b className="buttonBadge">{unreadCount}</b>}</button></div><p className="musingText" key={displayText}>{displayText}</p>{hasReward && <p className="reward">出来事で手に入った：{rewardText(activeMusing?.rewardItems)}</p>}</Card>;

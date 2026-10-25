@@ -1,4 +1,4 @@
-import type { EquipmentItem, EquipmentOption, EquipmentOptionTarget, EquipmentRarity, EquipmentSlot, GameState, JobType, ResourceKey, TreasureChest, TreasureChestType } from '../types';
+import type { EquipmentItem, EquipmentOption, EquipmentOptionTarget, EquipmentRarity, EquipmentSlot, FeedbackEvent, GameState, JobType, ResourceKey, TreasureChest, TreasureChestType } from '../types';
 import { enqueueMusing } from './musings';
 
 export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
@@ -304,12 +304,13 @@ export function sellEquipment(prev: GameState, uid: string): GameState {
   const value = getEquipmentSellValue(item);
   const equipped = { ...(prev.equipped || {}) };
   if (equipped[item.slot] === uid) delete equipped[item.slot];
+  const saleEvent: FeedbackEvent = { id: `sale-equipment-${Date.now()}`, type: 'sale', label: item.name };
   const next = {
     ...prev,
     gold: prev.gold + value,
     equipped,
     equipmentInventory: prev.equipmentInventory.filter((candidate) => candidate.uid !== uid),
-    feedbackEvents: [...(prev.feedbackEvents || []), { id: `sale-equipment-${Date.now()}`, type: 'sale', label: item.name }].slice(-24),
+    feedbackEvents: [...(prev.feedbackEvents || []), saleEvent].slice(-24),
     eventLog: [`装備売却：${item.name}を+${value}Gにした。思い出より収納場所が勝った。`, ...prev.eventLog].slice(0, 24),
   };
   return enqueueMusing(next, {
@@ -341,6 +342,11 @@ export function openTreasureChest(prev: GameState, uid: string): GameState {
   if (!chest || (prev.equipmentInventory?.length || 0) >= getEquipmentLimit(prev)) return prev;
   const equipment = generateEquipmentFromChest(chest);
   const equipmentText = `${EQUIPMENT_RARITY_LABELS[equipment.rarity]} ${equipment.name}`;
+  const dropEvent: FeedbackEvent = {
+    id: `open-chest-${Date.now()}`,
+    type: equipment.rarity === 'legendary' ? 'legendaryDrop' : 'equipmentDrop',
+    label: equipment.name,
+  };
   const next: GameState = {
     ...prev,
     treasureChests: prev.treasureChests.filter((candidate) => candidate.uid !== uid),
@@ -356,7 +362,7 @@ export function openTreasureChest(prev: GameState, uid: string): GameState {
     ].slice(0, 40),
     feedbackEvents: [
       ...(prev.feedbackEvents || []),
-      { id: `open-chest-${Date.now()}`, type: equipment.rarity === 'legendary' ? 'legendaryDrop' : 'equipmentDrop', label: equipment.name },
+      dropEvent,
     ].slice(-24),
     achievements: equipment.rarity === 'legendary'
       ? Array.from(new Set([...(prev.achievements || []), 'first_chest_open', 'first_equipment', 'first_legendary_equipment']))

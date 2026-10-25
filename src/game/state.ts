@@ -72,7 +72,69 @@ export function createInitialState(jobs: Record<string, Job>): GameState {
   };
 }
 
+// セーブの版は saveVersion で数える。初期プロトタイプ（v1）は saveVersion 自体を持たない。
+export function detectSaveVersion(parsed: Partial<GameState>): number {
+  return typeof parsed.saveVersion === 'number' && parsed.saveVersion >= 1 ? Math.floor(parsed.saveVersion) : 1;
+}
+
+type SaveMigrationStep = {
+  from: number;
+  to: number;
+  // その版で何が増えて、どう揃えるのかをここに残す。移行の追跡はこの一覧が正。
+  summary: string;
+  apply: (parsed: Partial<GameState>) => Partial<GameState>;
+};
+
+// バージョンごとの移行手順。新しい版でセーブの形が増えたら、ここに1段追加する。
+// 各手順は「その版で増えた置き場を用意する」ところまでを担い、細部の欠損補完は
+// 最後に normalizeMigratedState がまとめて面倒を見る（二重の安全網）。
+export const SAVE_MIGRATIONS: SaveMigrationStep[] = [
+  {
+    from: 1,
+    to: 2,
+    summary: '装備・宝箱システムの追加に合わせ、装備インベントリと宝箱の置き場を用意する',
+    apply: (parsed) => ({
+      ...parsed,
+      equipmentInventory: parsed.equipmentInventory || [],
+      equipped: parsed.equipped || {},
+      seenEquipmentBaseIds: parsed.seenEquipmentBaseIds || [],
+      equipmentDropLog: parsed.equipmentDropLog || [],
+      treasureChests: parsed.treasureChests || [],
+      openedChestLog: parsed.openedChestLog || [],
+    }),
+  },
+  {
+    from: 2,
+    to: 3,
+    summary: '生活コンボ・デイリーボーナス・帰還サマリーの置き場を用意する',
+    apply: (parsed) => ({
+      ...parsed,
+      combo: parsed.combo || { streak: 0, boons: {} },
+      dailyBonus: parsed.dailyBonus || { streak: 0 },
+      offlineSummary: parsed.offlineSummary ?? null,
+    }),
+  },
+];
+
 export function migrateState(parsed: Partial<GameState>, initialState: GameState): GameState {
+  const fromVersion = detectSaveVersion(parsed);
+  let working: Partial<GameState> = { ...parsed };
+  const applied: string[] = [];
+  for (const step of SAVE_MIGRATIONS) {
+    if (step.from >= fromVersion && step.to <= SAVE_VERSION) {
+      working = step.apply(working);
+      applied.push(`v${step.from}→v${step.to}: ${step.summary}`);
+    }
+  }
+  const next = normalizeMigratedState(working, initialState);
+  if (applied.length > 0) {
+    // 移行はゲーム体験の邪魔をしない範囲で、開発者が追えるようにだけ残す。
+    console.info(`[idle-yuusha] セーブデータを v${fromVersion} から v${SAVE_VERSION} へ移行しました。`, applied);
+  }
+  return next;
+}
+
+function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameState): GameState {
   const normalizedItems = Object.fromEntries(Object.entries(parsed.items || {}).map(([key, value]) => [
     key,
     itemKind(key) === '重要' ? Math.min(1, value || 0) : value,
@@ -114,7 +176,7 @@ export function migrateState(parsed: Partial<GameState>, initialState: GameState
     monsterHp: parsed.monsterHp || 0,
     visitedAreas: parsed.visitedAreas || [],
     defeatedMonsters: parsed.defeatedMonsters || [],
-    unlockedJobs: [],
+    unlockedJobs: [] as string[],
     seenMusingIds: parsed.seenMusingIds || [],
     recentMusingIds: parsed.recentMusingIds || [],
     musingCooldowns: parsed.musingCooldowns || {},
@@ -162,10 +224,10 @@ function applyOfflineProgress(state: GameState): GameState {
   // 表示する経過時間は、実際に進行へ反映した（計算対象の）時間に合わせる
   const elapsedText = formatOfflineElapsed(offlineTicks * TICK_INTERVAL_MS);
   const itemGains = Object.fromEntries(Object.entries(next.items || {})
-    .map(([key, value]) => [key, value - (state.items?.[key] || 0)])
+    .map(([key, value]): [string, number] => [key, value - (state.items?.[key] || 0)])
     .filter(([, value]) => value > 0));
   const resourceGains = Object.fromEntries(Object.entries(next.resources || {})
-    .map(([key, value]) => [key, value - (state.resources?.[key as keyof typeof state.resources] || 0)])
+    .map(([key, value]): [string, number] => [key, value - (state.resources?.[key as keyof typeof state.resources] || 0)])
     .filter(([, value]) => value > 0));
   return {
     ...next,

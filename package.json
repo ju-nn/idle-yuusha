@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc -b && vite build",
     "preview": "vite preview",
     "codegraph:sync": "npx @colbymchenry/codegraph sync",
     "codegraph:status": "npx @colbymchenry/codegraph status"
@@ -15,5 +15,9 @@
     "react-dom": "latest",
     "typescript": "latest",
     "vite": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
   }
 }

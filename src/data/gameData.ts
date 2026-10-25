@@ -1,4 +1,4 @@
-import type { Job, Musing, MusingType, ResourceKey } from '../types';
+import type { Job, Musing, MusingType } from '../types';
 
 function resolveMusingType(category = 'normal', eventType?: string): MusingType {
   const source = eventType || category;

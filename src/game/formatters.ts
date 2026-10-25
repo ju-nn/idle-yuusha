@@ -1,8 +1,6 @@
 import { itemKind, itemName } from '../data/catalog';
 import { upgrades } from '../data/gameData';
-import type { Musing } from '../types';
-
-export function rewardText(rewards: Musing['rewardItems'] = []) {
+export function rewardText(rewards: ReadonlyArray<{ item: string; amount: number }> = []) {
   return rewards.map((r) => `${itemName(r.item)}+${r.amount}${itemKind(r.item) === '重要' ? '★' : ''}`).join(' / ');
 }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import chestOpenGif from './assets/sprites/treasure_chest_mini/animation.gif';
 import { Header } from './components/Header';
 import { AreaGrid, CurrentJobCard, UpgradePanel } from './components/JobPanels';

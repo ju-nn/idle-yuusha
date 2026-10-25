@@ -72,7 +72,7 @@ export function getCropRewards(cropId: CropId, readyAt: number, now = Date.now()
   const crop = CROPS[cropId] || CROPS.daikon;
   const overgrownMs = Math.max(0, now - readyAt);
   const bonusCount = Math.min(crop.maxBonus, Math.floor(overgrownMs / crop.bonusEveryMs));
-  const rewards = crop.rewards.map((reward) => ({ ...reward }));
+  const rewards: { item: string; amount: number }[] = crop.rewards.map((reward) => ({ ...reward }));
   if (bonusCount > 0) {
     rewards.push({ item: crop.bonusItem.item, amount: crop.bonusItem.amount * bonusCount });
   }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import chestClosed from '../assets/sprites/treasure_chest_mini/chest-1.png';
 import { ACHIEVEMENTS, itemDesc, itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
@@ -7,7 +7,8 @@ import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipment
 import { MUSING_LABELS } from '../game/musings';
 import { isJobUnlocked } from '../game/requirements';
 import { applyUserSettings, loadUserSettings, saveUserSettings, type UserSettings } from '../game/settings';
-import { SAVE_KEY } from '../game/state';
+import { createSaveBackupText, importSaveBackup } from '../game/saveTransfer';
+import { createInitialState } from '../game/state';
 import type { EquipmentItem, EquipmentSlot, GameState, Job, Monster, Musing } from '../types';
 import { Icon } from './Icon';
 import { Card, Modal } from './shared';
@@ -54,24 +55,45 @@ export function SettingsModal({ onClose, reset }: { onClose: () => void; reset: 
     applyUserSettings(settings);
   }, [settings]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const exportSave = () => {
-    const saved = localStorage.getItem(SAVE_KEY) || '';
-    setBackupText(saved);
-    setBackupMessage(saved ? 'バックアップ文字列を作りました。' : 'まだ保存データがありません。');
+    const backup = createSaveBackupText();
+    setBackupText(backup || '');
+    setBackupMessage(backup ? 'バックアップ文字列を作りました。大事なところにしまっておきましょう。' : 'まだ保存データがありません。');
+  };
+  const downloadSave = () => {
+    const backup = createSaveBackupText();
+    if (!backup) {
+      setBackupMessage('まだ保存データがありません。');
+      return;
+    }
+    const stamp = new Date().toISOString().slice(0, 10).replaceAll('-', '');
+    const url = URL.createObjectURL(new Blob([backup], { type: 'application/json' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `idle-yuusha-save-${stamp}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setBackupMessage('セーブをファイルに書き出しました。');
+  };
+  const loadSaveFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      setImportText(await file.text());
+      setBackupMessage('ファイルからバックアップを読みました。「取り込む」で勇者の記憶を引っ越します。');
+    } catch {
+      setBackupMessage('ファイルを読めませんでした。');
+    }
   };
   const importSave = () => {
-    try {
-      const parsed = JSON.parse(importText);
-      if (!parsed || typeof parsed !== 'object') throw new Error('invalid');
-      localStorage.setItem(SAVE_KEY, JSON.stringify(parsed));
-      setBackupMessage('セーブを取り込みました。画面を再読み込みします。');
+    const result = importSaveBackup(importText, createInitialState(jobs));
+    setBackupMessage(result.message);
+    if (result.ok) {
       window.setTimeout(() => window.location.reload(), 350);
-    } catch {
-      setBackupMessage('取り込みに失敗しました。バックアップ文字列を確認してください。');
     }
   };
 
-  return <Modal title="設定" description="音と表示、セーブ周りの設定。" onClose={onClose}><div className="settingsPanel"><SettingSlider icon="volume" label="BGM" value={settings.bgm} onChange={(bgm) => setSettings((current) => ({ ...current, bgm }))} /><SettingSlider icon="sliders" label="SE" value={settings.se} onChange={(se) => setSettings((current) => ({ ...current, se }))} /><label className="settingToggle"><span><b>連続SEを控えめにする</b><p>チャチャリン系を短いチャリンに寄せる。</p></span><input type="checkbox" checked={settings.simplifiedComboSe} onChange={(event) => setSettings((current) => ({ ...current, simplifiedComboSe: event.currentTarget.checked }))} /></label><div className="settingRow"><div><b>テキスト速度</b><p>ぼやきの表示演出の速さ。</p></div><div className="settingChoices"><button className={settings.textSpeed === 'normal' ? 'active' : ''} onClick={() => setSettings((current) => ({ ...current, textSpeed: 'normal' }))}>標準</button><button className={settings.textSpeed === 'fast' ? 'active' : ''} onClick={() => setSettings((current) => ({ ...current, textSpeed: 'fast' }))}>速い</button></div></div><div className="dangerZone"><div><b>最初からやり直す</b><p>セーブデータを消して、勇者の労働生活を巻き戻す。</p></div><button onClick={reset}><Icon name="reset" /> リセット</button></div><div className="backupPanel"><div><b>セーブバックアップ</b><p>端末を変える前や、リセット前の保険に使う。</p></div><div className="backupActions"><button onClick={exportSave}><Icon name="book" /> 書き出す</button><button onClick={importSave} disabled={!importText.trim()}>取り込む</button></div><textarea value={backupText} onChange={(event) => setBackupText(event.currentTarget.value)} placeholder="書き出したセーブがここに表示されます。" readOnly /><textarea value={importText} onChange={(event) => setImportText(event.currentTarget.value)} placeholder="取り込むバックアップ文字列をここに貼り付けます。" />{backupMessage && <p className="backupMessage">{backupMessage}</p>}</div></div></Modal>;
+  return <Modal title="設定" description="音と表示、セーブ周りの設定。" onClose={onClose}><div className="settingsPanel"><SettingSlider icon="volume" label="BGM" value={settings.bgm} onChange={(bgm) => setSettings((current) => ({ ...current, bgm }))} /><SettingSlider icon="sliders" label="SE" value={settings.se} onChange={(se) => setSettings((current) => ({ ...current, se }))} /><label className="settingToggle"><span><b>連続SEを控えめにする</b><p>チャチャリン系を短いチャリンに寄せる。</p></span><input type="checkbox" checked={settings.simplifiedComboSe} onChange={(event) => setSettings((current) => ({ ...current, simplifiedComboSe: event.currentTarget.checked }))} /></label><div className="settingRow"><div><b>テキスト速度</b><p>ぼやきの表示演出の速さ。</p></div><div className="settingChoices"><button className={settings.textSpeed === 'normal' ? 'active' : ''} onClick={() => setSettings((current) => ({ ...current, textSpeed: 'normal' }))}>標準</button><button className={settings.textSpeed === 'fast' ? 'active' : ''} onClick={() => setSettings((current) => ({ ...current, textSpeed: 'fast' }))}>速い</button></div></div><div className="dangerZone"><div><b>最初からやり直す</b><p>セーブデータを消して、勇者の労働生活を巻き戻す。</p></div><button onClick={reset}><Icon name="reset" /> リセット</button></div><div className="backupPanel"><div><b>セーブバックアップ</b><p>端末を変える前や、リセット前の保険に使う。</p></div><div className="backupActions"><button onClick={exportSave}><Icon name="book" /> 書き出す</button><button onClick={downloadSave}>ファイルで書き出す</button><button onClick={() => fileInputRef.current?.click()}>ファイルから読み込む</button><button onClick={importSave} disabled={!importText.trim()}>取り込む</button></div><input ref={fileInputRef} type="file" accept=".json,.txt,application/json" hidden onChange={(event) => { void loadSaveFile(event.currentTarget.files?.[0]); event.currentTarget.value = ''; }} /><textarea value={backupText} onChange={(event) => setBackupText(event.currentTarget.value)} placeholder="書き出したセーブがここに表示されます。" readOnly /><textarea value={importText} onChange={(event) => setImportText(event.currentTarget.value)} placeholder="取り込むバックアップ文字列をここに貼り付けます。" />{backupMessage && <p className="backupMessage">{backupMessage}</p>}</div></div></Modal>;
 }
 
 function SettingSlider({ icon, label, value, onChange }: { icon: 'volume' | 'sliders'; label: string; value: number; onChange: (value: number) => void }) {

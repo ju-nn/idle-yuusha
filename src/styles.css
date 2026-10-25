@@ -1781,3 +1781,287 @@ button.primary:active:not(:disabled) {
   .chestCard, .chestSpriteOpening, .modal, .modalBackdrop,
   .failBadge--break, .bar.breaking { animation:none; }
 }
+
+/* ===== Mobile fix layer (2026-10-26 / 実機フィードバック対応) =====
+   対象: iPhone実機で「画面が入りきらない」「タップする場所が分からない」。
+   原因: ゲームボード層が html/body/#root と .page を 100dvh + overflow:hidden
+   で固定し、モバイルでも全UIを1画面に圧縮していたこと。エリア/整備リストは
+   86〜106px の行に overflow:hidden で閉じ込められ、仕事ボタンは横スクロール
+   の画面外、ヘッダーの操作ボタンは 28×26px のアイコンのみになっていた。
+   方針: 980px 以下ではボード固定をやめて通常の縦スクロールへ戻し、
+   主要な押下要素を 44px 以上＋ラベル付きボタンとして見せる。
+   デスクトップ (>980px) のボードレイアウトには一切触れない。 */
+
+@media (max-width: 980px) {
+  /* --- 1画面圧縮をやめ、ページ全体を縦スクロールに戻す --- */
+  html, body, #root {
+    height:auto;
+    overflow:visible;
+    overflow-x:clip;
+  }
+  .page {
+    height:auto;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:10px 10px 28px;
+    overflow:visible;
+  }
+  .layout {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    overflow:visible;
+  }
+  .side {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    overflow:visible;
+  }
+  /* ボード層で消えていた生活ナビをモバイルでも出す */
+  .side .card.notice {
+    display:flex;
+  }
+  .main {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    overflow:visible;
+  }
+  .activityGrid {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    overflow:visible;
+  }
+  .activityGrid > .card,
+  .main > .card,
+  .jobMenuPanel,
+  .card.notice.lifePlan {
+    overflow:visible;
+  }
+  .activityGrid > .card.musing {
+    height:auto;
+    min-height:0;
+  }
+  .jobCard {
+    overflow:visible;
+  }
+  /* エリア/整備リストを極小の固定行から解放し、縦積みで全部見せる */
+  .jobCard .jobDetailGrid {
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    overflow:visible;
+  }
+  .jobDetailGrid .areaSection,
+  .jobDetailGrid .inlineUpgradeSection {
+    display:block;
+  }
+  .compactAreaGrid {
+    max-height:none;
+    overflow:visible;
+  }
+  .inlineUpgradeList {
+    flex-direction:column;
+    overflow:visible;
+  }
+  .compactUpgrade {
+    flex:none;
+    width:100%;
+  }
+  .upgradeGrid {
+    max-height:none;
+    overflow:visible;
+  }
+
+  /* --- ヘッダーは縦積み。ステータスは3列で潰さない --- */
+  .header {
+    display:block;
+    padding:2px 2px 0;
+  }
+  .statGrid {
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:6px;
+    margin-top:8px;
+  }
+  .stat {
+    min-height:42px;
+    padding:6px 8px;
+    font-size:.86rem;
+  }
+  .stat small {
+    display:block;
+    font-size:.62rem;
+  }
+  .stat b {
+    font-size:.92rem;
+  }
+
+  /* --- ヘッダーの操作は「ラベル付きの大きめボタン」に戻す --- */
+  .actions {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:10px;
+    justify-content:flex-start;
+  }
+  .actions button,
+  .actions .stampButton {
+    flex:1 1 42%;
+    width:auto;
+    min-width:0 !important;
+    min-height:44px;
+    padding:9px 10px;
+    font-size:.86rem;
+    white-space:nowrap;
+  }
+  .actions button span {
+    display:inline;
+  }
+  .utilityButton {
+    min-height:44px;
+    font-size:.86rem;
+    background:rgba(255,253,248,.85);
+  }
+
+  /* --- 仕事メニュー: 横スクロールの画面外をやめ、2列で全部見せる --- */
+  .jobMenuPanel {
+    display:block;
+    overflow:visible;
+    padding:10px;
+  }
+  .jobMenuPanel::after {
+    display:none;
+  }
+  .jobMenuPanel .panelTitle {
+    position:static;
+    flex:none;
+    margin:0 0 6px;
+    padding:0 2px 6px;
+    border-right:0;
+    border-bottom:1px dashed rgba(161,98,7,.28);
+    background:transparent;
+  }
+  .jobMenuPanel .panelTitle small {
+    display:inline;
+  }
+  .jobList {
+    height:auto;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:7px;
+    overflow:visible;
+    padding-right:0;
+  }
+  .jobList .jobButton {
+    flex:none;
+    width:100%;
+    min-height:52px;
+  }
+
+  /* --- ぼやき本文はモバイルでは行数制限を外して全文読ませる --- */
+  .activityGrid .musingText {
+    max-height:none;
+    white-space:pre-wrap;
+    overflow:visible;
+    font-size:.95rem;
+    line-height:1.6;
+  }
+  .activityGrid .card.musing .reward {
+    display:block;
+  }
+
+  /* --- 主要アクションのタップ領域を 44px 以上にそろえる --- */
+  button {
+    min-height:44px;
+  }
+  .musingNext {
+    min-height:48px;
+    min-width:104px;
+    padding:10px 18px;
+    font-size:.95rem;
+  }
+  .sectionHead button,
+  .jobDetailGrid .sectionHead button {
+    min-height:44px;
+    padding:8px 14px;
+    font-size:.82rem;
+  }
+  .compactUpgrade button {
+    min-height:44px;
+    padding:8px 12px;
+    font-size:.8rem;
+  }
+  .latestLog,
+  .jobCard .latestLog {
+    min-height:44px;
+    align-items:center;
+  }
+  .equipmentActions button {
+    min-height:44px;
+    padding:8px 12px;
+    font-size:.84rem;
+  }
+  .bookTabs button,
+  .musingFilters button {
+    min-height:44px;
+    padding:8px 14px;
+  }
+  .revealActions button {
+    min-height:44px;
+    padding:8px 14px;
+  }
+  .modalHead button {
+    min-height:44px;
+    padding:8px 14px;
+  }
+  .returnBanner button {
+    min-height:44px;
+  }
+  .dailyStamp button {
+    min-height:44px;
+  }
+  .settingNumber {
+    min-height:44px;
+  }
+
+  /* --- 押した実感を色でも返す（hover の効かない実機向け） --- */
+  button:not(.primary):active:not(:disabled) {
+    background:var(--accent-soft);
+  }
+  button.primary:active:not(:disabled) {
+    background:var(--accent-hover);
+  }
+}
+
+@media (max-width: 520px) {
+  /* 390px 前後: ステータス数値とぼやき本文の窮屈さを解く */
+  .stat {
+    gap:5px;
+  }
+  .stat b {
+    font-size:.86rem;
+  }
+  .musingText {
+    width:auto;
+    max-width:100%;
+  }
+  .musingMeta {
+    flex-wrap:wrap;
+    overflow:visible;
+  }
+  .musingMeta span:nth-child(2),
+  .musingMeta span:nth-child(3),
+  .musingMeta span:nth-child(4) {
+    display:inline-flex;
+  }
+  .jobList .jobButton {
+    min-height:52px;
+  }
+  .jobButton small {
+    white-space:normal;
+  }
+}

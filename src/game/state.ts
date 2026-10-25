@@ -1,9 +1,9 @@
-import type { GameState, Job, Musing } from '../types';
+import type { GameState, Job, Musing, OfflineTier } from '../types';
 import { itemKind } from '../data/catalog';
 import { jobs as gameJobs } from '../data/gameData';
 import { checkRequirement } from './requirements';
 import { TICK_INTERVAL_MS } from './timing';
-import { runTick } from './tick';
+import { runOfflineTicks } from './tick';
 
 export const SAVE_KEY = 'yuusha-does-not-want-to-work-codex-handoff-v1';
 export const SAVE_VERSION = 3;
@@ -126,21 +126,41 @@ export function migrateState(parsed: Partial<GameState>, initialState: GameState
   return next;
 }
 
+// オフライン進行として計算する上限。放置の核は「戻ってきたら成果が積もっている」ことなので、
+// 数日ぶんまではそのまま進める。それを超えた分は計算対象外（capped で帰還表示に明示する）。
+export const OFFLINE_MAX_TICKS = 72 * 60 * 60; // 3日ぶん
+
+export function getOfflineTier(elapsedMs: number): OfflineTier {
+  if (elapsedMs >= 24 * 60 * 60 * 1000) return 'days';
+  if (elapsedMs >= 6 * 60 * 60 * 1000) return 'overnight';
+  if (elapsedMs >= 30 * 60 * 1000) return 'hours';
+  return 'short';
+}
+
+function formatOfflineElapsed(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor((totalSeconds % 86_400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (days > 0) return `${days}日${hours}時間`;
+  if (hours > 0) return `${hours}時間${minutes}分`;
+  return minutes > 0 ? `${minutes}分${seconds}秒` : `${seconds}秒`;
+}
+
 function applyOfflineProgress(state: GameState): GameState {
   const now = Date.now();
   const savedAt = state.lastSavedAt || now;
   const elapsedMs = Math.max(0, now - savedAt);
-  const offlineTicks = Math.min(720, Math.floor(elapsedMs / TICK_INTERVAL_MS));
+  const rawTicks = Math.floor(elapsedMs / TICK_INTERVAL_MS);
+  const offlineTicks = Math.min(OFFLINE_MAX_TICKS, rawTicks);
   if (offlineTicks < 3) return { ...state, lastSavedAt: now };
 
-  let next = state;
-  for (let i = 0; i < offlineTicks; i += 1) {
-    next = runTick(next);
-  }
+  const next = runOfflineTicks(state, offlineTicks);
+  const capped = rawTicks > OFFLINE_MAX_TICKS;
 
-  const minutes = Math.floor(elapsedMs / 60_000);
-  const seconds = Math.floor((elapsedMs % 60_000) / 1000);
-  const elapsedText = minutes > 0 ? `${minutes}分${seconds}秒` : `${seconds}秒`;
+  // 表示する経過時間は、実際に進行へ反映した（計算対象の）時間に合わせる
+  const elapsedText = formatOfflineElapsed(offlineTicks * TICK_INTERVAL_MS);
   const itemGains = Object.fromEntries(Object.entries(next.items || {})
     .map(([key, value]) => [key, value - (state.items?.[key] || 0)])
     .filter(([, value]) => value > 0));
@@ -157,6 +177,8 @@ function applyOfflineProgress(state: GameState): GameState {
       itemGains,
       chestGain: Math.max(0, (next.treasureChests?.length || 0) - (state.treasureChests?.length || 0)),
       cycles: offlineTicks,
+      tier: getOfflineTier(elapsedMs),
+      capped,
     },
     feedbackEvents: [],
     eventLog: [

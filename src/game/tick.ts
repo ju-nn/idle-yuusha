@@ -626,3 +626,63 @@ export function runTick(prev: GameState): GameState {
   };
   return announceJobUnlocks(prev, nextState, now);
 }
+
+// オフライン進行専用のバッチ実行。
+// 非完了tickの処理は「tick前進＋HP/MP回復＋環境ぼやき判定」だけなので、
+// サイクル完了直前までは回復をまとめて適用して一括で進め、
+// 完了tickだけ通常の runTick で処理する。これにより長時間ぶんでも
+// runTick の呼び出しは「サイクル数＋前後の端数」程度に収まる。
+// 先頭の部分サイクルは通常tickで進め、ロード直後の環境ぼやきなど
+// 従来のオフライン進行（最大720tickループ）と同じ挙動を保つ。
+export function runOfflineTicks(prev: GameState, ticks: number): GameState {
+  let next = prev;
+  let remaining = Math.max(0, Math.floor(ticks));
+  let headDone = false;
+
+  const runPlain = (count: number) => {
+    for (let i = 0; i < count && remaining > 0; i += 1) {
+      next = runTick(next);
+      remaining -= 1;
+    }
+  };
+
+  while (remaining > 0) {
+    const job = jobs[next.activeJob];
+    if (!job || job.type === 'farming' || !isJobUnlocked(next.activeJob, next)) break;
+    const area = getActiveArea(next.activeJob, next.activeArea);
+    const data = next.jobData[next.activeJob] || { level: 1, xp: 0, seenMusings: [] };
+    const ownedUpgradeCount = countOwnedUpgrades(job.upgrades.map((u) => u.id), next.items || {});
+    const durationTicks = getEffectiveDurationTicksForState(area.seconds, data.level, ownedUpgradeCount, next, next.activeJob);
+    const ticksUntilCycle = durationTicks - (next.tick % durationTicks);
+
+    // 残りがサイクル完了まで届かない端数は通常tickで締める
+    if (remaining <= ticksUntilCycle) {
+      runPlain(remaining);
+      break;
+    }
+    // 先頭の部分サイクルは通常tickで進める（環境ぼやき等の挙動を従来と揃える）
+    if (!headDone) {
+      runPlain(ticksUntilCycle);
+      headDone = true;
+      continue;
+    }
+    headDone = true;
+    // サイクル完了直前までの非完了tickを一括で進める。
+    // 回復はtickごとに上限クランプされるが、回復量は正なので一括でも等価。
+    const idleTicks = ticksUntilCycle - 1;
+    if (idleTicks > 0) {
+      const hpRegen = 1 + Math.floor(getEquipmentBonus(next, 'hpRegen') / 25);
+      const mpRegen = 1 + Math.floor(getEquipmentBonus(next, 'mpRegen') / 25);
+      next = {
+        ...next,
+        tick: next.tick + idleTicks,
+        hp: clamp(next.hp + hpRegen * idleTicks, 0, next.maxHp),
+        mp: clamp(next.mp + mpRegen * idleTicks, 0, next.maxMp),
+        progressBreaking: false,
+      };
+      remaining -= idleTicks;
+    }
+    runPlain(1);
+  }
+  return next;
+}

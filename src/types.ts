@@ -146,6 +146,8 @@ export type Job = {
   levelMusings?: Record<number, Musing[]>;
 };
 
+export type OfflineTier = 'short' | 'hours' | 'overnight' | 'days';
+
 export type GameState = {
   saveVersion?: number;
   offlineSummary?: {
@@ -155,6 +157,8 @@ export type GameState = {
     itemGains: Record<string, number>;
     chestGain?: number;
     cycles: number;
+    tier?: OfflineTier;
+    capped?: boolean;
   } | null;
   combo?: {
     lastJob?: string;

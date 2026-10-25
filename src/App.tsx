@@ -187,7 +187,20 @@ function OfflineReturnCard({ state, onClose }: { state: GameState; onClose: () =
   const items = Object.entries(summary.itemGains || {}).filter(([, value]) => value > 0).slice(0, 5);
   const chestGain = summary.chestGain || 0;
   const hasGain = summary.goldGain > 0 || resources.length > 0 || items.length > 0 || chestGain > 0;
-  return <div className="returnBanner"><div><small>帰還ボーナス</small><b>{summary.elapsedText}ぶん生活が進みました</b><p>{hasGain ? '見てない間に成果が積もっています。宝箱があれば、開ける楽しみも残っています。' : '大きな収穫はないけれど、時間はちゃんと味方に回っていました。'}</p><div className="returnGains">{summary.goldGain > 0 && <span>+{summary.goldGain}G</span>}{resources.map(([key, value]) => <span key={key}>+{value}{formatResourceName(key)}</span>)}{items.map(([key, value]) => <span key={key}>+{value}{itemName(key)}</span>)}{chestGain > 0 && <span>宝箱+{chestGain}</span>}</div></div><button onClick={onClose}>確認</button></div>;
+  const tier = summary.tier || 'short';
+  const tierLabel = {
+    short: '帰還ボーナス',
+    hours: '帰還ボーナス',
+    overnight: '一晩ぶんの帰還',
+    days: '長い不在からの帰還',
+  }[tier];
+  const tierMessage = {
+    short: hasGain ? '見てない間に成果が積もっています。宝箱があれば、開ける楽しみも残っています。' : '大きな収穫はないけれど、時間はちゃんと味方に回っていました。',
+    hours: hasGain ? '数時間ぶん、生活は止まらずに進んでいました。見てない間の成果、ちゃんと積もっています。' : '数時間ぶん、大きな収穫はないけれど、時間はちゃんと味方に回っていました。',
+    overnight: hasGain ? '一晩ぶん、勇者の生活は静かに進んでいました。起きたら成果が待っている、悪くない朝です。' : '一晩ぶん、大きな収穫はないけれど、時間は静かに味方に回っていました。',
+    days: hasGain ? '数日ぶんの時間が、ちゃんと成果になって残っています。焦らなくても進む。それが形になった帰還です。' : '数日ぶん、大きな収穫はないけれど、時間はちゃんと味方に回っていました。',
+  }[tier];
+  return <div className={`returnBanner tier-${tier}`}><div><small>{tierLabel}</small><b>{summary.elapsedText}ぶん生活が進みました</b><p>{tierMessage}</p><div className="returnGains">{summary.goldGain > 0 && <span>+{summary.goldGain}G</span>}{resources.map(([key, value]) => <span key={key}>+{value}{formatResourceName(key)}</span>)}{items.map(([key, value]) => <span key={key}>+{value}{itemName(key)}</span>)}{chestGain > 0 && <span>宝箱+{chestGain}</span>}</div>{summary.capped && <p className="returnCapped">進行の計算は3日ぶんまでです。それより前の時間は、勇者の記憶の中にだけ残っています。</p>}</div><button onClick={onClose}>確認</button></div>;
 }
 
 export default function App() {

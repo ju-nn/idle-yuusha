@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import chestClosed from '../assets/sprites/treasure_chest_mini/chest-1.png';
+import chestClosed from '../assets/sprites/hero/chest-closed.png';
 import { ACHIEVEMENTS, itemDesc, itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import { getJobDropItems } from '../game/collection';
@@ -12,6 +12,7 @@ import { createSaveBackupText, importSaveBackup } from '../game/saveTransfer';
 import { createInitialState } from '../game/state';
 import type { EquipmentItem, EquipmentSlot, GameState, Job, Monster, Musing } from '../types';
 import { Icon } from './Icon';
+import { EquipSprite, ItemSprite, MonsterThumb } from './GameIcon';
 import { Card, Modal } from './shared';
 
 export function LogModal({ logs, onClose }: { logs: string[]; onClose: () => void }) {
@@ -29,7 +30,7 @@ export function EquipmentModal({ state, equipItem, sellEquipment, toggleLock, op
 }
 
 function EquipmentCard({ item, equipped, equipItem, sellEquipment, toggleLock }: { item: EquipmentItem; equipped?: boolean; equipItem?: (uid: string) => void; sellEquipment: (uid: string) => void; toggleLock: (uid: string) => void }) {
-  return <div className={`equipmentCard ${item.rarity} ${equipped ? 'equipped' : ''} ${item.locked ? 'locked' : ''}`}><div className="equipmentTop"><div><small>{EQUIPMENT_RARITY_LABELS[item.rarity]} / {EQUIPMENT_SLOT_LABELS[item.slot]}</small><b>{item.name}</b></div><div className="equipmentBadges">{equipped && <span className="equipBadge">装備中</span>}{item.locked && <span className="lockBadge">保護</span>}</div></div><p>{item.description}</p><ul>{item.options.map((option) => <li key={option.id}>{equipmentOptionText(option)}</li>)}</ul><div className="equipmentActions">{equipItem && <button className="primary" onClick={() => equipItem(item.uid)} disabled={equipped}>装備</button>}<button onClick={() => toggleLock(item.uid)}>{item.locked ? '保護解除' : '保護'}</button><button onClick={() => sellEquipment(item.uid)} disabled={item.locked}>+{getEquipmentSellValue(item)}Gで売る</button></div></div>;
+  return <div className={`equipmentCard ${item.rarity} ${equipped ? 'equipped' : ''} ${item.locked ? 'locked' : ''}`}><div className="equipmentTop"><EquipSprite baseId={item.baseId} size={40} /><div><small>{EQUIPMENT_RARITY_LABELS[item.rarity]} / {EQUIPMENT_SLOT_LABELS[item.slot]}</small><b>{item.name}</b></div><div className="equipmentBadges">{equipped && <span className="equipBadge">装備中</span>}{item.locked && <span className="lockBadge">保護</span>}</div></div><p>{item.description}</p><ul>{item.options.map((option) => <li key={option.id}>{equipmentOptionText(option)}</li>)}</ul><div className="equipmentActions">{equipItem && <button className="primary" onClick={() => equipItem(item.uid)} disabled={equipped}>装備</button>}<button onClick={() => toggleLock(item.uid)}>{item.locked ? '保護解除' : '保護'}</button><button onClick={() => sellEquipment(item.uid)} disabled={item.locked}>+{getEquipmentSellValue(item)}Gで売る</button></div></div>;
 }
 
 export function CollectionModal({ state, musings, achievements, onClose }: { state: GameState; musings: Musing[]; achievements: string[]; onClose: () => void }) {
@@ -69,7 +70,7 @@ export function PrestigeModal({ state, buyPrestigeUpgrade, retire, onClose }: { 
       const stage = getPrestigeStage(state, def.id);
       const cost = getNextPrestigeCost(state, def.id);
       const currentBonus = stage * def.perStage;
-      return <div className="settingRow" key={def.id}><div><b>{def.name} <span className="sub">段階 {stage}/{def.maxStage}</span></b><p>{def.description}</p><p>{def.effectLabel}：{def.id === 'memory_start_gold' ? `+${currentBonus}G` : def.id === 'memory_vitality' ? `+${currentBonus}` : `+${currentBonus}%`}</p></div>{cost === null ? <span className="sub">最大段階</span> : <button className="primary" onClick={() => buyPrestigeUpgrade(def.id)} disabled={prestige.memoryPoints < cost}>{cost} で強化</button>}</div>;
+      return <div className="settingRow" key={def.id}><div><b>{def.name} <span className="stagePips" role="img" aria-label={`段階 ${stage}/${def.maxStage}`}>{Array.from({ length: def.maxStage }, (_, i) => <i key={i} className={i < stage ? 'on' : ''} />)}</span></b><p>{def.description}</p><p>{def.effectLabel}：{def.id === 'memory_start_gold' ? `+${currentBonus}G` : def.id === 'memory_vitality' ? `+${currentBonus}` : `+${currentBonus}%`}</p></div>{cost === null ? <span className="sub">最大段階</span> : <button className="primary" onClick={() => buyPrestigeUpgrade(def.id)} disabled={prestige.memoryPoints < cost}>{cost} で強化</button>}</div>;
     })}
   </div></Modal>;
 }
@@ -145,11 +146,12 @@ function CollectionSummary({ state, musings, achievements }: { state: GameState;
   const totalUpgrades = Object.values(jobs).reduce((sum, job) => sum + job.upgrades.length, 0);
   const monsters = getAllMonsters();
   const defeated = monsters.filter((monster) => state.defeatedMonsters?.includes(monster.id)).length;
-  return <div className="collectionSummary"><SummaryPill label="発見物" value={`${foundItems}/${itemIds.length}`} /><SummaryPill label="装備" value={`${state.equipmentInventory?.length || 0}`} /><SummaryPill label="討伐" value={`${defeated}/${monsters.length}`} /><SummaryPill label="ぼやき" value={`${musings.length}`} /><SummaryPill label="実績" value={`${achievements.length}/${totalAchievements}`} /><SummaryPill label="仕事" value={`${unlockedJobs}/${totalJobs}`} /><SummaryPill label="拠点整備" value={`${ownedUpgrades}/${totalUpgrades}`} /></div>;
+  return <div className="collectionSummary"><SummaryPill label="発見物" value={`${foundItems}/${itemIds.length}`} ratio={itemIds.length ? foundItems / itemIds.length : 0} /><SummaryPill label="装備" value={`${state.equipmentInventory?.length || 0}`} /><SummaryPill label="討伐" value={`${defeated}/${monsters.length}`} ratio={monsters.length ? defeated / monsters.length : 0} /><SummaryPill label="ぼやき" value={`${musings.length}`} /><SummaryPill label="実績" value={`${achievements.length}/${totalAchievements}`} ratio={totalAchievements ? achievements.length / totalAchievements : 0} /><SummaryPill label="仕事" value={`${unlockedJobs}/${totalJobs}`} ratio={totalJobs ? unlockedJobs / totalJobs : 0} /><SummaryPill label="拠点整備" value={`${ownedUpgrades}/${totalUpgrades}`} ratio={totalUpgrades ? ownedUpgrades / totalUpgrades : 0} /></div>;
 }
 
-function SummaryPill({ label, value }: { label: string; value: string }) {
-  return <div className="summaryPill"><span>{label}</span><b>{value}</b></div>;
+function SummaryPill({ label, value, ratio }: { label: string; value: string; ratio?: number }) {
+  const percent = ratio === undefined ? null : Math.max(0, Math.min(100, Math.round(ratio * 100)));
+  return <div className="summaryPill"><span>{label}</span><b>{value}</b>{percent !== null && <i className="summaryBar" aria-hidden="true"><b style={{ width: `${percent}%` }} /></i>}</div>;
 }
 
 function DiscoveryBook({ state }: { state: GameState }) {
@@ -164,12 +166,12 @@ function DiscoverySection({ jobKey, job, state }: { jobKey: string; job: Job; st
 
 function DiscoveryItem({ id, count }: { id: string; count: number }) {
   const found = count > 0;
-  return <p className={`discoverItem ${found ? '' : 'unknown'}`} title={found ? itemDesc(id) : 'まだ見つけていない'}><span>{itemKind(id) === '重要' && <Icon name="key" />} {found ? itemName(id) : '？？？'}</span><b>{found ? count : '—'}</b></p>;
+  return <p className={`discoverItem ${found ? '' : 'unknown'}`} title={found ? itemDesc(id) : 'まだ見つけていない'}><span><ItemSprite id={id} size={32} silhouette={!found} />{itemKind(id) === '重要' && <Icon name="key" />} {found ? itemName(id) : '？？？'}</span><b>{found ? count : '—'}</b></p>;
 }
 
 function EquipmentBook({ state }: { state: GameState }) {
   const inventory = state.equipmentInventory || [];
-  return <Card title="装備図鑑"><p className="sub">拾った装備と開封ログ。良い装備ほど、勇者の働きたくなさを助ける。</p>{(state.openedChestLog || []).length > 0 && <div className="equipmentArchiveList">{state.openedChestLog.slice(0, 6).map((log, index) => <div className="equipmentArchive" key={`${log}-${index}`}><small>開封記録</small><b>{log}</b></div>)}</div>}{inventory.length === 0 ? <p className="sub">まだ装備はない。手ぶらも自由だが、効率は手ぶらに厳しい。</p> : <div className="equipmentArchiveList">{inventory.map((item) => <div className={`equipmentArchive ${item.rarity}`} key={item.uid}><small>{EQUIPMENT_RARITY_LABELS[item.rarity]} / {EQUIPMENT_SLOT_LABELS[item.slot]}</small><b>{item.name}</b><p>{item.options.map(equipmentOptionText).join(' / ')}</p></div>)}</div>}</Card>;
+  return <Card title="装備図鑑"><p className="sub">拾った装備と開封ログ。良い装備ほど、勇者の働きたくなさを助ける。</p>{(state.openedChestLog || []).length > 0 && <div className="equipmentArchiveList">{state.openedChestLog.slice(0, 6).map((log, index) => <div className="equipmentArchive" key={`${log}-${index}`}><small>開封記録</small><b>{log}</b></div>)}</div>}{inventory.length === 0 ? <p className="sub">まだ装備はない。手ぶらも自由だが、効率は手ぶらに厳しい。</p> : <div className="equipmentArchiveList">{inventory.map((item) => <div className={`equipmentArchive ${item.rarity}`} key={item.uid}><EquipSprite baseId={item.baseId} size={36} /><div><small>{EQUIPMENT_RARITY_LABELS[item.rarity]} / {EQUIPMENT_SLOT_LABELS[item.slot]}</small><b>{item.name}</b><p>{item.options.map(equipmentOptionText).join(' / ')}</p></div></div>)}</div>}</Card>;
 }
 
 function getAllMonsters() {
@@ -189,7 +191,7 @@ function BestiaryBook({ state }: { state: GameState }) {
 
 function MonsterArchive({ monster, defeated }: { monster: Monster; defeated?: boolean }) {
   const dropText = monster.drops.map((drop) => itemName(drop.item)).join(' / ');
-  return <div className={`monsterArchive ${defeated ? 'defeated' : ''}`}><div><b>{defeated ? monster.name : '？？？'}</b><span>{defeated ? `HP${monster.hp} / 攻撃${monster.attack}` : '未討伐'}</span></div><p>{defeated ? `落とすもの：${dropText || 'なし'}。勝てたなら、次はできれば会釈だけで済ませたい。` : 'まだ倒していない。名前を知らない不安は、だいたい強そうに見える。'}</p></div>;
+  return <div className={`monsterArchive ${defeated ? 'defeated' : ''}`}><MonsterThumb id={monster.id} size={56} silhouette={!defeated} /><div className="monsterArchiveBody"><div><b>{defeated ? monster.name : '？？？'}</b><span>{defeated ? `HP${monster.hp} / 攻撃${monster.attack}` : '未討伐'}</span></div><p>{defeated ? `落とすもの：${dropText || 'なし'}。勝てたなら、次はできれば会釈だけで済ませたい。` : 'まだ倒していない。名前を知らない不安は、だいたい強そうに見える。'}</p></div></div>;
 }
 
 function MusingBook({ musings }: { musings: Musing[] }) {

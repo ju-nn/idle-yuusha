@@ -450,7 +450,7 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
 .chestSection { margin-bottom:12px; padding:10px; border:1px solid rgba(251,191,36,.34); border-radius:8px; background:linear-gradient(135deg, rgba(254,243,199,.72), rgba(255,253,248,.74)); }
 .chestGrid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:9px; }
 .chestCard { min-width:0; padding:10px; border:1px solid rgba(161,98,7,.26); border-radius:8px; background:rgba(255,253,248,.82); box-shadow:0 8px 18px rgba(68,64,60,.1); animation:chestGlow 1.8s ease-in-out infinite alternate; }
-.chestCard img { display:block; width:32px; height:32px; object-fit:contain; image-rendering:pixelated; image-rendering:crisp-edges; margin:0 auto 4px; filter:drop-shadow(0 3px 0 rgba(68,64,60,.14)); }
+.chestCard img { display:block; width:40px; height:40px; object-fit:contain; image-rendering:pixelated; image-rendering:crisp-edges; margin:0 auto 4px; filter:drop-shadow(0 3px 0 rgba(68,64,60,.14)); }
 .chestCard small { display:block; color:var(--warn); font-size:.7rem; font-weight:900; }
 .chestCard b { display:block; margin-top:2px; color:var(--text); }
 .chestCard p { margin:6px 0 8px; color:var(--text-soft); font-size:.8rem; line-height:1.42; }
@@ -2117,12 +2117,17 @@ button.primary:active:not(:disabled) {
   height: 10px;
   background: repeating-linear-gradient(90deg, rgba(90, 64, 32, .28) 0 8px, rgba(90, 64, 32, .12) 8px 16px);
 }
-.heroSprite {
+.heroWrap {
   position: absolute;
   left: 30%;
   bottom: 8px;
   width: 64px;
   height: 96px;
+  will-change: transform;
+}
+.heroSprite {
+  position: absolute;
+  inset: 0;
   background-repeat: no-repeat;
   background-size: 256px 96px;
   image-rendering: pixelated;
@@ -2286,20 +2291,206 @@ button.primary:active:not(:disabled) {
 /* --- モバイル: シーンを少し低く --- */
 @media (max-width: 980px) {
   .heroScene { height: 104px; }
-  .heroSprite { left: 22%; }
+  .heroWrap { left: 22%; }
   .sceneProp { left: calc(22% + 78px); }
 }
 
 /* --- モーション抑制 --- */
 @media (prefers-reduced-motion: reduce) {
   .heroSprite, .sceneCloud, .sceneLeaf, .ambientCloud,
+  .sceneFar, .monsterSprite, .sceneStars,
   .actions .utilityButton.ready:not(.stampButton),
   .chestOpeningOverlay.opening .chestSpriteOpening,
   .levelBox.levelFlash, .levelUpPop,
   .card.musing.rareMusing::before, .achievementToast::after { animation: none; }
   .sceneLeaf { display: none; }
+  .slashFx, .dmgPop, .rewardPop { display: none; }
   .stat .statBar > b { transition: none; }
 }
 
 /* プレステージ（引退モーダル） */
 .prestigeConfirm { display:inline-flex; gap:8px; flex-wrap:wrap; }
+
+/* --- ビジュアル強化第1弾: 遠景・時間帯・モンスター戦闘演出 --- */
+.sceneFar {
+  position: absolute;
+  left: 0; right: 0; bottom: 10px;
+  height: 48px;
+  background-repeat: repeat-x;
+  background-size: 256px 48px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  opacity: .75;
+  animation: farDrift 120s linear infinite;
+}
+@keyframes farDrift {
+  from { background-position-x: 0; }
+  to { background-position-x: -256px; }
+}
+.sceneShade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: background 1.2s ease;
+}
+.tod-morning .sceneShade { background: linear-gradient(180deg, rgba(255, 186, 120, .13), rgba(255, 186, 120, .03)); }
+.tod-day .sceneShade { background: transparent; }
+.tod-dusk .sceneShade { background: linear-gradient(180deg, rgba(255, 118, 58, .24), rgba(96, 44, 96, .16)); }
+.tod-night .sceneShade { background: linear-gradient(180deg, rgba(14, 22, 62, .52), rgba(9, 14, 42, .4)); }
+.sceneCelestial {
+  position: absolute;
+  right: 13%;
+  top: 8px;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.sceneCelestial.sun.tod-morning { top: 24px; }
+.sceneCelestial.sun.tod-dusk { top: 36px; filter: sepia(.45) saturate(1.6) hue-rotate(-12deg); }
+.sceneStars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle 1.6px at 8% 18%, rgba(255, 250, 220, .95) 55%, transparent 62%),
+    radial-gradient(circle 1.3px at 24% 8%, rgba(255, 250, 220, .85) 55%, transparent 62%),
+    radial-gradient(circle 1.5px at 41% 22%, rgba(255, 250, 220, .9) 55%, transparent 62%),
+    radial-gradient(circle 1.2px at 58% 10%, rgba(255, 250, 220, .8) 55%, transparent 62%),
+    radial-gradient(circle 1.6px at 73% 20%, rgba(255, 250, 220, .95) 55%, transparent 62%),
+    radial-gradient(circle 1.3px at 88% 30%, rgba(255, 250, 220, .85) 55%, transparent 62%),
+    radial-gradient(circle 1.2px at 95% 12%, rgba(255, 250, 220, .8) 55%, transparent 62%);
+  animation: sparkleTwinkle 1.8s ease-in-out infinite alternate;
+}
+.tod-night .sceneCloud { opacity: .32; }
+.tod-dusk .sceneCloud { opacity: .55; }
+
+.monsterSprite {
+  position: absolute;
+  right: 11%;
+  bottom: 8px;
+  width: 96px;
+  height: 96px;
+  background-repeat: no-repeat;
+  background-size: 192px 96px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  animation: monsterPlay 1.1s steps(2) infinite;
+  filter: drop-shadow(0 2px 0 rgba(68, 64, 60, .2));
+}
+@keyframes monsterPlay {
+  from { background-position-x: 0; }
+  to { background-position-x: -192px; }
+}
+.monsterSprite.phase-enter { animation: monsterPlay 1.1s steps(2) infinite, monsterEnter .45s ease-out both; }
+@keyframes monsterEnter {
+  from { transform: translateX(52px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.monsterSprite.phase-defeat { animation: monsterPlay 1.1s steps(2) infinite, monsterDefeat .65s ease-in both; }
+@keyframes monsterDefeat {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  30% { transform: translateY(-4px) scale(1.04); opacity: 1; filter: brightness(1.9); }
+  100% { transform: translateY(-16px) scale(.5); opacity: 0; }
+}
+.monsterSprite.phase-leave { animation: monsterPlay 1.1s steps(2) infinite, monsterLeave .5s ease-out both; }
+@keyframes monsterLeave {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(30px); opacity: 0; }
+}
+.monsterName {
+  position: absolute;
+  right: 11%;
+  bottom: 106px;
+  width: 96px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(30, 24, 16, .65);
+  pointer-events: none;
+}
+.slashFx {
+  position: absolute;
+  right: calc(11% + 6px);
+  bottom: 40px;
+  width: 84px;
+  height: 84px;
+  pointer-events: none;
+  background: linear-gradient(135deg, transparent 43%, rgba(255, 255, 255, .98) 49%, rgba(178, 228, 255, .92) 53%, transparent 61%);
+  clip-path: polygon(6% 100%, 100% 6%, 88% 0, 0 88%);
+  animation: slashAnim .38s ease-out both;
+}
+@keyframes slashAnim {
+  0% { transform: rotate(-16deg) scale(.65); opacity: 0; }
+  22% { opacity: 1; }
+  100% { transform: rotate(12deg) scale(1.12); opacity: 0; }
+}
+.dmgPop {
+  position: absolute;
+  right: calc(11% + 30px);
+  bottom: 98px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 1px 0 #b3372e, 0 0 7px rgba(60, 20, 10, .35);
+  pointer-events: none;
+  animation: dmgRise .8s ease-out both;
+}
+@keyframes dmgRise {
+  0% { opacity: 0; transform: translateY(6px) scale(.7); }
+  18% { opacity: 1; transform: translateY(0) scale(1.15); }
+  100% { opacity: 0; transform: translateY(-20px) scale(1); }
+}
+.rewardPop {
+  position: absolute;
+  right: calc(11% + 22px);
+  bottom: 104px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .03em;
+  color: #ffd94d;
+  text-shadow: 0 1px 0 #8a5a00, 0 0 8px rgba(120, 70, 0, .4);
+  pointer-events: none;
+  animation: dmgRise 1s ease-out both;
+}
+@media (max-width: 980px) {
+  .monsterSprite { right: 6%; bottom: 4px; }
+  .monsterName { display: none; }
+  .slashFx { right: calc(6% + 6px); }
+  .dmgPop { right: calc(6% + 30px); }
+  .rewardPop { right: calc(6% + 22px); }
+}
+
+/* ===== Visual package 2: UI視覚化 + 宝箱シート (2026-10-26) ===== */
+.gameSprite { image-rendering: pixelated; image-rendering: crisp-edges; flex: none; }
+.gameSprite.silhouette { filter: brightness(0); opacity: .26; }
+.monsterThumb { display: block; flex: none; background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; }
+.monsterThumb.silhouette { filter: brightness(0); opacity: .26; }
+.monsterArchive { display: flex; gap: 12px; align-items: flex-start; }
+.monsterArchiveBody { flex: 1; min-width: 0; }
+.monsterArchiveBody > div { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.equipmentArchive { display: flex; gap: 10px; align-items: flex-start; }
+.equipmentArchive > div { flex: 1; min-width: 0; }
+.equipmentTop { align-items: center; }
+.equipmentBadges { margin-left: auto; }
+.summaryBar { display: block; margin-top: 5px; height: 4px; border-radius: 2px; background: rgba(96, 84, 60, .16); overflow: hidden; }
+.summaryBar > b { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, #c99a3a, #e8bc5a); transition: width .45s ease; }
+.stagePips { display: inline-flex; gap: 3px; margin-left: 7px; vertical-align: middle; }
+.stagePips i { width: 8px; height: 8px; border-radius: 50%; background: rgba(96, 84, 60, .22); }
+.stagePips i.on { background: #d9a441; box-shadow: 0 0 4px rgba(217, 164, 65, .55); }
+.countBadge { background: #b4762a; color: #fff; border-radius: 999px; padding: 0 7px; font-size: .72rem; font-weight: 800; line-height: 1.55; }
+.costChips { display: inline-flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 2px; }
+.costChip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; background: rgba(96, 84, 60, .1); font-weight: 700; font-size: .8rem; }
+.costChip .icon { width: 14px; height: 14px; }
+.costChip.short { color: #b3352c; background: rgba(179, 53, 44, .12); }
+.chestSheetAnim { display: block; background-repeat: no-repeat; background-size: 192px 32px; background-position: 0 0; }
+.chestOpeningOverlay.opening .chestSheetAnim { animation: chestShake .8s ease-in-out infinite, chestSheetPlay .8s steps(5) forwards; }
+.chestOpeningOverlay.revealed .chestSheetAnim { background-position: -160px 0; }
+@keyframes chestSheetPlay { from { background-position: 0 0; } to { background-position: -160px 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .chestSheetAnim { animation: none; background-position: -160px 0; }
+  .summaryBar > b { transition: none; }
+}
+.monsterArchive > .monsterArchiveBody { display: block; }

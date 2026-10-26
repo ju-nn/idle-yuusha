@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ambientCloudUrl from './assets/sprites/hero/cloud.png';
-import chestOpenGif from './assets/sprites/treasure_chest_mini/animation.gif';
+import chestSheetUrl from './assets/sprites/hero/chest-open-sheet.png';
 import { Header } from './components/Header';
 import { AreaGrid, CurrentJobCard, UpgradePanel } from './components/JobPanels';
 import { JobMenu } from './components/JobMenu';
@@ -169,7 +169,7 @@ function ChestOpeningOverlay({ reveal, onClose, equipItem }: { reveal: ChestReve
   const item = reveal.item;
   return <div className={`chestOpeningOverlay ${revealed ? 'revealed' : 'opening'} ${item.rarity}`} role="dialog" aria-modal="true" aria-live="polite">
     <div className="chestOpeningStage">
-      <img className="chestSpriteOpening" src={chestOpenGif} alt="" aria-hidden="true" key={reveal.id} />
+      <span className="chestSpriteOpening chestSheetAnim" aria-hidden="true" key={reveal.id} style={{ backgroundImage: `url(${chestSheetUrl})` }} />
       <div className="chestLight" aria-hidden="true" />
       {!revealed ? <div className="openingText"><small>宝箱開封中</small><b>カチッ……</b><p>勇者「開ける前が一番楽しい。今がその前だ」</p></div> : <div className="revealCard">
         <small>{EQUIPMENT_RARITY_LABELS[item.rarity]} / {EQUIPMENT_SLOT_LABELS[item.slot]}{reveal.openedCount && reveal.openedCount > 1 ? ` / ${reveal.openedCount}個開封` : ''}</small>

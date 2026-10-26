@@ -1,5 +1,6 @@
 import type { EquipmentItem, EquipmentOption, EquipmentOptionTarget, EquipmentRarity, EquipmentSlot, FeedbackEvent, GameState, JobType, ResourceKey, TreasureChest, TreasureChestType } from '../types';
 import { enqueueMusing } from './musings';
+import { getPrestigeChestMultiplier } from './prestige';
 
 export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
   weapon: '武器',
@@ -168,7 +169,7 @@ function makeOptions(rarity: EquipmentRarity, slot: EquipmentSlot, jobId: string
 
 export function maybeDropChest(state: GameState, jobId: string, jobType: JobType, areaId: string): TreasureChest | null {
   const baseChance = jobType === 'adventure' ? 0.11 : jobType === 'combat' ? 0.075 : jobId === 'merchant' ? 0.035 : 0.018;
-  const chance = baseChance * (1 + getEquipmentBonus(state, 'dropRate') / 100);
+  const chance = baseChance * (1 + getEquipmentBonus(state, 'dropRate') / 100) * getPrestigeChestMultiplier(state);
   if ((state.treasureChests?.length || 0) >= getChestLimit(state)) return null;
   if (Math.random() >= chance) return null;
   let type: TreasureChestType = jobType === 'adventure' ? 'adventure' : jobId === 'merchant' ? 'life' : 'worn';

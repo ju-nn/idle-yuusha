@@ -66,6 +66,9 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   first_combo: { name: '生活ループが噛み合った', description: '生活コンボを発動した。休む、売る、食べるが次の行動を少し楽にする。' },
   work_streak: { name: '反復は地味な複利', description: '同じ仕事を続けて連続作業ボーナスを得た。飽きる前に少しだけ上手くなる。' },
   ten_achievements: { name: '人生ログが厚い', description: '実績を10個集めた。派手ではないが、生活はちゃんと進んでいる。' },
+  first_retire: { name: '早期退職、達成', description: '初めて引退した。終わりではなく、思い出を持っての周回が始まった。' },
+  retire_3: { name: '転職のプロ', description: '3回引退した。履歴書の職歴欄が、勇者より冒険している。' },
+  first_prestige_upgrade: { name: '思い出は複利', description: '思い出ポイントで永続強化を買った。過去の自分が今の自分を助けている。' },
   all_jobs_unlocked: { name: '職業欄が騒がしい', description: 'すべての仕事を解禁した。自由に近づくほど、選択肢も増えてしまう。' },
   release_goal: { name: 'そこそこ安心生活', description: 'リリース版の生活目標に到達した。世界最強ではないが、今日の勇者はかなり勝っている。' },
 };

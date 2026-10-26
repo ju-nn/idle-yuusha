@@ -146,6 +146,13 @@ export type Job = {
   levelMusings?: Record<number, Musing[]>;
 };
 
+export type PrestigeState = {
+  memoryPoints: number;
+  totalEarned: number;
+  retireCount: number;
+  upgrades: Record<string, number>;
+};
+
 export type OfflineTier = 'short' | 'hours' | 'overnight' | 'days';
 
 export type GameState = {
@@ -208,6 +215,7 @@ export type GameState = {
   lastAmbientMusingAt?: number;
   lastCertainMusingAt?: number;
   lastSavedAt?: number;
+  prestige?: PrestigeState;
 };
 
 export type Achievement = {

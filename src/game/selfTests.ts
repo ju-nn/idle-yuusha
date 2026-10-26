@@ -9,6 +9,7 @@ import { enqueueMusing } from './musings';
 import { addItems, getLifePlan, getNextTarget, rollDrops } from './progression';
 import { checkRequirement, getActiveArea, isJobUnlocked } from './requirements';
 import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
+import { buyPrestigeUpgrade, canRetire, getPrestigeScore, getRetirementPoints, retire } from './prestige';
 import { createInitialState, migrateState, SAVE_VERSION } from './state';
 
 const initialState = createInitialState(jobs);
@@ -75,5 +76,43 @@ export function runSelfTests() {
     console.assert(battle.won && battle.hpCost >= 0 && battle.mpCost > 0, 'battle simulation should resolve a basic win with costs');
   }
   console.assert(getAdventureEntryCost(initialState, 8) === 8, 'adventure entry cost should default to base cost');
+  // プレステージ: v3セーブ（prestige無し）からの移行で置き場が初期化されること。
+  const migratedV3 = migrateState({ saveVersion: 3, gold: 50, jobData: { fishing: { level: 4, xp: 0, seenMusings: [] } }, items: { small_fish: 3 } } as Partial<typeof initialState>, initialState);
+  console.assert(migratedV3.saveVersion === SAVE_VERSION && migratedV3.prestige?.memoryPoints === 0 && migratedV3.prestige?.retireCount === 0, 'v3 save should gain an empty prestige state');
+  // プレステージ: バックアップ往復で思い出が保たれること。
+  const prestigeBackup = parseSaveBackup(JSON.stringify({ saveVersion: SAVE_VERSION, gold: 10, jobData: {}, items: {}, prestige: { memoryPoints: 9, totalEarned: 9, retireCount: 1, upgrades: { memory_xp: 2 } } }));
+  console.assert(prestigeBackup.ok, 'prestige save should parse as a valid backup');
+  if (prestigeBackup.ok) {
+    const restored = migrateState(prestigeBackup.save, initialState);
+    console.assert(restored.prestige?.memoryPoints === 9 && restored.prestige?.upgrades.memory_xp === 2, 'prestige data should survive backup round trip');
+  }
+  // プレステージ: 初期状態では引退できず、進めると獲得見込みが増えること。
+  console.assert(!canRetire(initialState) && getRetirementPoints(initialState) >= 0, 'fresh state should not be retireable');
+  const grownState = {
+    ...initialState,
+    jobData: {
+      ...initialState.jobData,
+      fishing: { level: 12, xp: 0, seenMusings: [] },
+      woodcutting: { level: 8, xp: 0, seenMusings: [] },
+      rest: { level: 6, xp: 0, seenMusings: [] },
+      merchant: { level: 5, xp: 0, seenMusings: [] },
+    },
+    items: { ...initialState.items, small_fish: 5, twig: 3, hinoki_stick: 1, quiet_scale: 1, field_note: 1, old_pickaxe: 1 },
+    achievements: ['first_fish', 'first_musing'],
+  };
+  const grownScore = getPrestigeScore(grownState);
+  console.assert(grownScore.score === (11 + 7 + 5 + 4) + 7 + 4, `prestige score should sum levels, discoveries and achievements (got ${grownScore.score})`);
+  console.assert(canRetire(grownState) && getRetirementPoints(grownState) > 0, 'grown state should be retireable with points');
+  // プレステージ: 引退で周回内がリセットされ、思い出と記録が残ること。
+  const retired = retire(grownState, initialState);
+  console.assert(retired !== grownState && retired.jobData.fishing.level === 1 && retired.gold === initialState.gold, 'retire should reset run progress');
+  console.assert(retired.prestige?.retireCount === 1 && retired.prestige?.memoryPoints === getRetirementPoints(grownState), 'retire should bank memory points');
+  console.assert(retired.achievements.includes('first_fish') && retired.achievements.includes('first_retire'), 'retire should keep achievements and add first_retire');
+  // プレステージ: 永続強化は所持ポイントの範囲でだけ買えること。
+  const bought = buyPrestigeUpgrade(retired, 'memory_start_gold');
+  console.assert(bought.prestige?.upgrades.memory_start_gold === 1, 'prestige upgrade should apply one stage');
+  console.assert((bought.prestige?.memoryPoints || 0) === (retired.prestige?.memoryPoints || 0) - 2, 'prestige upgrade should cost points');
+  const broke = buyPrestigeUpgrade({ ...initialState, prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {} } }, 'memory_start_gold');
+  console.assert(broke.prestige?.upgrades.memory_start_gold === undefined, 'prestige upgrade should not apply without points');
 }
 

@@ -1,12 +1,13 @@
 import type { GameState, Job, Musing, OfflineTier } from '../types';
 import { itemKind } from '../data/catalog';
 import { jobs as gameJobs } from '../data/gameData';
+import { createPrestigeState, getPrestigeOfflineMultiplier, normalizePrestigeState } from './prestige';
 import { checkRequirement } from './requirements';
 import { TICK_INTERVAL_MS } from './timing';
 import { runOfflineTicks } from './tick';
 
 export const SAVE_KEY = 'yuusha-does-not-want-to-work-codex-handoff-v1';
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export const introMusing: Musing = {
   id: 'intro_001',
@@ -69,6 +70,7 @@ export function createInitialState(jobs: Record<string, Job>): GameState {
     lastAmbientMusingAt: undefined,
     lastCertainMusingAt: Date.now(),
     lastSavedAt: Date.now(),
+    prestige: createPrestigeState(),
   };
 }
 
@@ -112,6 +114,15 @@ export const SAVE_MIGRATIONS: SaveMigrationStep[] = [
       combo: parsed.combo || { streak: 0, boons: {} },
       dailyBonus: parsed.dailyBonus || { streak: 0 },
       offlineSummary: parsed.offlineSummary ?? null,
+    }),
+  },
+  {
+    from: 3,
+    to: 4,
+    summary: 'プレステージ（引退）の追加に合わせ、思い出ポイントと永続強化の置き場を用意する',
+    apply: (parsed) => ({
+      ...parsed,
+      prestige: normalizePrestigeState(parsed.prestige),
     }),
   },
 ];
@@ -183,6 +194,7 @@ function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameSt
     lastAmbientMusingAt: parsed.lastAmbientMusingAt,
     lastCertainMusingAt: parsed.lastCertainMusingAt,
     lastSavedAt: parsed.lastSavedAt || Date.now(),
+    prestige: normalizePrestigeState(parsed.prestige),
   };
   next.unlockedJobs = Object.keys(gameJobs).filter((key) => checkRequirement(gameJobs[key].unlock, next));
   return next;
@@ -215,11 +227,13 @@ function applyOfflineProgress(state: GameState): GameState {
   const savedAt = state.lastSavedAt || now;
   const elapsedMs = Math.max(0, now - savedAt);
   const rawTicks = Math.floor(elapsedMs / TICK_INTERVAL_MS);
-  const offlineTicks = Math.min(OFFLINE_MAX_TICKS, rawTicks);
+  // オフライン効率の永続強化があると、不在中の進行が実時間より少し多めに積もる（上限は従来どおり3日ぶん）。
+  const boostedTicks = Math.floor(rawTicks * getPrestigeOfflineMultiplier(state));
+  const offlineTicks = Math.min(OFFLINE_MAX_TICKS, boostedTicks);
   if (offlineTicks < 3) return { ...state, lastSavedAt: now };
 
   const next = runOfflineTicks(state, offlineTicks);
-  const capped = rawTicks > OFFLINE_MAX_TICKS;
+  const capped = boostedTicks > OFFLINE_MAX_TICKS;
 
   // 表示する経過時間は、実際に進行へ反映した（計算対象の）時間に合わせる
   const elapsedText = formatOfflineElapsed(offlineTicks * TICK_INTERVAL_MS);

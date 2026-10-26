@@ -1,5 +1,6 @@
 import type { GameState } from '../types';
 import { getEquipmentBonus } from './equipment';
+import { getPrestigeSpeedMultiplier } from './prestige';
 
 export const GAME_SPEED_DIVISOR = 5;
 export const TICK_INTERVAL_MS = 1000;
@@ -23,7 +24,8 @@ export function getEffectiveDurationTicks(seconds: number, level = 1, ownedUpgra
 export function getEffectiveDurationTicksForState(seconds: number, level: number, ownedUpgradeCount: number, state: GameState, jobId: string) {
   const baseTicks = getScaledDurationTicks(seconds);
   const equipmentSpeed = 1 + (getEquipmentBonus(state, 'jobSpeed', jobId) + getEquipmentBonus(state, 'jobSpeed')) / 100;
-  return Math.max(3, Math.ceil(baseTicks / (getWorkSpeedMultiplier(level, ownedUpgradeCount) * equipmentSpeed)));
+  const prestigeSpeed = getPrestigeSpeedMultiplier(state);
+  return Math.max(3, Math.ceil(baseTicks / (getWorkSpeedMultiplier(level, ownedUpgradeCount) * equipmentSpeed * prestigeSpeed)));
 }
 
 export function countOwnedUpgrades(upgradeIds: string[], ownedItems: Record<string, number> = {}) {

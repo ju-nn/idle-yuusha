@@ -5,6 +5,7 @@ import { simulateMonsterBattle } from './combat';
 import { getAdventureEntryCost, getChestLimit, getEquipmentBonus, getResourceGainMultiplier, getSellPriceMultiplier, maybeDropChest } from './equipment';
 import { formatResourceName, rewardText } from './formatters';
 import { enqueueMusing } from './musings';
+import { getPrestigeGoldMultiplier, getPrestigeMusingRewardMultiplier, getPrestigeXpMultiplier } from './prestige';
 import { getActiveArea, isJobUnlocked } from './requirements';
 import { countOwnedUpgrades, getEffectiveDurationTicksForState } from './timing';
 import { addAchievement, announceJobUnlocks, clamp, getFailChance, grantItemRewards, isUniqueItem, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
@@ -236,7 +237,12 @@ export function runTick(prev: GameState): GameState {
 
   const grantMusingRewards = (musing: { rewardItems?: Array<{ item: string; amount: number }> }) => {
     if (!musing.rewardItems?.length) return;
-    const result = grantItemRewards(nextItems, musing.rewardItems);
+    // ぼやき報酬の永続強化: 固有アイテムは増やさず、数があるものだけ思い出の分を上乗せする。
+    const rewardMultiplier = getPrestigeMusingRewardMultiplier(prev);
+    const boostedRewards = rewardMultiplier > 1
+      ? musing.rewardItems.map((reward) => (isUniqueItem(reward.item) ? reward : { ...reward, amount: Math.max(reward.amount, Math.floor(reward.amount * rewardMultiplier)) }))
+      : musing.rewardItems;
+    const result = grantItemRewards(nextItems, boostedRewards);
     Object.keys(nextItems).forEach((key) => delete nextItems[key]);
     Object.assign(nextItems, result.items);
     if (result.granted.length) eventLog.unshift(`出来事報酬：${rewardText(result.granted)}`);
@@ -478,6 +484,11 @@ export function runTick(prev: GameState): GameState {
     }
   }
 
+  // XPの永続強化は、このサイクルで得た分だけにまとめて掛ける（既存の進み具合は変えない）。
+  const gainedXpThisCycle = xp - data.xp;
+  if (gainedXpThisCycle > 0) {
+    xp = data.xp + Math.floor(gainedXpThisCycle * getPrestigeXpMultiplier(prev));
+  }
   while (xp >= xpToNext(level)) {
     xp -= xpToNext(level);
     level += 1;
@@ -510,7 +521,9 @@ export function runTick(prev: GameState): GameState {
 
   const reward = area.rewards;
   const baseGoldGain = job.type === 'adventure' || !reward.gold ? 0 : randInt(reward.gold[0], reward.gold[1]);
-  let goldGain = baseGoldGain + sellGold + adventureGold + bonusGold - adventureEntryCost;
+  // 収入の永続強化は稼いだ分にだけ掛ける（冒険費用などの支出は割り引かない）。
+  const earnedGold = baseGoldGain + sellGold + adventureGold + bonusGold;
+  let goldGain = Math.floor(earnedGold * getPrestigeGoldMultiplier(prev)) - adventureEntryCost;
   if (goldGain > 0 && prev.activeJob !== 'merchant' && consumeBoon('market_sense')) {
     const marketBonus = Math.max(1, Math.floor(goldGain * 0.12));
     goldGain += marketBonus;

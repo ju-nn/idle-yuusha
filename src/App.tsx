@@ -4,7 +4,7 @@ import chestOpenGif from './assets/sprites/treasure_chest_mini/animation.gif';
 import { Header } from './components/Header';
 import { AreaGrid, CurrentJobCard, UpgradePanel } from './components/JobPanels';
 import { JobMenu } from './components/JobMenu';
-import { CollectionModal, EquipmentModal, LogModal, SettingsModal } from './components/Modals';
+import { CollectionModal, EquipmentModal, LogModal, PrestigeModal, SettingsModal } from './components/Modals';
 import { MusingPanel } from './components/MusingPanel';
 import { Card, Modal } from './components/shared';
 import { ACHIEVEMENTS, itemName } from './data/catalog';
@@ -17,6 +17,7 @@ import type { CropId } from './game/farming';
 import { formatResourceName } from './game/formatters';
 import { clearSave, createInitialState, loadState, saveState } from './game/state';
 import { getLifePlan } from './game/progression';
+import { buyPrestigeUpgrade, retire } from './game/prestige';
 import { getActiveArea, isJobUnlocked } from './game/requirements';
 import { runTick } from './game/tick';
 import { countOwnedUpgrades, getEffectiveDurationTicksForState, getWorkSpeedMultiplier, TICK_INTERVAL_MS } from './game/timing';
@@ -208,6 +209,7 @@ export default function App() {
   const [collectionOpen, setCollectionOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [prestigeOpen, setPrestigeOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [areaOpen, setAreaOpen] = useState(false);
   const [upgradesOpen, setUpgradesOpen] = useState(false);
@@ -291,6 +293,8 @@ export default function App() {
   const handleHarvestCrop = () => setState(harvestCrop);
   const handleBuyUpgrade = (u: typeof activeJob.upgrades[number]) => setState((prev) => buyUpgrade(prev, u));
   const handleClaimDaily = () => setState(claimDailyBonus);
+  const handleBuyPrestigeUpgrade = (id: string) => setState((prev) => buyPrestigeUpgrade(prev, id));
+  const handleRetire = () => setState((prev) => retire(prev, initialState));
   const handleEquipItem = (uid: string) => setState((prev) => equipItem(prev, uid));
   const handleSellEquipment = (uid: string) => setState((prev) => sellEquipment(prev, uid));
   const handleToggleEquipmentLock = (uid: string) => setState((prev) => toggleEquipmentLock(prev, uid));
@@ -332,7 +336,7 @@ export default function App() {
       <AchievementToasts toasts={achievementToasts} />
       <ChestOpeningOverlay reveal={chestReveal} equipItem={handleEquipItem} onClose={() => setChestReveal(null)} />
       <OfflineReturnCard state={state} onClose={() => setState((prev) => ({ ...prev, offlineSummary: null }))} />
-      <Header state={state} foundCount={foundCount} musingCount={readMusings.length} dailyReady={dailyReady} dailyStreak={dailyStreak} claimDaily={handleClaimDaily} openEquipment={() => setEquipmentOpen(true)} openCollection={() => setCollectionOpen(true)} openSettings={() => setSettingsOpen(true)} />
+      <Header state={state} foundCount={foundCount} musingCount={readMusings.length} dailyReady={dailyReady} dailyStreak={dailyStreak} claimDaily={handleClaimDaily} openEquipment={() => setEquipmentOpen(true)} openCollection={() => setCollectionOpen(true)} openPrestige={() => setPrestigeOpen(true)} openSettings={() => setSettingsOpen(true)} />
       <div className="layout">
         <div className="side">
           <JobMenu state={state} selectJob={handleSelectJob} />
@@ -350,6 +354,7 @@ export default function App() {
       {upgradesOpen && <Modal title={`${activeJob.name}の拠点整備`} description="生活を少し楽にする導入候補。足りない素材もここで確認できます。" onClose={() => setUpgradesOpen(false)} wide><div className="detailModalBody"><UpgradePanel state={state} job={activeJob} buyUpgrade={handleBuyUpgrade} /></div></Modal>}
       {equipmentOpen && <EquipmentModal state={state} equipItem={handleEquipItem} sellEquipment={handleSellEquipment} toggleLock={handleToggleEquipmentLock} openChest={handleOpenChest} openAllChests={handleOpenAllChests} onClose={() => setEquipmentOpen(false)} />}
       {collectionOpen && <CollectionModal state={state} musings={readMusings} achievements={state.achievements} onClose={() => setCollectionOpen(false)} />}
+      {prestigeOpen && <PrestigeModal state={state} buyPrestigeUpgrade={handleBuyPrestigeUpgrade} retire={() => { handleRetire(); setPrestigeOpen(false); }} onClose={() => setPrestigeOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} reset={() => { reset(); setSettingsOpen(false); }} />}
     </div>
   );

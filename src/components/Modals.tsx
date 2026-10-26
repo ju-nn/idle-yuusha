@@ -5,6 +5,7 @@ import { jobs } from '../data/gameData';
 import { getJobDropItems } from '../game/collection';
 import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipmentOptionText, getChestLimit, getEquipmentLimit, getEquipmentSellValue } from '../game/equipment';
 import { MUSING_LABELS } from '../game/musings';
+import { canRetire, getNextPrestigeCost, getPrestigeScore, getPrestigeStage, getRetirementPoints, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, RETIRE_REQUIRED_SCORE } from '../game/prestige';
 import { isJobUnlocked } from '../game/requirements';
 import { applyUserSettings, loadUserSettings, saveUserSettings, type UserSettings } from '../game/settings';
 import { createSaveBackupText, importSaveBackup } from '../game/saveTransfer';
@@ -42,6 +43,35 @@ export function CollectionModal({ state, musings, achievements, onClose }: { sta
     { id: 'achievements', label: '実績' },
   ] as const;
   return <Modal title="図鑑" description="発見物・装備・討伐・ぼやき・実績をまとめて確認する。" onClose={onClose} wide><CollectionSummary state={state} musings={musings} achievements={achievements} /><div className="bookTabs">{tabs.map((tab) => <button key={tab.id} className={filter === tab.id ? 'active' : ''} onClick={() => setFilter(tab.id)}>{tab.label}</button>)}</div><div className={`bookGrid ${filter !== 'all' ? 'single' : ''}`}>{(filter === 'all' || filter === 'items') && <DiscoveryBook state={state} />}{(filter === 'all' || filter === 'equipment') && <EquipmentBook state={state} />}{(filter === 'all' || filter === 'monsters') && <BestiaryBook state={state} />}{(filter === 'all' || filter === 'musings') && <MusingBook musings={musings} />}{(filter === 'all' || filter === 'achievements') && <AchievementBook achievements={achievements} />}</div></Modal>;
+}
+
+export function PrestigeModal({ state, buyPrestigeUpgrade, retire, onClose }: { state: GameState; buyPrestigeUpgrade: (id: string) => void; retire: () => void; onClose: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const prestige = state.prestige || { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {} };
+  const score = getPrestigeScore(state);
+  const gain = getRetirementPoints(state);
+  const eligible = canRetire(state);
+  const remaining = Math.max(0, RETIRE_REQUIRED_SCORE - score.score);
+  const progressPercent = Math.min(100, Math.floor((score.score / RETIRE_REQUIRED_SCORE) * 100));
+  return <Modal title="引退と思い出" description="区切りを付けて、歩みを思い出ポイントに変える。思い出は次の人生でも消えない。" onClose={onClose} wide><div className="settingsPanel">
+    <div className="collectionSummary">
+      <SummaryPill label={MEMORY_POINT_NAME} value={`${prestige.memoryPoints}`} />
+      <SummaryPill label="累計獲得" value={`${prestige.totalEarned}`} />
+      <SummaryPill label="引退回数" value={`${prestige.retireCount}回`} />
+      <SummaryPill label="いま引退すると" value={eligible ? `+${gain}` : 'まだ'} />
+    </div>
+    <div className="settingRow"><div><b>この人生の進行度：{score.score} / {RETIRE_REQUIRED_SCORE}</b><p>仕事レベル合計 {score.totalLevels} ＋ 発見 {score.discovered} ＋ 実績 {score.achievements}×2。{eligible ? `引退で思い出ポイント+${gain}が手に入ります。` : `引退まであと${remaining}。仕事レベル、発見、実績で増えます。`}</p><div className="targetBar"><i style={{ width: `${progressPercent}%` }} /></div></div></div>
+    <div className="dangerZone"><div><b>引退する</b><p>レベル・G・素材・所持品・装備・宝箱・拠点整備はリセットされます。実績・ぼやき図鑑・討伐と訪問の記録・思い出ポイントと永続強化は残ります。</p></div>{confirming
+      ? <span className="prestigeConfirm"><button className="primary" onClick={retire}>本当に引退する</button><button onClick={() => setConfirming(false)}>やめておく</button></span>
+      : <button onClick={() => setConfirming(true)} disabled={!eligible}>{eligible ? `引退して +${gain} を受け取る` : `あと${remaining}で引退可能`}</button>}</div>
+    <div><b>永続強化（思い出ポイントで買う）</b><p className="sub">引退しても消えません。次の人生の立ち上がりが、少しずつ楽になります。</p></div>
+    {PRESTIGE_UPGRADES.map((def) => {
+      const stage = getPrestigeStage(state, def.id);
+      const cost = getNextPrestigeCost(state, def.id);
+      const currentBonus = stage * def.perStage;
+      return <div className="settingRow" key={def.id}><div><b>{def.name} <span className="sub">段階 {stage}/{def.maxStage}</span></b><p>{def.description}</p><p>{def.effectLabel}：{def.id === 'memory_start_gold' ? `+${currentBonus}G` : def.id === 'memory_vitality' ? `+${currentBonus}` : `+${currentBonus}%`}</p></div>{cost === null ? <span className="sub">最大段階</span> : <button className="primary" onClick={() => buyPrestigeUpgrade(def.id)} disabled={prestige.memoryPoints < cost}>{cost} で強化</button>}</div>;
+    })}
+  </div></Modal>;
 }
 
 export function SettingsModal({ onClose, reset }: { onClose: () => void; reset: () => void }) {

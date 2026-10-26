@@ -2300,3 +2300,6 @@ button.primary:active:not(:disabled) {
   .sceneLeaf { display: none; }
   .stat .statBar > b { transition: none; }
 }
+
+/* プレステージ（引退モーダル） */
+.prestigeConfirm { display:inline-flex; gap:8px; flex-wrap:wrap; }

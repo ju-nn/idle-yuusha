@@ -2554,3 +2554,9 @@ button.primary:active:not(:disabled) {
     top:60px;
   }
 }
+
+/* ===== Area monster preview (2026-10-27 / エリアカードの出現モンスター表示) ===== */
+/* 未解禁エリアには出さない（TSX側で unlocked 時のみ描画）。未討伐はシルエット＋？？？で図鑑と同じ秘匿ルール。 */
+.area .areaMonsters { float:none; display:flex; flex-wrap:wrap; gap:8px; clear:both; margin-top:8px; }
+.areaMonster { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.areaMonster small { background:transparent; padding:0; margin:0; color:var(--text-soft); }

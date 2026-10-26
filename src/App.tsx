@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { AreaGrid, CurrentJobCard, UpgradePanel } from './components/JobPanels';
 import { JobMenu } from './components/JobMenu';
 import { CollectionModal, EquipmentModal, LogModal, PrestigeModal, SettingsModal } from './components/Modals';
+import { ItemSprite } from './components/GameIcon';
 import { MusingPanel } from './components/MusingPanel';
 import { Card, Modal } from './components/shared';
 import { ACHIEVEMENTS, itemName } from './data/catalog';
@@ -36,6 +37,7 @@ type FloatingGain = {
   label: string;
   amount: number;
   kind: 'gold' | 'resource' | 'item';
+  iconId?: string;
   x: number;
   y: number;
   delay: number;
@@ -66,13 +68,14 @@ function snapshotGains(state: GameState) {
   };
 }
 
-function makeFloatingGain(label: string, amount: number, kind: FloatingGain['kind'], index: number): FloatingGain {
+function makeFloatingGain(label: string, amount: number, kind: FloatingGain['kind'], index: number, iconId?: string): FloatingGain {
   const lane = index % 6;
   return {
     id: Date.now() + Math.floor(Math.random() * 100_000) + index,
     label,
     amount,
     kind,
+    iconId,
     x: 38 + lane * 8 + (Math.random() * 8 - 4),
     y: 26 + Math.floor(index / 6) * 7 + Math.random() * 8,
     delay: Math.min(360, index * 42),
@@ -90,7 +93,7 @@ function FloatingGains({ gains }: { gains: FloatingGain[] }) {
         animationDelay: `${gain.delay}ms`,
       }}
     >
-      <b>+{gain.amount}</b><span>{gain.label}</span>
+      {gain.iconId ? <ItemSprite id={gain.iconId} size={20} /> : null}<b>+{gain.amount}</b><span>{gain.label}</span>
     </div>
   ))}</div>;
 }
@@ -256,7 +259,7 @@ export default function App() {
 
     Object.entries(next.items).forEach(([key, value]) => {
       const amount = value - (previous.items[key] || 0);
-      if (amount > 0) gained.push(makeFloatingGain(itemName(key), amount, 'item', gained.length));
+      if (amount > 0) gained.push(makeFloatingGain(itemName(key), amount, 'item', gained.length, key));
     });
 
     previousGains.current = next;

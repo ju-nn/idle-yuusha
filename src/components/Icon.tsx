@@ -1,6 +1,7 @@
 import {
   Axe,
   Badge,
+  BarChart3,
   BookOpen,
   BriefcaseBusiness,
   ChevronRight,
@@ -42,6 +43,7 @@ type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 const icons = {
   axe: Axe,
   badge: Badge,
+  chart: BarChart3,
   book: BookOpen,
   briefcase: BriefcaseBusiness,
   chevronRight: ChevronRight,

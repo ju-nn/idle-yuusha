@@ -2560,3 +2560,15 @@ button.primary:active:not(:disabled) {
 .area .areaMonsters { float:none; display:flex; flex-wrap:wrap; gap:8px; clear:both; margin-top:8px; }
 .areaMonster { display:flex; flex-direction:column; align-items:center; gap:2px; }
 .areaMonster small { background:transparent; padding:0; margin:0; color:var(--text-soft); }
+
+/* ===== Stats modal (2026-10-27 / UI深化: 統計画面) ===== */
+.statsPanel .statsSummary { padding:14px 0 0; }
+.statsRows { display:flex; flex-direction:column; gap:2px; }
+.statsRow { display:flex; justify-content:space-between; gap:12px; padding:7px 2px; border-bottom:1px solid var(--line); }
+.statsRow span { color:var(--text-soft); }
+.statsRow b { text-align:right; }
+@media (max-width: 640px) {
+  .statsPanel .statsSummary { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .statsRow { flex-direction:column; gap:2px; }
+  .statsRow b { text-align:left; }
+}

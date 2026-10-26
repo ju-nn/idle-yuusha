@@ -3,10 +3,13 @@ import chestClosed from '../assets/sprites/hero/chest-closed.png';
 import { ACHIEVEMENTS, itemDesc, itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import { getJobDropItems } from '../game/collection';
-import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipmentOptionText, getChestLimit, getEquipmentLimit, getEquipmentSellValue } from '../game/equipment';
+import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipmentOptionText, getChestLimit, getEquipmentBonus, getEquipmentLimit, getEquipmentSellValue } from '../game/equipment';
+import { formatResourceName } from '../game/formatters';
 import { MUSING_LABELS } from '../game/musings';
-import { canRetire, getNextPrestigeCost, getPrestigeScore, getPrestigeStage, getRetirementPoints, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, RETIRE_REQUIRED_SCORE } from '../game/prestige';
-import { isJobUnlocked } from '../game/requirements';
+import { canRetire, getNextPrestigeCost, getPrestigeScore, getPrestigeSpeedMultiplier, getPrestigeStage, getRetirementPoints, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, RETIRE_REQUIRED_SCORE } from '../game/prestige';
+import { getFailChance, xpToNext } from '../game/progression';
+import { isJobUnlocked, getActiveArea } from '../game/requirements';
+import { GAME_SPEED_DIVISOR, countOwnedUpgrades, getEffectiveDurationTicksForState, getWorkSpeedMultiplier } from '../game/timing';
 import { applyUserSettings, loadUserSettings, saveUserSettings, type UserSettings } from '../game/settings';
 import { createSaveBackupText, importSaveBackup } from '../game/saveTransfer';
 import { createInitialState } from '../game/state';
@@ -17,6 +20,92 @@ import { Card, Modal } from './shared';
 
 export function LogModal({ logs, onClose }: { logs: string[]; onClose: () => void }) {
   return <Modal title="作業ログ" description="最新の作業結果を確認する。" onClose={onClose}><div className="logList">{logs.map((log, index) => <p key={`${log}-${index}`} className={index === 0 ? 'freshLog' : ''}>{log}</p>)}</div></Modal>;
+}
+
+function avgRange(range?: [number, number]) {
+  return range ? (range[0] + range[1]) / 2 : 0;
+}
+
+function fmtNum(value: number) {
+  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+}
+
+export function StatsModal({ state, onClose }: { state: GameState; onClose: () => void }) {
+  const activeJob = jobs[state.activeJob] || jobs.fishing;
+  const activeArea = getActiveArea(state.activeJob, state.activeArea) || activeJob.areas[0];
+  const activeData = state.jobData[state.activeJob] || { level: 1, xp: 0, seenMusings: [] };
+  const ownedUpgrades = countOwnedUpgrades(activeJob.upgrades.map((u) => u.id), state.items || {});
+  const ticks = getEffectiveDurationTicksForState(activeArea.seconds, activeData.level, ownedUpgrades, state, state.activeJob);
+  const cycleSeconds = Math.max(1, Math.ceil(ticks / GAME_SPEED_DIVISOR));
+  const failChance = getFailChance(activeArea, activeJob.upgrades, state.items || {});
+  const successRate = 1 - failChance;
+  const speedMultiplier = getWorkSpeedMultiplier(activeData.level, ownedUpgrades)
+    * (1 + (getEquipmentBonus(state, 'jobSpeed', state.activeJob) + getEquipmentBonus(state, 'jobSpeed')) / 100)
+    * getPrestigeSpeedMultiplier(state);
+  const resourceGains = (['fish', 'wood', 'ore'] as const)
+    .map((key) => ({ key, amount: avgRange(activeArea.rewards[key]) }))
+    .filter((entry) => entry.amount > 0);
+  const goldPerCycle = avgRange(activeArea.rewards.gold)
+    + (activeArea.sell ? avgRange(activeArea.sell.amount) * activeArea.sell.price : 0);
+  const xpPerCycle = activeArea.rewards.xp || 0;
+  const cyclesPerHour = 3600 / cycleSeconds;
+  const goldPerHour = goldPerCycle * cyclesPerHour * successRate;
+  const xpPerHour = xpPerCycle * cyclesPerHour * successRate;
+  const xpProgress = Math.min(100, Math.round((activeData.xp / xpToNext(activeData.level)) * 100));
+  const monsters = getAllMonsters();
+  const defeated = monsters.filter((monster) => (state.defeatedMonsters || []).includes(monster.id)).length;
+  const totalAreas = Object.values(jobs).reduce((sum, job) => sum + job.areas.length, 0);
+  const prestige = state.prestige || { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {} };
+
+  return <Modal title="統計" description="現在の仕事の効率と、全体の進み具合。数字は今の状態からの期待値で、セーブには何も書きません。" onClose={onClose} wide><div className="settingsPanel statsPanel">
+    <div>
+      <div className="sectionHead"><h3>現在の仕事の効率：{activeJob.name} / {activeArea.name}</h3></div>
+      <div className="collectionSummary statsSummary">
+        <SummaryPill label="1周の時間" value={`約${cycleSeconds}秒`} />
+        <SummaryPill label="速度倍率" value={`x${speedMultiplier.toFixed(2)}`} />
+        <SummaryPill label="失敗率" value={`${Math.round(failChance * 100)}%`} />
+        <SummaryPill label="時給（金）" value={`約${Math.round(goldPerHour)}G`} />
+        <SummaryPill label="時給（XP）" value={`約${Math.round(xpPerHour)}`} />
+        <SummaryPill label="1周あたり" value={`${fmtNum(goldPerCycle)}G / ${xpPerCycle}XP`} />
+      </div>
+      <div className="statsRows">
+        <div className="statsRow"><span>仕事Lv</span><b>{activeData.level}（次まで {activeData.xp} / {xpToNext(activeData.level)} XP）</b></div>
+        <div className="targetBar"><i style={{ width: `${xpProgress}%` }} /></div>
+        {resourceGains.length > 0 && <div className="statsRow"><span>1周あたりの素材（期待値）</span><b>{resourceGains.map((entry) => `${fmtNum(entry.amount)}${formatResourceName(entry.key)}`).join(' / ')}</b></div>}
+        {activeArea.sell && <div className="statsRow"><span>売却収入（1周）</span><b>約{fmtNum(avgRange(activeArea.sell.amount) * activeArea.sell.price)}G（{formatResourceName(activeArea.sell.resource)}を売る仕事）</b></div>}
+        {activeArea.adventureCost ? <div className="statsRow"><span>出発費（1周）</span><b>{activeArea.adventureCost}G（モンスター報酬は含まない）</b></div> : null}
+        <p className="sub">時給は「1周の期待値 × 1時間あたりの周回数 × 成功率」で出した目安です。ドロップの運、在庫アイテムの売却、戦闘・探索のモンスター報酬は含みません。1周の秒数は現在の仕事カードと同じ表示単位です。</p>
+      </div>
+    </div>
+    <div>
+      <div className="sectionHead"><h3>仕事別</h3></div>
+      <div className="statsRows">
+        {Object.entries(jobs).map(([jobKey, job]) => {
+          if (!isJobUnlocked(jobKey, state)) return <div className="statsRow" key={jobKey}><span>？？？</span><b>まだ出会っていない仕事</b></div>;
+          const jobData = state.jobData[jobKey] || { level: 1, xp: 0, seenMusings: [] };
+          const owned = countOwnedUpgrades(job.upgrades.map((u) => u.id), state.items || {});
+          return <div className="statsRow" key={jobKey}><span>{job.name}</span><b>Lv{jobData.level} / 拠点 {owned}/{job.upgrades.length} / 基礎速度 x{getWorkSpeedMultiplier(jobData.level, owned).toFixed(2)}{jobKey === state.activeJob ? '（作業中）' : ''}</b></div>;
+        })}
+      </div>
+      <p className="sub">基礎速度はレベルと拠点整備だけの倍率です。装備と永続強化は現在の仕事の効率にだけ上乗せされます。</p>
+    </div>
+    <div>
+      <div className="sectionHead"><h3>全体と上限</h3></div>
+      <div className="collectionSummary statsSummary">
+        <SummaryPill label="所持金" value={`${state.gold}G`} />
+        <SummaryPill label="ぼやき" value={`${(state.readMusings || []).length}件`} />
+        <SummaryPill label="実績" value={`${(state.achievements || []).length}/${Object.keys(ACHIEVEMENTS).length}`} ratio={Object.keys(ACHIEVEMENTS).length ? (state.achievements || []).length / Object.keys(ACHIEVEMENTS).length : 0} />
+        <SummaryPill label="討伐" value={`${defeated}/${monsters.length}`} ratio={monsters.length ? defeated / monsters.length : 0} />
+        <SummaryPill label="訪問エリア" value={`${(state.visitedAreas || []).length}/${totalAreas}`} ratio={totalAreas ? (state.visitedAreas || []).length / totalAreas : 0} />
+        <SummaryPill label="生活スタンプ" value={`${state.dailyBonus?.streak || 0}日`} />
+        <SummaryPill label="宝箱" value={`${state.treasureChests?.length || 0}/${getChestLimit(state)}`} ratio={getChestLimit(state) ? (state.treasureChests?.length || 0) / getChestLimit(state) : 0} />
+        <SummaryPill label="装備" value={`${state.equipmentInventory?.length || 0}/${getEquipmentLimit(state)}`} ratio={getEquipmentLimit(state) ? (state.equipmentInventory?.length || 0) / getEquipmentLimit(state) : 0} />
+        <SummaryPill label="引退" value={`${prestige.retireCount}回`} />
+        <SummaryPill label="思い出ポイント" value={`${prestige.memoryPoints}`} />
+      </div>
+      <p className="sub">宝箱と装備の上限はここで見えます。上限に近づいたら、宝箱を開けるか装備を売る・保護する判断の目安にしてください。</p>
+    </div>
+  </div></Modal>;
 }
 
 export function EquipmentModal({ state, equipItem, sellEquipment, toggleLock, openChest, openAllChests, onClose }: { state: GameState; equipItem: (uid: string) => void; sellEquipment: (uid: string) => void; toggleLock: (uid: string) => void; openChest: (uid: string) => void; openAllChests: () => void; onClose: () => void }) {

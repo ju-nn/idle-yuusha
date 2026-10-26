@@ -4,7 +4,7 @@ import chestSheetUrl from './assets/sprites/hero/chest-open-sheet.png';
 import { Header } from './components/Header';
 import { AreaGrid, CurrentJobCard, UpgradePanel } from './components/JobPanels';
 import { JobMenu } from './components/JobMenu';
-import { CollectionModal, EquipmentModal, LogModal, PrestigeModal, SettingsModal } from './components/Modals';
+import { CollectionModal, EquipmentModal, LogModal, PrestigeModal, SettingsModal, StatsModal } from './components/Modals';
 import { ItemSprite } from './components/GameIcon';
 import { MusingPanel } from './components/MusingPanel';
 import { Card, Modal } from './components/shared';
@@ -214,6 +214,7 @@ export default function App() {
   const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [prestigeOpen, setPrestigeOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [areaOpen, setAreaOpen] = useState(false);
   const [upgradesOpen, setUpgradesOpen] = useState(false);
@@ -343,7 +344,7 @@ export default function App() {
       <AchievementToasts toasts={achievementToasts} />
       <ChestOpeningOverlay reveal={chestReveal} equipItem={handleEquipItem} onClose={() => setChestReveal(null)} />
       <OfflineReturnCard state={state} onClose={() => setState((prev) => ({ ...prev, offlineSummary: null }))} />
-      <Header state={state} foundCount={foundCount} musingCount={readMusings.length} dailyReady={dailyReady} dailyStreak={dailyStreak} claimDaily={handleClaimDaily} openEquipment={() => { playUiSound('open'); setEquipmentOpen(true); }} openCollection={() => { playUiSound('open'); setCollectionOpen(true); }} openPrestige={() => { playUiSound('open'); setPrestigeOpen(true); }} openSettings={() => { playUiSound('open'); setSettingsOpen(true); }} />
+      <Header state={state} foundCount={foundCount} musingCount={readMusings.length} dailyReady={dailyReady} dailyStreak={dailyStreak} claimDaily={handleClaimDaily} openEquipment={() => { playUiSound('open'); setEquipmentOpen(true); }} openCollection={() => { playUiSound('open'); setCollectionOpen(true); }} openPrestige={() => { playUiSound('open'); setPrestigeOpen(true); }} openSettings={() => { playUiSound('open'); setSettingsOpen(true); }} openStats={() => { playUiSound('open'); setStatsOpen(true); }} />
       <div className="layout">
         <div className="side">
           <JobMenu state={state} selectJob={handleSelectJob} />
@@ -363,6 +364,7 @@ export default function App() {
       {collectionOpen && <CollectionModal state={state} musings={readMusings} achievements={state.achievements} onClose={() => setCollectionOpen(false)} />}
       {prestigeOpen && <PrestigeModal state={state} buyPrestigeUpgrade={handleBuyPrestigeUpgrade} retire={() => { handleRetire(); setPrestigeOpen(false); }} onClose={() => setPrestigeOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} reset={() => { reset(); setSettingsOpen(false); }} />}
+      {statsOpen && <StatsModal state={state} onClose={() => setStatsOpen(false)} />}
     </div>
   );
 }

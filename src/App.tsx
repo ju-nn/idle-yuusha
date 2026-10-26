@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import ambientCloudUrl from './assets/sprites/hero/cloud.png';
 import chestOpenGif from './assets/sprites/treasure_chest_mini/animation.gif';
 import { Header } from './components/Header';
 import { AreaGrid, CurrentJobCard, UpgradePanel } from './components/JobPanels';
@@ -322,6 +323,11 @@ export default function App() {
 
   return (
     <div className="page">
+      <div className="ambientLayer" aria-hidden="true">
+        <img className="ambientCloud ambientA" src={ambientCloudUrl} alt="" />
+        <img className="ambientCloud ambientB" src={ambientCloudUrl} alt="" />
+        <img className="ambientCloud ambientC" src={ambientCloudUrl} alt="" />
+      </div>
       <FloatingGains gains={floatingGains} />
       <AchievementToasts toasts={achievementToasts} />
       <ChestOpeningOverlay reveal={chestReveal} equipItem={handleEquipItem} onClose={() => setChestReveal(null)} />

@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/generate-hero-sprites.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "codegraph:sync": "npx @colbymchenry/codegraph sync",

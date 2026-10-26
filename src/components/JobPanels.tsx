@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { describeUpgradeEffects, formatResourceName } from '../game/formatters';
 import { CROPS, formatFarmDuration, getCropRewards, getFarmingProgress, type CropId } from '../game/farming';
 import { getAdventureEntryCost } from '../game/equipment';
@@ -7,6 +7,7 @@ import { getFailChance, xpToNext } from '../game/progression';
 import { isAreaUnlocked, isJobUnlocked } from '../game/requirements';
 import { countOwnedUpgrades, GAME_SPEED_DIVISOR, getEffectiveDurationTicksForState } from '../game/timing';
 import type { Area, GameState, Job, ResourceKey, Upgrade } from '../types';
+import { HeroScene } from './HeroScene';
 import { Icon, JobIcon } from './Icon';
 import { Card } from './shared';
 
@@ -15,7 +16,18 @@ export function CurrentJobCard(props: { job: Job; area: Area; data: { level: num
   const combat = job.type === 'combat';
   const showsBattleLog = job.type === 'combat' || job.type === 'adventure';
   const breaking = state.progressBreaking || false;
-  return <Card tone={combat ? 'combat jobCard' : 'jobCard'}><div className="jobHeader"><div><small>現在の仕事</small><h2><JobIcon id={state.activeJob} /> {job.name}</h2><p>{job.description}</p><button className="latestLog" onClick={openLog}><span>最新ログ</span><span className="logText">{latestLog}</span></button></div><div className="levelBox"><small>仕事Lv</small><b>{data.level}</b></div></div><ComboStrip state={state} job={job} />{job.type === 'farming' ? <FarmingBox state={state} ready={farmingReady} plantCrop={plantCrop} harvestCrop={harvestCrop} /> : showsBattleLog ? <CombatBox area={area} data={data} progress={progress} combatLog={state.combatLog || []} breaking={breaking} speedMultiplier={speedMultiplier} effectiveDurationTicks={effectiveDurationTicks} isAdventure={job.type === 'adventure'} adventureCost={getAdventureEntryCost(state, area.adventureCost || 0)} /> : <ProgressBox area={area} data={data} progress={progress} breaking={breaking} job={job} ownedItems={state.items} speedMultiplier={speedMultiplier} effectiveDurationTicks={effectiveDurationTicks} />}<div className="jobDetailGrid"><div className="areaSection"><div className="sectionHead"><h3>仕事エリア</h3>{openAreas && <button onClick={openAreas}>一覧</button>}</div><AreaGrid job={job} state={state} selectArea={selectArea} compact /></div><div className="inlineUpgradeSection"><div className="sectionHead"><h3>拠点整備</h3>{openUpgrades && <button onClick={openUpgrades}>一覧</button>}</div><InlineUpgradeList state={state} job={job} buyUpgrade={buyUpgrade} /></div></div></Card>;
+  const [levelFlash, setLevelFlash] = useState(false);
+  const prevLevelRef = useRef(data.level);
+  useEffect(() => {
+    if (data.level > prevLevelRef.current) {
+      setLevelFlash(true);
+      const timer = window.setTimeout(() => setLevelFlash(false), 1700);
+      prevLevelRef.current = data.level;
+      return () => window.clearTimeout(timer);
+    }
+    prevLevelRef.current = data.level;
+  }, [data.level]);
+  return <Card tone={combat ? 'combat jobCard' : 'jobCard'}><div className="jobHeader"><div><small>現在の仕事</small><h2><JobIcon id={state.activeJob} /> {job.name}</h2><p>{job.description}</p><button className="latestLog" onClick={openLog}><span>最新ログ</span><span className="logText">{latestLog}</span></button></div><div className={`levelBox${levelFlash ? ' levelFlash' : ''}`}><small>仕事Lv</small><b>{data.level}</b>{levelFlash && <span className="levelUpPop">LEVEL UP!</span>}</div></div><HeroScene jobId={state.activeJob} /><ComboStrip state={state} job={job} />{job.type === 'farming' ? <FarmingBox state={state} ready={farmingReady} plantCrop={plantCrop} harvestCrop={harvestCrop} /> : showsBattleLog ? <CombatBox area={area} data={data} progress={progress} combatLog={state.combatLog || []} breaking={breaking} speedMultiplier={speedMultiplier} effectiveDurationTicks={effectiveDurationTicks} isAdventure={job.type === 'adventure'} adventureCost={getAdventureEntryCost(state, area.adventureCost || 0)} /> : <ProgressBox area={area} data={data} progress={progress} breaking={breaking} job={job} ownedItems={state.items} speedMultiplier={speedMultiplier} effectiveDurationTicks={effectiveDurationTicks} />}<div className="jobDetailGrid"><div className="areaSection"><div className="sectionHead"><h3>仕事エリア</h3>{openAreas && <button onClick={openAreas}>一覧</button>}</div><AreaGrid job={job} state={state} selectArea={selectArea} compact /></div><div className="inlineUpgradeSection"><div className="sectionHead"><h3>拠点整備</h3>{openUpgrades && <button onClick={openUpgrades}>一覧</button>}</div><InlineUpgradeList state={state} job={job} buyUpgrade={buyUpgrade} /></div></div></Card>;
 }
 
 function ComboStrip({ state, job }: { state: GameState; job: Job }) {

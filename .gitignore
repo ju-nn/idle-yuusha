@@ -1,5 +1,7 @@
 node_modules
 dist
+# 勇者ドット絵スプライトは scripts/generate-hero-sprites.mjs がビルド時に生成する
+src/assets/sprites/hero/*.png
 *.log
 test-results
 .env

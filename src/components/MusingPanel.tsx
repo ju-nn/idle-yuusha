@@ -18,6 +18,11 @@ export function MusingPanel({ state, totalMusings, musingCount, canAdvance, adva
   const displayText = activeMusing ? activeMusing.text : idleText;
   const unreadCount = state.musingQueue.length;
   const hasReward = Boolean(activeMusing?.rewardItems?.length);
+  const isRareMusing = Boolean(activeMusing && (
+    activeMusing.eventType === 'milestone'
+    || activeMusing.eventSubType?.includes('legendary')
+    || activeMusing.eventSubType === 'equipment_drop'
+  ));
   const isJobUnlock = Boolean(activeMusing?.id?.startsWith('job-unlock-'));
   const unlockPreview = displayText.length > 220 ? `${displayText.slice(0, 220).trim()}...` : displayText;
 
@@ -37,5 +42,5 @@ export function MusingPanel({ state, totalMusings, musingCount, canAdvance, adva
     return <div className="unlockModal" role="dialog" aria-modal="true" aria-labelledby="unlockTitle"><div className="unlockModalContent"><div className="unlockHero"><span className="unlockKicker"><Icon name="key" /> 仕事解禁</span><h2 id="unlockTitle">新しい生活ルートが増えました</h2><p className="unlockJobName">{activeMusing?.job}</p></div><p className="unlockText">{unlockPreview}</p>{hasReward && <p className="reward">出来事で手に入った：{rewardText(activeMusing?.rewardItems)}</p>}<button className="primary" onClick={advanceMusing}><Icon name="play" /> 確認する</button></div></div>;
   }
 
-  return <Card tone="musing"><div className="musingTop"><div className="musingMeta"><span><Icon name="message" /> ぼやきノベル</span><span>{activeMusing ? activeMusing.job : '勇者'}</span><span>{activeMusing ? activeMusing.area : '作業中'}</span><span>収集 {musingCount}/{totalMusings}</span>{unreadCount > 0 && <span className="unreadPill">未読 {unreadCount}</span>}</div><button className="primary musingNext" onClick={advanceMusing} disabled={!canAdvance}><Icon name="play" /> 次へ{unreadCount > 0 && <b className="buttonBadge">{unreadCount}</b>}</button></div><p className="musingText" key={displayText}>{displayText}</p>{hasReward && <p className="reward">出来事で手に入った：{rewardText(activeMusing?.rewardItems)}</p>}</Card>;
+  return <Card tone={isRareMusing ? 'musing rareMusing' : 'musing'}><div className="musingTop"><div className="musingMeta"><span><Icon name="message" /> ぼやきノベル</span><span>{activeMusing ? activeMusing.job : '勇者'}</span><span>{activeMusing ? activeMusing.area : '作業中'}</span><span>収集 {musingCount}/{totalMusings}</span>{unreadCount > 0 && <span className="unreadPill">未読 {unreadCount}</span>}</div><button className="primary musingNext" onClick={advanceMusing} disabled={!canAdvance}><Icon name="play" /> 次へ{unreadCount > 0 && <b className="buttonBadge">{unreadCount}</b>}</button></div><p className="musingText" key={displayText}>{displayText}</p>{hasReward && <p className="reward">出来事で手に入った：{rewardText(activeMusing?.rewardItems)}</p>}</Card>;
 }

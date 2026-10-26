@@ -2494,3 +2494,209 @@ button.primary:active:not(:disabled) {
   .summaryBar > b { transition: none; }
 }
 .monsterArchive > .monsterArchiveBody { display: block; }
+
+/* ===== Mobile UX layer (2026-10-26 / スマホ操作性と画面整理) =====
+   棚卸し(390px実測): 全高2079px。ヘッダー278px(操作5ボタンが2列3段で148px)、
+   仕事メニュー424px、生活ナビ261px が先行し、ゲームの核であるぼやきが
+   1003px地点=1画面目の外にあった。「次へ」も1013pxで親指圏外。
+   参考パターン: Melvor Idle(常時見えるリソースバー+ナビ集約+メイン優先)、
+   人気放置ゲーム共通のボトムタブバー(親指圏に主要導線を固定)。
+   方針(<=980pxのみ。デスクトップのボードレイアウトには触れない):
+   - ステータスは上部固定の1行バー(6種)に圧縮し、スクロール中も残す
+   - 主要操作(押印/宝箱/図鑑/引退/設定)は下部固定バーへ移し親指圏に常駐
+   - 並び順を「ぼやき→現在の仕事→仕事メニュー→生活ナビ」へ入れ替え、
+     核であるぼやきノベルを1画面目に戻す
+   - ぼやきの「次へ」は本文の下に全幅52pxの主ボタンとして置く
+   - 仕事メニューは3列グリッド、エリアは2列グリッドで総スクロールを削る */
+
+@media (max-width: 980px) {
+  /* --- ページ: 固定バー2本ぶんの余白を確保 --- */
+  .page {
+    padding-top:64px;
+    padding-bottom:calc(98px + env(safe-area-inset-bottom));
+  }
+
+  /* --- ヘッダー: ブランド1行だけを通常フローに残す --- */
+  .header {
+    padding:0 2px;
+  }
+  .brandKicker {
+    display:none;
+  }
+  .header h1 {
+    font-size:1rem;
+    line-height:1.2;
+  }
+
+  /* --- ステータス: 上部固定の1行リソースバー --- */
+  .statGrid {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:40;
+    margin:0;
+    padding:6px 10px;
+    grid-template-columns:repeat(6, minmax(0, 1fr));
+    gap:4px;
+    background:rgba(255, 253, 248, .93);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(124, 74, 35, .16);
+    box-shadow:0 6px 18px rgba(87, 83, 78, .08);
+  }
+  .stat {
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:1px;
+    min-height:42px;
+    padding:3px 2px;
+    font-size:.8rem;
+  }
+  .stat .icon {
+    width:15px;
+    height:15px;
+  }
+  .stat span {
+    align-items:center;
+  }
+  .stat small {
+    display:none;
+  }
+  .stat b {
+    font-size:.74rem;
+    line-height:1.1;
+    white-space:nowrap;
+  }
+  .stat .statBar {
+    width:100%;
+    margin-top:2px;
+  }
+
+  /* --- 主要操作: 下部固定のタブバー(親指圏) --- */
+  .actions {
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:40;
+    margin:0;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    display:flex;
+    flex-wrap:nowrap;
+    gap:6px;
+    background:rgba(255, 253, 248, .95);
+    backdrop-filter:blur(14px);
+    border-top:1px solid rgba(124, 74, 35, .18);
+    box-shadow:0 -8px 22px rgba(87, 83, 78, .10);
+  }
+  .actions button,
+  .actions .stampButton {
+    flex:1 1 0;
+    flex-direction:column;
+    gap:2px;
+    min-height:54px;
+    padding:6px 2px;
+    font-size:.72rem;
+    line-height:1.15;
+    white-space:nowrap;
+  }
+  .actions button .icon {
+    width:20px;
+    height:20px;
+  }
+  .actions .countBadge {
+    position:absolute;
+    top:4px;
+    right:calc(50% - 20px);
+  }
+  .actions button {
+    position:relative;
+  }
+
+  /* --- 並び順: ぼやき+現在の仕事(メイン)を先、仕事選択と生活ナビを後 --- */
+  .layout > .main {
+    order:1;
+  }
+  .layout > .side {
+    order:2;
+  }
+
+  /* --- ぼやき: 「次へ」を本文の下の全幅主ボタンへ --- */
+  .activityGrid > .card.musing {
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  .card.musing .musingTop {
+    display:contents;
+  }
+  .card.musing .musingMeta {
+    order:0;
+  }
+  .activityGrid .musingText {
+    order:1;
+  }
+  .card.musing .reward {
+    order:2;
+  }
+  .card.musing .musingNext {
+    order:3;
+    align-self:stretch;
+    width:100%;
+    min-height:52px;
+    margin-top:10px;
+    padding:10px 18px;
+    font-size:1rem;
+  }
+
+  /* --- 仕事メニュー: 3列グリッドで縦を圧縮 --- */
+  .jobList {
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:6px;
+  }
+  .jobList .jobButton {
+    min-height:56px;
+    padding:6px;
+    gap:5px;
+  }
+  .jobButtonText b {
+    font-size:.84rem;
+  }
+  .jobButton small {
+    font-size:.62rem;
+    white-space:normal;
+    line-height:1.3;
+  }
+  .jobIcon {
+    width:1.15rem;
+    height:1.15rem;
+  }
+
+  /* --- エリア/作物: 2列グリッドで縦積みを半分に --- */
+  .jobCard .compactAreaGrid {
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:7px;
+  }
+  .jobCard .cropGrid {
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:7px;
+  }
+
+  /* --- 生活ナビ: 下部に回したうえで余白を締める --- */
+  .card.notice.lifePlan {
+    gap:8px;
+  }
+  .lifePrimary,
+  .lifeProgress {
+    padding:6px 8px;
+  }
+
+  /* --- 固定通知はステータスバーの下から出す --- */
+  .achievementToasts {
+    top:60px;
+  }
+  .returnBanner {
+    top:60px;
+  }
+}

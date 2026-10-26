@@ -387,6 +387,7 @@ export function runTick(prev: GameState): GameState {
       const battle = simulateMonsterBattle({ ...prev, hp: recoveredHp, mp: recoveredMp }, job, monster, data.level);
       combatEvents.push(...battle.logs);
       if (!battle.won) {
+        addFeedback('battleLose');
         addMusing({
           id: `failure-monster-${monster.id}-${now}`,
           job: job.name,
@@ -492,6 +493,7 @@ export function runTick(prev: GameState): GameState {
   while (xp >= xpToNext(level)) {
     xp -= xpToNext(level);
     level += 1;
+    addFeedback('levelUp', `${job.name}Lv${level}`);
     eventLog.push(`${job.name}Lv${level}：同じ仕事でも、見える景色と悩みが少し変わった。`);
     if (prev.activeJob === 'fishing' && level >= 2) achievements = addAchievement({ ...prev, achievements }, 'fishing_lv2', eventLog);
     // レベルアップ時のぼやきを発生させる

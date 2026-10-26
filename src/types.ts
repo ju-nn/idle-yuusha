@@ -59,7 +59,11 @@ export type FeedbackEventType =
   | 'legendaryDrop'
   | 'adventureStart'
   | 'adventureSuccess'
-  | 'failure';
+  | 'failure'
+  | 'levelUp'
+  | 'battleLose'
+  | 'chestOpen'
+  | 'retire';
 
 export type FeedbackEvent = {
   id: string;

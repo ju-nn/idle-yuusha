@@ -243,6 +243,7 @@ export function retire(prev: GameState, initialState: GameState): GameState {
     openedChestLog: prev.openedChestLog || [],
     dailyBonus: prev.dailyBonus || { streak: 0 },
     tutorialStep: 'done',
+    feedbackEvents: [{ id: `retire-${Date.now()}`, type: 'retire' as const, label: `思い出ポイント+${gained}` }],
     currentMusing: retireMusing,
     musingQueue: [],
     eventLog,

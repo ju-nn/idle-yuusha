@@ -343,6 +343,11 @@ export function openTreasureChest(prev: GameState, uid: string): GameState {
   if (!chest || (prev.equipmentInventory?.length || 0) >= getEquipmentLimit(prev)) return prev;
   const equipment = generateEquipmentFromChest(chest);
   const equipmentText = `${EQUIPMENT_RARITY_LABELS[equipment.rarity]} ${equipment.name}`;
+  const openEvent: FeedbackEvent = {
+    id: `chest-open-${Date.now()}`,
+    type: 'chestOpen',
+    label: chest.name,
+  };
   const dropEvent: FeedbackEvent = {
     id: `open-chest-${Date.now()}`,
     type: equipment.rarity === 'legendary' ? 'legendaryDrop' : 'equipmentDrop',
@@ -363,6 +368,7 @@ export function openTreasureChest(prev: GameState, uid: string): GameState {
     ].slice(0, 40),
     feedbackEvents: [
       ...(prev.feedbackEvents || []),
+      openEvent,
       dropEvent,
     ].slice(-24),
     achievements: equipment.rarity === 'legendary'

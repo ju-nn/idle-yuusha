@@ -28,4 +28,6 @@ export function saveUserSettings(settings: UserSettings) {
 
 export function applyUserSettings(settings: UserSettings) {
   document.documentElement.dataset.textSpeed = settings.textSpeed;
+  // BGMエンジン等が音量変更へ即追従できるよう通知する。
+  window.dispatchEvent(new CustomEvent('yuusha:settings-changed'));
 }

@@ -11,7 +11,8 @@ import { Card, Modal } from './components/shared';
 import { ACHIEVEMENTS, itemName } from './data/catalog';
 import { jobs } from './data/gameData';
 import { advanceMusing, buyUpgrade, canClaimDailyBonus, claimDailyBonus, harvestCrop, plantCrop, selectArea, selectJob } from './game/actions';
-import { playFeedbackSound } from './game/audio';
+import { playFeedbackSound, playUiSound } from './game/audio';
+import { initBgm, setBgmAdventure } from './game/bgm';
 import { getJobDropItems } from './game/collection';
 import { EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipItem, equipmentOptionText, getEquipmentBonus, openAllTreasureChests, openTreasureChest, sellEquipment, toggleEquipmentLock } from './game/equipment';
 import type { CropId } from './game/farming';
@@ -225,11 +226,14 @@ export default function App() {
   const previousFeedbackEvents = useRef(new Set((state.feedbackEvents || []).map((event) => event.id)));
 
   useEffect(() => { saveState(state); }, [state]);
+  useEffect(() => { initBgm(); }, []);
+  useEffect(() => { setBgmAdventure(jobs[state.activeJob]?.type === 'adventure'); }, [state.activeJob]);
   useEffect(() => {
     const previous = previousAchievements.current;
     const unlocked = (state.achievements || []).filter((id) => !previous.has(id) && ACHIEVEMENTS[id]);
     previousAchievements.current = new Set(state.achievements || []);
     if (!unlocked.length) return;
+    playUiSound('achievement');
     const toasts = unlocked.map((id) => ({ id: `${id}-${Date.now()}`, name: ACHIEVEMENTS[id].name, description: ACHIEVEMENTS[id].description }));
     setAchievementToasts((current) => [...toasts, ...current].slice(0, 3));
     const removeIds = new Set(toasts.map((toast) => toast.id));
@@ -289,12 +293,12 @@ export default function App() {
   const dailyStreak = state.dailyBonus?.streak || 0;
 
   const reset = () => { clearSave(); setState(initialState); };
-  const handleAdvanceMusing = () => setState(advanceMusing);
-  const handleSelectJob = (key: string) => setState((prev) => selectJob(prev, key));
-  const handleSelectArea = (id: string) => setState((prev) => selectArea(prev, id));
+  const handleAdvanceMusing = () => { if (canAdvance) playUiSound('next'); setState(advanceMusing); };
+  const handleSelectJob = (key: string) => { playUiSound('click'); setState((prev) => selectJob(prev, key)); };
+  const handleSelectArea = (id: string) => { playUiSound('click'); setState((prev) => selectArea(prev, id)); };
   const handlePlantCrop = (cropId: CropId) => setState((prev) => plantCrop(prev, cropId));
   const handleHarvestCrop = () => setState(harvestCrop);
-  const handleBuyUpgrade = (u: typeof activeJob.upgrades[number]) => setState((prev) => buyUpgrade(prev, u));
+  const handleBuyUpgrade = (u: typeof activeJob.upgrades[number]) => { playUiSound('buy'); setState((prev) => buyUpgrade(prev, u)); };
   const handleClaimDaily = () => setState(claimDailyBonus);
   const handleBuyPrestigeUpgrade = (id: string) => setState((prev) => buyPrestigeUpgrade(prev, id));
   const handleRetire = () => setState((prev) => retire(prev, initialState));
@@ -339,7 +343,7 @@ export default function App() {
       <AchievementToasts toasts={achievementToasts} />
       <ChestOpeningOverlay reveal={chestReveal} equipItem={handleEquipItem} onClose={() => setChestReveal(null)} />
       <OfflineReturnCard state={state} onClose={() => setState((prev) => ({ ...prev, offlineSummary: null }))} />
-      <Header state={state} foundCount={foundCount} musingCount={readMusings.length} dailyReady={dailyReady} dailyStreak={dailyStreak} claimDaily={handleClaimDaily} openEquipment={() => setEquipmentOpen(true)} openCollection={() => setCollectionOpen(true)} openPrestige={() => setPrestigeOpen(true)} openSettings={() => setSettingsOpen(true)} />
+      <Header state={state} foundCount={foundCount} musingCount={readMusings.length} dailyReady={dailyReady} dailyStreak={dailyStreak} claimDaily={handleClaimDaily} openEquipment={() => { playUiSound('open'); setEquipmentOpen(true); }} openCollection={() => { playUiSound('open'); setCollectionOpen(true); }} openPrestige={() => { playUiSound('open'); setPrestigeOpen(true); }} openSettings={() => { playUiSound('open'); setSettingsOpen(true); }} />
       <div className="layout">
         <div className="side">
           <JobMenu state={state} selectJob={handleSelectJob} />
@@ -348,7 +352,7 @@ export default function App() {
         <main className="main">
           <div className="activityGrid">
             <MusingPanel state={state} totalMusings={totalMusings} musingCount={readMusings.length} canAdvance={canAdvance} advanceMusing={handleAdvanceMusing} />
-            <CurrentJobCard job={activeJob} area={activeArea} data={activeData} progress={progress} speedMultiplier={workSpeedMultiplier} effectiveDurationTicks={progressDuration} latestLog={state.eventLog?.[0] || 'まだ作業ログはない。'} openLog={() => setLogOpen(true)} openAreas={() => setAreaOpen(true)} openUpgrades={() => setUpgradesOpen(true)} farmingReady={farmingReady} state={state} plantCrop={handlePlantCrop} harvestCrop={handleHarvestCrop} selectArea={handleSelectArea} buyUpgrade={handleBuyUpgrade} />
+            <CurrentJobCard job={activeJob} area={activeArea} data={activeData} progress={progress} speedMultiplier={workSpeedMultiplier} effectiveDurationTicks={progressDuration} latestLog={state.eventLog?.[0] || 'まだ作業ログはない。'} openLog={() => { playUiSound('open'); setLogOpen(true); }} openAreas={() => { playUiSound('open'); setAreaOpen(true); }} openUpgrades={() => { playUiSound('open'); setUpgradesOpen(true); }} farmingReady={farmingReady} state={state} plantCrop={handlePlantCrop} harvestCrop={handleHarvestCrop} selectArea={handleSelectArea} buyUpgrade={handleBuyUpgrade} />
           </div>
         </main>
       </div>

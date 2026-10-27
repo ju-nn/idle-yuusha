@@ -764,12 +764,59 @@ function monsterSilentGardener(f) {
   px(c, 37 + sway, 28, K);
   return c;
 }
+function monsterSighMoss(f) {
+  const c = canvas(48, 48);
+  const bob = f === 1 ? 1 : 0;
+  // 苔むした土台（ため息をつくたび少し沈む）
+  rect(c, 12, 38 + bob, 24, 6, GREEN_D);
+  rect(c, 10, 34 + bob, 28, 4, GREEN);
+  rect(c, 14, 30 + bob, 20, 4, GREEN);
+  rect(c, 12, 28 + bob, 24, 2, [120, 190, 116]);
+  // ため息の気配（小さな丸い泡）
+  px(c, 8, 26 + bob, CYAN); px(c, 36, 24 + bob, CYAN); px(c, 38, 27 + bob, CYAN);
+  // 眠そうな目とため息の口
+  rect(c, 18, 32 + bob, 3, 1, K); rect(c, 27, 32 + bob, 3, 1, K);
+  rect(c, 21, 36 + bob, 6, 1, K);
+  return c;
+}
+function monsterRollingRock(f) {
+  const c = canvas(48, 48);
+  const roll = f === 1 ? 2 : 0;
+  // 転がる勢いの線
+  rect(c, 6, 30, 5, 2, GRAY_D); rect(c, 4, 36, 7, 2, GRAY_D);
+  // 岩玉（転がっても形が保たれる丸い岩）
+  rect(c, 14 + roll, 20, 20, 4, GOLEM);
+  rect(c, 12 + roll, 24, 24, 12, GOLEM);
+  rect(c, 14 + roll, 36, 20, 4, GOLEM_D);
+  px(c, 19 + roll, 27, GOLEM_D); px(c, 27 + roll, 32, GOLEM_D);
+  // 目（転がりながらもこちらを見ている）
+  px(c, 21 + roll, 28, GOLD); px(c, 27 + roll, 28, GOLD);
+  rect(c, 22 + roll, 33, 4, 1, K);
+  return c;
+}
+function monsterDarkMushroom(f) {
+  const c = canvas(48, 48);
+  const bob = f === 1 ? 1 : 0;
+  // 茎（暗闇でも白く浮かぶ）
+  rect(c, 19, 28 + bob, 10, 16, MUSH_STEM);
+  rect(c, 17, 44 + bob, 4, 2, MUSH_STEM); rect(c, 27, 44 + bob, 4, 2, MUSH_STEM);
+  // 暗い傘（斑点だけ光る）
+  rect(c, 15, 18 + bob, 18, 4, [64, 52, 84]);
+  rect(c, 12, 22 + bob, 24, 4, [64, 52, 84]);
+  rect(c, 10, 26 + bob, 28, 3, [44, 36, 60]);
+  px(c, 16, 20 + bob, CYAN); px(c, 30, 20 + bob, CYAN); px(c, 23, 23 + bob, CYAN);
+  // 暗闇で光る目
+  px(c, 21, 33 + bob, CYAN); px(c, 26, 33 + bob, CYAN);
+  rect(c, 22, 38 + bob, 4, 1, K);
+  return c;
+}
 const MONSTER_BUILDERS = {
   slime: monsterSlime, goblin: monsterGoblin, wolf: monsterWolf, rust_armor: monsterRustArmor,
   bill_wraith: monsterBillWraith, tax_mimic: monsterTaxMimic, quiet_king: monsterQuietKing,
   forest_mushroom: monsterForestMushroom, pebble_golem: monsterPebbleGolem, cave_bat: monsterCaveBat,
   gatekeeper_armor: monsterGatekeeperArmor, dry_fountain_spirit: monsterDryFountainSpirit,
   silent_gardener: monsterSilentGardener,
+  sigh_moss: monsterSighMoss, rolling_rock: monsterRollingRock, dark_mushroom: monsterDarkMushroom,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);

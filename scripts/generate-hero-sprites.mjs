@@ -695,10 +695,81 @@ function monsterCaveBat(f) {
   rect(c, 18, 36, 3, 2, BAT); rect(c, 27, 36, 3, 2, BAT);
   return c;
 }
+function monsterGatekeeperArmor(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 脚とスカート状の鎧（錆びた鎧より一回り大きく、門番らしい重さ）
+  rect(c, 17 + sway, 38, 6, 8, RUST_D); rect(c, 25 + sway, 38, 6, 8, RUST_D);
+  rect(c, 16 + sway, 45, 7, 2, K); rect(c, 25 + sway, 45, 7, 2, K);
+  rect(c, 15 + sway, 32, 18, 6, RUST);
+  rect(c, 15 + sway, 36, 18, 2, RUST_D);
+  // 胴（門の紋章つき）
+  rect(c, 15 + sway, 20, 18, 12, RUST);
+  rect(c, 15 + sway, 20, 18, 2, RUST_L);
+  rect(c, 22 + sway, 24, 4, 4, GOLD); // 紋章
+  px(c, 24 + sway, 26, RUST_D);
+  // 腕（右手に大きな門の鍵）
+  rect(c, 11 + sway, 21, 4, 11, RUST_D);
+  rect(c, 33 + sway, 21, 4, 11, RUST_D);
+  rect(c, 36 + sway, 31, 2, 11, GOLD);
+  rect(c, 35 + sway, 31, 4, 4, GOLD); px(c, 36 + sway, 32, K);
+  rect(c, 38 + sway, 36, 3, 2, GOLD);
+  // 兜（縦長の前立てと横スリット）
+  rect(c, 16 + sway, 7, 16, 12, RUST);
+  rect(c, 16 + sway, 7, 16, 2, RUST_L);
+  rect(c, 22 + sway, 1, 4, 6, RUST_D);
+  rect(c, 18 + sway, 12, 12, 3, K);
+  px(c, 21 + sway, 13, GOLD); px(c, 26 + sway, 13, GOLD);
+  return c;
+}
+const FOUNTAIN_W = [110, 186, 224], FOUNTAIN_D = [70, 144, 196];
+function monsterDryFountainSpirit(f) {
+  const c = canvas(48, 48);
+  const bob = f === 1 ? -1 : 0;
+  // 枯れた噴水の鉢（水はほとんどない）
+  rect(c, 10, 36, 28, 8, GRAY_D);
+  rect(c, 8, 34, 32, 3, GRAY);
+  rect(c, 12, 38, 4, 2, WATER_D); // 残り水
+  // 水の精の体（しずく形）
+  rect(c, 19, 12 + bob, 10, 6, FOUNTAIN_W);
+  rect(c, 16, 18 + bob, 16, 14, FOUNTAIN_W);
+  rect(c, 16, 30 + bob, 16, 2, FOUNTAIN_D);
+  px(c, 22, 10 + bob, FOUNTAIN_W); px(c, 25, 10 + bob, FOUNTAIN_W);
+  // 眠そうな目と小さな口（水不足で元気がない）
+  rect(c, 19, 21 + bob, 3, 1, K); rect(c, 26, 21 + bob, 3, 1, K);
+  rect(c, 22, 26 + bob, 4, 1, K);
+  // 両手に小さな水滴
+  px(c, 14, 24 + bob, WATER); px(c, 15, 24 + bob, WATER);
+  px(c, 32, 24 + bob, WATER); px(c, 33, 24 + bob, WATER);
+  return c;
+}
+function monsterSilentGardener(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 脚と長い外套（庭仕事の土色）
+  rect(c, 18 + sway, 38, 5, 8, [92, 74, 52]); rect(c, 25 + sway, 38, 5, 8, [92, 74, 52]);
+  for (let y = 20; y <= 46; y++) {
+    const w = 7 + Math.round((y - 20) * 0.28);
+    rect(c, 24 - w + sway, y, w * 2, 1, y > 40 ? GREEN_D : GREEN);
+  }
+  // 帽子と影の顔
+  rect(c, 14 + sway, 8, 20, 3, [92, 74, 52]);
+  rect(c, 17 + sway, 5, 14, 3, [92, 74, 52]);
+  rect(c, 18 + sway, 11, 12, 8, [52, 58, 50]);
+  px(c, 21 + sway, 14, GOLD); px(c, 27 + sway, 14, GOLD); // 影に光る目
+  // 両手の剪定ばさみ
+  rect(c, 12 + sway, 22, 4, 8, GREEN_D);
+  line(c, 34 + sway, 24, 40 + sway, 32, METAL_D);
+  line(c, 34 + sway, 32, 40 + sway, 24, METAL_D);
+  px(c, 37 + sway, 28, K);
+  return c;
+}
 const MONSTER_BUILDERS = {
   slime: monsterSlime, goblin: monsterGoblin, wolf: monsterWolf, rust_armor: monsterRustArmor,
   bill_wraith: monsterBillWraith, tax_mimic: monsterTaxMimic, quiet_king: monsterQuietKing,
   forest_mushroom: monsterForestMushroom, pebble_golem: monsterPebbleGolem, cave_bat: monsterCaveBat,
+  gatekeeper_armor: monsterGatekeeperArmor, dry_fountain_spirit: monsterDryFountainSpirit,
+  silent_gardener: monsterSilentGardener,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);

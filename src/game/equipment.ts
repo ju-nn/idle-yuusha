@@ -80,6 +80,12 @@ const BASES: EquipmentBase[] = [
   { baseId: 'notification_ward', name: '通知除けのお守り', slot: 'charm', minRarity: 'rare', description: '鳴らないだけで、少し勝っている。', jobs: ['remote', 'delivery', 'streaming'] },
   { baseId: 'freedom_compass', name: '自由のコンパス', slot: 'charm', onlyRarity: 'legendary', description: '北ではなく、帰り道をよく指す。' },
   { baseId: 'no_work_ring', name: 'もう働きたくない指輪', slot: 'charm', onlyRarity: 'legendary', description: '願いが強すぎて、効果欄が少し震えている。' },
+  { baseId: 'lunch_break_hammer', name: '昼休みのハンマー', slot: 'weapon', description: '叩く相手は敵ではなく、午後の眠気のほう。' },
+  { baseId: 'weekend_bow', name: '週末の弓', slot: 'weapon', description: '矢はよく飛ぶ。予定だけは飛んでこない。' },
+  { baseId: 'warm_sweater', name: '毛玉のセーター', slot: 'armor', description: '毛玉がつくほど着た。防御力より安心感が先に育った。' },
+  { baseId: 'raincoat_of_days_off', name: '休日のレインコート', slot: 'armor', minRarity: 'rare', description: '雨の日でも、少しだけ出かけたくなる色をしている。' },
+  { baseId: 'morning_coffee_charm', name: '朝コーヒーのお守り', slot: 'charm', description: '一口で、今日の最初の敵（眠気）が少し弱る。' },
+  { baseId: 'receipt_charm', name: '領収書のお守り', slot: 'charm', description: '経費にできそうなものは、だいたい勇気になる。', jobs: ['merchant'] },
 ];
 
 type OptionTemplate = {

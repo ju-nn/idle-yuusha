@@ -477,6 +477,7 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
 .lockBadge { background:rgba(41,32,24,.72); }
 .equipmentCard p, .equipmentArchive p { margin:7px 0; color:var(--text-soft); font-size:.84rem; line-height:1.45; }
 .equipmentCard ul { margin:8px 0; padding-left:18px; color:var(--accent-panel); font-size:.82rem; font-weight:900; line-height:1.55; }
+.equipCompare { margin:7px 0; padding:7px 8px; border-radius:6px; background:rgba(15,143,111,.08); color:var(--text-soft); font-size:.8rem; line-height:1.45; }
 .equipmentActions { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
 .equipmentActions button { min-height:30px; padding:5px 9px; font-size:.78rem; }
 .equipmentArchiveList { display:grid; gap:8px; }

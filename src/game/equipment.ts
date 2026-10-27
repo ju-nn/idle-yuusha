@@ -86,6 +86,12 @@ const BASES: EquipmentBase[] = [
   { baseId: 'raincoat_of_days_off', name: '休日のレインコート', slot: 'armor', minRarity: 'rare', description: '雨の日でも、少しだけ出かけたくなる色をしている。' },
   { baseId: 'morning_coffee_charm', name: '朝コーヒーのお守り', slot: 'charm', description: '一口で、今日の最初の敵（眠気）が少し弱る。' },
   { baseId: 'receipt_charm', name: '領収書のお守り', slot: 'charm', description: '経費にできそうなものは、だいたい勇気になる。', jobs: ['merchant'] },
+  { baseId: 'overtime_frying_pan', name: '残業明けのフライパン', slot: 'weapon', description: '晩ごはんのついでに敵もひっくり返す。油はねだけは勘弁。' },
+  { baseId: 'punctual_boomerang', name: '定時ダッシュのブーメラン', slot: 'weapon', minRarity: 'rare', description: '投げれば必ず定時に戻ってくる。手元に戻る安心感が武器。' },
+  { baseId: 'blanket_armor', name: '毛布の鎧', slot: 'armor', description: '包まれると戦う気より眠る気が勝つ。防御より安心感で守る。' },
+  { baseId: 'rain_shelter_scarf', name: '雨宿りのマフラー', slot: 'armor', minRarity: 'rare', description: '雨宿りのあたたかさが残っている。濡れた心配だけ少し弾く。' },
+  { baseId: 'front_door_key_charm', name: '玄関の鍵のお守り', slot: 'charm', description: '帰る場所があるだけで、今日の冒険は少しだけ軽くなる。' },
+  { baseId: 'paid_leave_calendar_charm', name: '有給カレンダーのお守り', slot: 'charm', onlyRarity: 'legendary', description: 'カレンダーの休み欄だけがやけに光っている。見るだけで回復する。' },
 ];
 
 type OptionTemplate = {

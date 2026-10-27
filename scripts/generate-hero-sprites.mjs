@@ -640,9 +640,65 @@ function monsterQuietKing(f) {
   if (f === 1) { px(c, 18 + sway, 3, WHITE); px(c, 30 + sway, 4, WHITE); } // 冠のきらめき
   return c;
 }
+const MUSH_CAP = [190, 90, 70], MUSH_CAP_D = [150, 62, 48], MUSH_STEM = [246, 238, 214];
+function monsterForestMushroom(f) {
+  const c = canvas(48, 48);
+  const bob = f === 1 ? 1 : 0;
+  // 茎（眠そうな顔つき）
+  rect(c, 19, 28 + bob, 10, 16, MUSH_STEM);
+  rect(c, 19, 28 + bob, 10, 2, [210, 198, 170]);
+  rect(c, 17, 44 + bob, 4, 2, MUSH_STEM); rect(c, 27, 44 + bob, 4, 2, MUSH_STEM);
+  // 傘（段状のドーム）
+  rect(c, 15, 18 + bob, 18, 4, MUSH_CAP);
+  rect(c, 12, 22 + bob, 24, 4, MUSH_CAP);
+  rect(c, 10, 26 + bob, 28, 3, MUSH_CAP_D);
+  px(c, 16, 20 + bob, WHITE); px(c, 30, 20 + bob, WHITE); px(c, 23, 23 + bob, WHITE); // 傘の斑点
+  // 眠そうな目と小さな口
+  rect(c, 20, 33 + bob, 3, 1, K); rect(c, 25, 33 + bob, 3, 1, K);
+  rect(c, 22, 38 + bob, 4, 1, K);
+  return c;
+}
+const GOLEM = [150, 148, 142], GOLEM_D = [108, 106, 100];
+function monsterPebbleGolem(f) {
+  const c = canvas(48, 48);
+  const bob = f === 1 ? 1 : 0;
+  // 脚
+  rect(c, 18, 38 + bob, 5, 8, GOLEM_D); rect(c, 25, 38 + bob, 5, 8, GOLEM_D);
+  rect(c, 17, 45 + bob, 6, 2, K); rect(c, 25, 45 + bob, 6, 2, K);
+  // 胴と苔むした頭
+  rect(c, 15, 20 + bob, 18, 18, GOLEM);
+  rect(c, 15, 20 + bob, 18, 2, GOLEM_D);
+  rect(c, 17, 18 + bob, 14, 3, GREEN);
+  px(c, 20, 24 + bob, GOLEM_D); px(c, 27, 30 + bob, GOLEM_D); // ひび
+  // 腕
+  rect(c, 11, 22 + bob, 4, 12, GOLEM_D); rect(c, 33, 22 + bob, 4, 12, GOLEM_D);
+  // 頭と光る目
+  rect(c, 18, 11 + bob, 12, 8, GOLEM);
+  px(c, 21, 14 + bob, GOLD); px(c, 26, 14 + bob, GOLD);
+  rect(c, 22, 17 + bob, 4, 1, K);
+  return c;
+}
+const BAT = [88, 72, 120], BAT_WING = [120, 100, 150];
+function monsterCaveBat(f) {
+  const c = canvas(48, 48);
+  const flap = f === 1 ? -3 : 0; // frame2: 翼を上げる
+  // 翼
+  rect(c, 5, 20 + flap, 15, 8, BAT_WING); rect(c, 5, 26 + flap, 15, 2, BAT);
+  rect(c, 28, 20 + flap, 15, 8, BAT_WING); rect(c, 28, 26 + flap, 15, 2, BAT);
+  // 体と耳
+  rect(c, 20, 22, 8, 14, BAT);
+  rect(c, 20, 17, 3, 6, BAT); rect(c, 25, 17, 3, 6, BAT);
+  px(c, 20, 17, [246, 238, 214]); px(c, 26, 17, [246, 238, 214]);
+  // 目と牙
+  px(c, 22, 26, RED); px(c, 25, 26, RED);
+  px(c, 22, 30, WHITE); px(c, 25, 30, WHITE);
+  rect(c, 18, 36, 3, 2, BAT); rect(c, 27, 36, 3, 2, BAT);
+  return c;
+}
 const MONSTER_BUILDERS = {
   slime: monsterSlime, goblin: monsterGoblin, wolf: monsterWolf, rust_armor: monsterRustArmor,
   bill_wraith: monsterBillWraith, tax_mimic: monsterTaxMimic, quiet_king: monsterQuietKing,
+  forest_mushroom: monsterForestMushroom, pebble_golem: monsterPebbleGolem, cave_bat: monsterCaveBat,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);

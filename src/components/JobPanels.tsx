@@ -77,16 +77,36 @@ function FarmingBox({ state, ready, plantCrop, harvestCrop }: { state: GameState
   return <div className="farmingBox"><p>農業は次のログインを少し楽しみにする枠。長く待つ作物ほど、収穫量と完熟おまけが増える。</p><div className="progressLabel"><span>{crop.name}の育成</span><span>{state.farming.plantedAt ? `${progress.percent}%` : '未植え'}</span></div><div className="bar"><div style={{ width: `${progress.percent}%` }} /></div><p className="sub">{state.farming.plantedAt ? (progress.ready ? `収穫できます。完熟おまけ ${harvestPreview?.bonusCount || 0}段階。` : `育成中。あと${formatFarmDuration(progress.remaining)}くらい。`) : 'まだ何も植えていない。'}</p>{harvestPreview && <p className="farmRewardPreview">収穫見込み：{rewardText(harvestPreview.rewards)}</p>}<div className="cropGrid">{(Object.entries(CROPS) as Array<[CropId, typeof CROPS[CropId]]>).map(([id, candidate]) => { const unlocked = farmingLevel >= candidate.unlockLevel; return <button key={id} className={id === state.farming.cropId ? 'active' : ''} onClick={() => plantCrop(id)} disabled={Boolean(state.farming.plantedAt) || !unlocked}><b>{unlocked ? candidate.name : '？？？'}</b><small>{unlocked ? `${formatFarmDuration(candidate.growthMs)} / ${rewardText(candidate.rewards)}` : `農業Lv${candidate.unlockLevel}`}</small></button>; })}</div><div className="row"><button onClick={harvestCrop} disabled={!ready}>収穫する</button></div></div>;
 }
 
+function avgRange(range?: [number, number]) {
+  return range ? (range[0] + range[1]) / 2 : 0;
+}
+
+function fmtCycle(value: number) {
+  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+}
+
+// 選択時点の比較：候補エリアの1周効率と、現在作業中のエリアの1周効率を並べる。
+function areaCompareText(candidate: Area, candidateSeconds: number, candidateFail: number, current: Area | undefined, currentSeconds: number, currentFail: number) {
+  const candidateLine = `約${candidateSeconds}秒 / 失敗率${Math.round(candidateFail * 100)}% / 1周 約${fmtCycle(avgRange(candidate.rewards.gold))}G・${candidate.rewards.xp || 0}XP`;
+  if (!current || current.id === candidate.id) return candidateLine;
+  const currentLine = `約${currentSeconds}秒 / 失敗率${Math.round(currentFail * 100)}% / 1周 約${fmtCycle(avgRange(current.rewards.gold))}G・${current.rewards.xp || 0}XP`;
+  return `候補：${candidateLine} ｜ 現在（${current.name}）：${currentLine}`;
+}
+
 export function AreaGrid({ job, state, selectArea, compact = false }: { job: Job; state: GameState; selectArea: (id: string) => void; compact?: boolean }) {
+  const currentArea = job.areas.find((area) => area.id === state.activeArea);
+  const data = state.jobData[state.activeJob] || { level: 1, xp: 0, seenMusings: [] };
+  const ownedUpgradeCount = countOwnedUpgrades(job.upgrades.map((u) => u.id), state.items || {});
+  const currentSeconds = currentArea ? Math.ceil(getEffectiveDurationTicksForState(currentArea.seconds, data.level, ownedUpgradeCount, state, state.activeJob) / GAME_SPEED_DIVISOR) : 0;
+  const currentFail = currentArea ? getFailChance(currentArea, job.upgrades, state.items || {}) : 0;
   return <div className={`areaGrid ${compact ? 'compactAreaGrid' : ''}`}>{job.areas.map((area) => {
     const unlocked = isAreaUnlocked(state.activeJob, area, state);
     const active = area.id === state.activeArea;
     const effectiveFail = getFailChance(area, job.upgrades, state.items || {});
-    const data = state.jobData[state.activeJob] || { level: 1, xp: 0, seenMusings: [] };
-    const ownedUpgradeCount = countOwnedUpgrades(job.upgrades.map((u) => u.id), state.items || {});
     const effectiveSeconds = Math.ceil(getEffectiveDurationTicksForState(area.seconds, data.level, ownedUpgradeCount, state, state.activeJob) / GAME_SPEED_DIVISOR);
     const entryCost = getAdventureEntryCost(state, area.adventureCost || 0);
-    return <button key={area.id} onClick={() => selectArea(area.id)} disabled={!unlocked} className={`area ${active ? 'active' : ''}`}><b>{unlocked ? <Icon name="mapPin" /> : <Icon name="lock" />} {area.name}</b><span>{unlocked ? `約${effectiveSeconds}s${entryCost ? ` / ${entryCost}G` : ''}` : `${area.seconds}s`}</span><p>{area.summary}</p>{unlocked && (area.monsters || []).length > 0 && <span className="areaMonsters">{(area.monsters || []).map((monster) => { const defeated = (state.defeatedMonsters || []).includes(monster.id); return <span key={monster.id} className="areaMonster" title={defeated ? monster.name : '？？？'}><MonsterThumb id={monster.id} size={48} silhouette={!defeated} /><small>{defeated ? monster.name : '？？？'}</small></span>; })}</span>}{unlocked && effectiveFail > 0 ? <small className="failRate">失敗率 {Math.round(effectiveFail * 100)}%</small> : <small>{!area.unlock || area.unlock.type === 'start' ? '最初から解禁' : '条件あり'}</small>}</button>;
+    const compareTitle = unlocked ? areaCompareText(area, effectiveSeconds, effectiveFail, currentArea, currentSeconds, currentFail) : undefined;
+    return <button key={area.id} onClick={() => selectArea(area.id)} disabled={!unlocked} className={`area ${active ? 'active' : ''}`} title={compareTitle}><b>{unlocked ? <Icon name="mapPin" /> : <Icon name="lock" />} {area.name}</b><span>{unlocked ? `約${effectiveSeconds}s${entryCost ? ` / ${entryCost}G` : ''}` : `${area.seconds}s`}</span><p>{area.summary}</p>{unlocked && (area.monsters || []).length > 0 && <span className="areaMonsters">{(area.monsters || []).map((monster) => { const defeated = (state.defeatedMonsters || []).includes(monster.id); return <span key={monster.id} className="areaMonster" title={defeated ? monster.name : '？？？'}><MonsterThumb id={monster.id} size={48} silhouette={!defeated} /><small>{defeated ? monster.name : '？？？'}</small></span>; })}</span>}{unlocked && effectiveFail > 0 ? <small className="failRate">失敗率 {Math.round(effectiveFail * 100)}%</small> : <small>{!area.unlock || area.unlock.type === 'start' ? '最初から解禁' : '条件あり'}</small>}</button>;
   })}</div>;
 }
 

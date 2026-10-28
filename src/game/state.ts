@@ -196,7 +196,19 @@ function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameSt
     lastSavedAt: parsed.lastSavedAt || Date.now(),
     prestige: normalizePrestigeState(parsed.prestige),
   };
-  next.unlockedJobs = Object.keys(gameJobs).filter((key) => checkRequirement(gameJobs[key].unlock, next));
+  // 解禁済み仕事は「条件を満たすもの」だけでなく、保存済みリストと使用実績も union で守る。
+  // 移行のたびに条件だけで再計算すると、旧版で使えていた仕事が再ロックされ得るため。
+  const evidenceKeys = Object.keys(gameJobs).filter((key) => {
+    const data = next.jobData?.[key];
+    if (data && ((data.level || 1) > 1 || (data.xp || 0) > 0 || (data.seenMusings || []).length > 0)) return true;
+    if ((gameJobs[key].upgrades || []).some((upgrade) => (next.items?.[upgrade.id] || 0) > 0)) return true;
+    return gameJobs[key].areas.some((area) => (next.visitedAreas || []).includes(area.id));
+  });
+  next.unlockedJobs = Array.from(new Set([
+    ...(parsed.unlockedJobs || []),
+    ...Object.keys(gameJobs).filter((key) => checkRequirement(gameJobs[key].unlock, next)),
+    ...evidenceKeys,
+  ])).filter((key) => Boolean(gameJobs[key]));
   return next;
 }
 

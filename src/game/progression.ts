@@ -1,6 +1,6 @@
-import { ACHIEVEMENTS, itemKind } from '../data/catalog';
+import { ACHIEVEMENTS, itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
-import { checkRequirement, isJobUnlocked } from './requirements';
+import { checkRequirement, describeRequirement, isJobUnlocked } from './requirements';
 import type { Area, GameState, Musing, Requirement, ResourceKey, Upgrade } from '../types';
 import { enqueueMusing } from './musings';
 
@@ -11,7 +11,10 @@ export { checkRequirement, getActiveArea, isAreaUnlocked, isJobUnlocked } from '
 
 export function randInt(min: number, max: number) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 export function clamp(value: number, min: number, max: number) { return Math.max(min, Math.min(max, value)); }
-export function xpToNext(level: number) { return Math.floor(45 + level * level * 12); }
+// レベル曲線: 序盤の「次の解禁まで遠い」詰まりを均すため、2026-10-28 に緩和。
+// 旧: 45 + Lv^2 * 12（Lv1→57, Lv2→93, Lv5→345, Lv10→1245）
+// 新: 30 + Lv^2 * 10（Lv1→40, Lv2→70, Lv5→280, Lv10→1030）
+export function xpToNext(level: number) { return Math.floor(30 + level * level * 10); }
 function pick<T>(arr: T[]) { return arr[Math.floor(Math.random() * arr.length)]; }
 export function isUniqueItem(item: string) {
   return itemKind(item) === '重要';
@@ -91,7 +94,7 @@ function requirementProgress(requirement: Requirement, state: GameState) {
       percent: Math.min(100, Math.floor((current / requirement.amount) * 100)),
       current,
       target: requirement.amount,
-      label: `${current}/${requirement.amount}`,
+      label: `${itemName(requirement.item)} ${current}/${requirement.amount}`,
     };
   }
   const current = state.jobData?.[requirement.job]?.level || 0;
@@ -127,7 +130,7 @@ export function getNextTarget(state: GameState) {
     const progress = requirementProgress(job.unlock, state);
     return {
       title: `次の解禁：${job.name}`,
-      detail: `${job.description}`,
+      detail: `${job.description} 解禁条件：${describeRequirement(job.unlock, state)}`,
       progress: progress.percent,
       meta: progress.label,
       cta: progress.percent >= 85 ? 'もう少しで生活の選択肢が増える' : 'まずは解禁条件を育てる',
@@ -269,7 +272,9 @@ export function addAchievement(prev: GameState, id: string, logs: string[]) {
 }
 
 function unlockedJobKeys(state: GameState) {
-  return Object.keys(jobs).filter((key) => checkRequirement(jobs[key].unlock, state));
+  // 条件だけでなく保存済みリストと使用実績も解禁として数える（grandfather）。
+  // 条件だけで再計算すると、既存プレイヤーの仕事が解禁リストから落ちて再ロックされ得る。
+  return Object.keys(jobs).filter((key) => isJobUnlocked(key, state));
 }
 
 function jobUnlockMusing(key: string): Musing {

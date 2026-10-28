@@ -4,7 +4,7 @@ import { CROPS, formatFarmDuration, getCropRewards, getFarmingProgress, type Cro
 import { getAdventureEntryCost } from '../game/equipment';
 import { rewardText } from '../game/formatters';
 import { getFailChance, xpToNext } from '../game/progression';
-import { isAreaUnlocked, isJobUnlocked } from '../game/requirements';
+import { describeRequirement, isAreaUnlocked, isJobUnlocked } from '../game/requirements';
 import { countOwnedUpgrades, GAME_SPEED_DIVISOR, getEffectiveDurationTicksForState } from '../game/timing';
 import type { Area, GameState, Job, ResourceKey, Upgrade } from '../types';
 import { HeroScene } from './HeroScene';
@@ -106,7 +106,13 @@ export function AreaGrid({ job, state, selectArea, compact = false }: { job: Job
     const effectiveSeconds = Math.ceil(getEffectiveDurationTicksForState(area.seconds, data.level, ownedUpgradeCount, state, state.activeJob) / GAME_SPEED_DIVISOR);
     const entryCost = getAdventureEntryCost(state, area.adventureCost || 0);
     const compareTitle = unlocked ? areaCompareText(area, effectiveSeconds, effectiveFail, currentArea, currentSeconds, currentFail) : undefined;
-    return <button key={area.id} onClick={() => selectArea(area.id)} disabled={!unlocked} className={`area ${active ? 'active' : ''}`} title={compareTitle}><b>{unlocked ? <Icon name="mapPin" /> : <Icon name="lock" />} {area.name}</b><span>{unlocked ? `約${effectiveSeconds}s${entryCost ? ` / ${entryCost}G` : ''}` : `${area.seconds}s`}</span><p>{area.summary}</p>{unlocked && (area.monsters || []).length > 0 && <span className="areaMonsters">{(area.monsters || []).map((monster) => { const defeated = (state.defeatedMonsters || []).includes(monster.id); return <span key={monster.id} className="areaMonster" title={defeated ? monster.name : '？？？'}><MonsterThumb id={monster.id} size={48} silhouette={!defeated} /><small>{defeated ? monster.name : '？？？'}</small></span>; })}</span>}{unlocked && effectiveFail > 0 ? <small className="failRate">失敗率 {Math.round(effectiveFail * 100)}%</small> : <small>{!area.unlock || area.unlock.type === 'start' ? '最初から解禁' : '条件あり'}</small>}</button>;
+    // 未解禁エリアは名前と概要を伏せ、「？？？＋解禁条件のヒント」だけを見せる。
+    // 以前は未解禁でも実名と概要が見えていて、次に目指す条件がカードからは分からなかった。
+    if (!unlocked) {
+      const hint = describeRequirement(area.unlock, state);
+      return <button key={area.id} disabled className="area locked" title={`解禁条件：${hint}`}><b><Icon name="lock" /> ？？？</b><span>未解禁</span><p>{hint}</p><small>進めると少しずつ開きます</small></button>;
+    }
+    return <button key={area.id} onClick={() => selectArea(area.id)} className={`area ${active ? 'active' : ''}`} title={compareTitle}><b><Icon name="mapPin" /> {area.name}</b><span>{`約${effectiveSeconds}s${entryCost ? ` / ${entryCost}G` : ''}`}</span><p>{area.summary}</p>{(area.monsters || []).length > 0 && <span className="areaMonsters">{(area.monsters || []).map((monster) => { const defeated = (state.defeatedMonsters || []).includes(monster.id); return <span key={monster.id} className="areaMonster" title={defeated ? monster.name : '？？？'}><MonsterThumb id={monster.id} size={48} silhouette={!defeated} /><small>{defeated ? monster.name : '？？？'}</small></span>; })}</span>}{effectiveFail > 0 ? <small className="failRate">失敗率 {Math.round(effectiveFail * 100)}%</small> : <small>{!area.unlock || area.unlock.type === 'start' ? '最初から解禁' : '条件あり'}</small>}</button>;
   })}</div>;
 }
 

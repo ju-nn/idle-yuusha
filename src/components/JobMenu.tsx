@@ -1,5 +1,5 @@
 import { jobs } from '../data/gameData';
-import { isJobUnlocked } from '../game/requirements';
+import { describeRequirement, isJobUnlocked } from '../game/requirements';
 import { countOwnedUpgrades, getWorkSpeedMultiplier } from '../game/timing';
 import type { GameState, Job } from '../types';
 import { Icon, JobIcon } from './Icon';
@@ -29,16 +29,6 @@ function JobButton({ id, job, state, selectJob }: { id: string; job: Job; state:
 }
 
 function getUnlockHint(job: Job, state: GameState) {
-  const unlock = job.unlock;
-  if (!unlock || unlock.type === 'start') return '最初から';
-  if (unlock.type === 'jobLevel') {
-    const level = state.jobData[unlock.job]?.level || 1;
-    const name = jobs[unlock.job]?.name || unlock.job;
-    return `${name}Lv${level}/${unlock.level}`;
-  }
-  if (unlock.type === 'item') {
-    const count = state.items[unlock.item] || 0;
-    return `必要 ${count}/${unlock.amount}`;
-  }
-  return '未解禁';
+  // アイテム条件は「必要 0/1」ではなくアイテム名まで出す（例: 休む許可を手に入れると解禁）。
+  return describeRequirement(job.unlock, state);
 }

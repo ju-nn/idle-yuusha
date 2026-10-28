@@ -7,7 +7,8 @@ import { describeUpgradeEffects, formatResourceName, rewardText } from './format
 import { getFarmingProgress } from './farming';
 import { enqueueMusing } from './musings';
 import { addItems, getLifePlan, getNextTarget, rollDrops } from './progression';
-import { checkRequirement, getActiveArea, isJobUnlocked } from './requirements';
+import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } from './requirements';
+import { xpToNext } from './progression';
 import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
 import { buyPrestigeUpgrade, canRetire, getPrestigeScore, getRetirementPoints, retire } from './prestige';
 import { createInitialState, migrateState, SAVE_VERSION } from './state';
@@ -114,5 +115,26 @@ export function runSelfTests() {
   console.assert((bought.prestige?.memoryPoints || 0) === (retired.prestige?.memoryPoints || 0) - 2, 'prestige upgrade should cost points');
   const broke = buyPrestigeUpgrade({ ...initialState, prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {} } }, 'memory_start_gold');
   console.assert(broke.prestige?.upgrades.memory_start_gold === undefined, 'prestige upgrade should not apply without points');
+  // 段階的解禁（2026-10-28）: 新規開始では釣り以外は閉じていて、ヒントが次の目標を示すこと。
+  console.assert(isJobUnlocked('rest', initialState) === false && isJobUnlocked('woodcutting', initialState) === false, 'fresh state should only have fishing unlocked');
+  console.assert(describeRequirement(jobs.rest.unlock, initialState).includes('休む許可'), 'rest unlock hint should name the required item');
+  console.assert(describeRequirement(jobs.fishing.areas[1].unlock, initialState).includes('釣りLv3'), 'river unlock hint should name the level gate');
+  console.assert(describeRequirement(jobs.woodcutting.unlock, initialState).includes('あと1'), 'woodcutting hint should show the remaining levels');
+  // grandfather: 使用実績がある仕事は、条件未達・リスト未記録でも再ロックしない。
+  const veteranState = {
+    ...initialState,
+    unlockedJobs: ['fishing'],
+    jobData: { ...initialState.jobData, woodcutting: { level: 3, xp: 0, seenMusings: [] } },
+  };
+  console.assert(isJobUnlocked('woodcutting', veteranState) === true, 'a job with usage history should never re-lock');
+  const listedState = { ...initialState, unlockedJobs: ['fishing', 'merchant'] };
+  console.assert(isJobUnlocked('merchant', listedState) === true, 'a job recorded as unlocked should stay unlocked');
+  const migratedVeteran = migrateState({ gold: 5, unlockedJobs: ['fishing'], jobData: { fishing: { level: 1, xp: 0, seenMusings: [] }, woodcutting: { level: 2, xp: 0, seenMusings: [] } }, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedVeteran.unlockedJobs.includes('woodcutting'), 'migration should keep jobs with usage history unlocked');
+  const migratedFresh = migrateState({ gold: 5, jobData: { fishing: { level: 1, xp: 0, seenMusings: [] } }, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(!migratedFresh.unlockedJobs.includes('woodcutting') && !migratedFresh.unlockedJobs.includes('rest'), 'migration should not unlock unused jobs');
+  // バランス調整（2026-10-28）: レベル曲線の緩和が想定値どおりであること。
+  console.assert(xpToNext(1) === 40 && xpToNext(2) === 70 && xpToNext(5) === 280 && xpToNext(10) === 1030, 'xp curve should match the softened 2026-10-28 values');
+  console.assert(jobs.fishing.areas[0].failChance === 0.10, 'first fishing area fail chance should be softened to 10%');
 }
 

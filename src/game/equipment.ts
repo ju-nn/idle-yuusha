@@ -92,6 +92,12 @@ const BASES: EquipmentBase[] = [
   { baseId: 'rain_shelter_scarf', name: '雨宿りのマフラー', slot: 'armor', minRarity: 'rare', description: '雨宿りのあたたかさが残っている。濡れた心配だけ少し弾く。' },
   { baseId: 'front_door_key_charm', name: '玄関の鍵のお守り', slot: 'charm', description: '帰る場所があるだけで、今日の冒険は少しだけ軽くなる。' },
   { baseId: 'paid_leave_calendar_charm', name: '有給カレンダーのお守り', slot: 'charm', onlyRarity: 'legendary', description: 'カレンダーの休み欄だけがやけに光っている。見るだけで回復する。' },
+  { baseId: 'nap_pillow_mace', name: '昼寝枕のメイス', slot: 'weapon', description: '振るたび、眠気が向こうへ飛んでいく。枕なのに意外と痛い。' },
+  { baseId: 'last_train_spear', name: '終電の槍', slot: 'weapon', minRarity: 'rare', description: '乗り遅れまいとする速度で突く。帰る意思だけは誰にも負けない。' },
+  { baseId: 'kotatsu_armor', name: 'こたつの鎧', slot: 'armor', description: '入ったら出られない。防御というより、戦う気の置き忘れ。' },
+  { baseId: 'day_off_hoodie', name: '休日のパーカー', slot: 'armor', minRarity: 'rare', description: 'フードをかぶると、世界が少しだけ静かになる。' },
+  { baseId: 'cat_nap_charm', name: '猫の昼寝のお守り', slot: 'charm', description: '猫が寝ている間だけ、運が少し上がる気がする。' },
+  { baseId: 'evening_bath_charm', name: '晩風呂の湯気のお守り', slot: 'charm', onlyRarity: 'legendary', description: '湯気の向こうでは、今日の疲れが少しだけ溶けていく。' },
 ];
 
 type OptionTemplate = {

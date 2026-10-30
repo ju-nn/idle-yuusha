@@ -99,6 +99,12 @@ const BASES: EquipmentBase[] = [
   { baseId: 'day_off_hoodie', name: '休日のパーカー', slot: 'armor', minRarity: 'rare', description: 'フードをかぶると、世界が少しだけ静かになる。' },
   { baseId: 'cat_nap_charm', name: '猫の昼寝のお守り', slot: 'charm', description: '猫が寝ている間だけ、運が少し上がる気がする。' },
   { baseId: 'evening_bath_charm', name: '晩風呂の湯気のお守り', slot: 'charm', onlyRarity: 'legendary', description: '湯気の向こうでは、今日の疲れが少しだけ溶けていく。' },
+  { baseId: 'folding_umbrella_sword', name: '折りたたみ傘の剣', slot: 'weapon', description: '開けば雨よけ、閉じれば剣。天気に左右されない身軽さが武器。' },
+  { baseId: 'midnight_fridge_axe', name: '深夜の冷蔵庫の斧', slot: 'weapon', minRarity: 'rare', description: '夜中に冷蔵庫を開ける勇気で振り下ろす。音だけは立てない。' },
+  { baseId: 'bath_towel_armor', name: '湯上がりバスタオルの鎧', slot: 'armor', description: '包まれると今日の疲れが半分になる。防御より湯上がりの安心感。' },
+  { baseId: 'zabuton_armor', name: '座布団の鎧', slot: 'armor', minRarity: 'rare', description: '座った瞬間、戦う気も一緒に座り込む。動かない強さがある。' },
+  { baseId: 'toothbrush_charm', name: '寝る前の歯磨きのお守り', slot: 'charm', description: '一日をきちんと閉じる力がつく。明日への準備はもう済んでいる。' },
+  { baseId: 'balcony_stargazing_charm', name: '星空のベランダのお守り', slot: 'charm', onlyRarity: 'legendary', description: '夜風に当たると、明日への元気が少し戻ってくる気がする。' },
 ];
 
 type OptionTemplate = {

@@ -846,6 +846,65 @@ function monsterShadowRat(f) {
   px(c, 32 + dart, 26, CYAN); px(c, 36 + dart, 26, CYAN);
   return c;
 }
+function monsterRustyMessenger(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 脚と錆びた外套
+  rect(c, 18 + sway, 38, 5, 8, RUST_D); rect(c, 25 + sway, 38, 5, 8, RUST_D);
+  rect(c, 15 + sway, 30, 18, 10, RUST);
+  rect(c, 15 + sway, 30, 18, 2, RUST_L);
+  // 胴と肩当て
+  rect(c, 16 + sway, 20, 16, 10, RUST);
+  rect(c, 16 + sway, 20, 16, 2, RUST_L);
+  // 兜と目のスリット
+  rect(c, 17 + sway, 8, 14, 11, RUST);
+  rect(c, 17 + sway, 8, 14, 2, RUST_L);
+  rect(c, 19 + sway, 13, 10, 2, K);
+  px(c, 21 + sway, 14, GOLD); px(c, 27 + sway, 14, GOLD);
+  // 手にした封筒（届け先不明の伝令）
+  rect(c, 34 + sway, 24, 8, 6, WHITE);
+  rect(c, 34 + sway, 24, 8, 1, METAL_D);
+  line(c, 34 + sway, 24, 38 + sway, 28, METAL_D); line(c, 42 + sway, 24, 38 + sway, 28, METAL_D);
+  // 小さな鐘（伝令の合図）
+  rect(c, 10 + sway, 22, 4, 4, GOLD); px(c, 12 + sway, 26, K);
+  return c;
+}
+function monsterCrackedFlagstone(f) {
+  const c = canvas(48, 48);
+  const shift = f === 1 ? 1 : 0;
+  // 石畳の板（地面に伏せた低い姿）
+  rect(c, 8, 34, 32, 8, GRAY);
+  rect(c, 8, 34, 32, 2, GRAY_D);
+  rect(c, 6, 40, 36, 3, GRAY_D);
+  // ひび割れ
+  line(c, 14 + shift, 36, 20 + shift, 40, K); line(c, 20 + shift, 40, 24 + shift, 37, K);
+  line(c, 28 - shift, 36, 32 - shift, 41, K);
+  // 苔と目（割れ目からこちらを見ている）
+  rect(c, 10, 34, 5, 2, GREEN_D); rect(c, 33, 34, 5, 2, GREEN_D);
+  px(c, 19 + shift, 38, GOLD); px(c, 28 - shift, 38, GOLD);
+  rect(c, 22, 40, 4, 1, K);
+  return c;
+}
+function monsterQuietStatue(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 台座
+  rect(c, 12, 42, 24, 4, GRAY_D);
+  rect(c, 14, 39, 20, 3, GRAY);
+  // 石像の体（苔むした石）
+  rect(c, 16 + sway, 22, 16, 17, GRAY);
+  rect(c, 16 + sway, 22, 16, 2, GRAY_D);
+  rect(c, 12 + sway, 24, 4, 10, GRAY_D); rect(c, 32 + sway, 24, 4, 10, GRAY_D);
+  px(c, 17 + sway, 23, GREEN_D); px(c, 30 + sway, 23, GREEN_D);
+  // 頭と小さな冠
+  rect(c, 18 + sway, 10, 12, 12, GRAY);
+  rect(c, 18 + sway, 10, 12, 2, GRAY_D);
+  rect(c, 21 + sway, 6, 6, 4, GOLD);
+  px(c, 23 + sway, 7, K); px(c, 25 + sway, 7, K);
+  // 静かに閉じた目
+  rect(c, 20 + sway, 16, 3, 1, K); rect(c, 25 + sway, 16, 3, 1, K);
+  return c;
+}
 const MONSTER_BUILDERS = {
   slime: monsterSlime, goblin: monsterGoblin, wolf: monsterWolf, rust_armor: monsterRustArmor,
   bill_wraith: monsterBillWraith, tax_mimic: monsterTaxMimic, quiet_king: monsterQuietKing,
@@ -854,6 +913,7 @@ const MONSTER_BUILDERS = {
   silent_gardener: monsterSilentGardener,
   sigh_moss: monsterSighMoss, rolling_rock: monsterRollingRock, dark_mushroom: monsterDarkMushroom,
   whisper_vine: monsterWhisperVine, cliff_goat: monsterCliffGoat, shadow_rat: monsterShadowRat,
+  rusty_messenger: monsterRustyMessenger, cracked_flagstone: monsterCrackedFlagstone, quiet_statue: monsterQuietStatue,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);

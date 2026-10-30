@@ -810,6 +810,42 @@ function monsterDarkMushroom(f) {
   rect(c, 22, 38 + bob, 4, 1, K);
   return c;
 }
+function monsterWhisperVine(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 2 : 0;
+  // 垂れ下がるツタ
+  rect(c, 14 + sway, 8, 3, 30, GREEN_D); rect(c, 28 - sway, 10, 3, 28, GREEN);
+  rect(c, 18, 16, 12, 3, GREEN); rect(c, 20, 26, 8, 3, GREEN_D);
+  // 葉とささやきの気配
+  rect(c, 10 + sway, 14, 6, 4, GREEN); rect(c, 30 - sway, 22, 6, 4, GREEN);
+  px(c, 8 + sway, 30, CYAN); px(c, 36 - sway, 28, CYAN);
+  // 細い目
+  rect(c, 19, 20, 3, 1, K); rect(c, 26, 20, 3, 1, K);
+  return c;
+}
+function monsterCliffGoat(f) {
+  const c = canvas(48, 48);
+  const step = f === 1 ? 2 : 0;
+  // 崖の足場
+  rect(c, 8, 40, 32, 4, GRAY_D);
+  // ヤギの体と角
+  rect(c, 14, 26 + step, 20, 10, GOLEM); rect(c, 30, 22 + step, 8, 8, GOLEM);
+  rect(c, 30, 18 + step, 3, 4, GOLD); rect(c, 35, 18 + step, 3, 4, GOLD);
+  px(c, 33, 25 + step, K); px(c, 36, 25 + step, K);
+  rect(c, 16, 36 + step, 3, 4, K); rect(c, 28, 36 + step, 3, 4, K);
+  return c;
+}
+function monsterShadowRat(f) {
+  const c = canvas(48, 48);
+  const dart = f === 1 ? 3 : 0;
+  // 影の尾と体
+  rect(c, 6 + dart, 32, 10, 2, [44, 36, 60]);
+  rect(c, 14 + dart, 26, 20, 10, [44, 36, 60]); rect(c, 30 + dart, 22, 8, 8, [44, 36, 60]);
+  // 耳と光る目
+  rect(c, 31 + dart, 18, 3, 4, [64, 52, 84]); rect(c, 35 + dart, 18, 3, 4, [64, 52, 84]);
+  px(c, 32 + dart, 26, CYAN); px(c, 36 + dart, 26, CYAN);
+  return c;
+}
 const MONSTER_BUILDERS = {
   slime: monsterSlime, goblin: monsterGoblin, wolf: monsterWolf, rust_armor: monsterRustArmor,
   bill_wraith: monsterBillWraith, tax_mimic: monsterTaxMimic, quiet_king: monsterQuietKing,
@@ -817,6 +853,7 @@ const MONSTER_BUILDERS = {
   gatekeeper_armor: monsterGatekeeperArmor, dry_fountain_spirit: monsterDryFountainSpirit,
   silent_gardener: monsterSilentGardener,
   sigh_moss: monsterSighMoss, rolling_rock: monsterRollingRock, dark_mushroom: monsterDarkMushroom,
+  whisper_vine: monsterWhisperVine, cliff_goat: monsterCliffGoat, shadow_rat: monsterShadowRat,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);

@@ -7,6 +7,7 @@ import { JobMenu } from './components/JobMenu';
 import { CollectionModal, EquipmentModal, LogModal, PrestigeModal, SettingsModal, StatsModal } from './components/Modals';
 import { ItemSprite } from './components/GameIcon';
 import { MusingPanel } from './components/MusingPanel';
+import { TitleScreen } from './components/TitleScreen';
 import { Card, Modal } from './components/shared';
 import { ACHIEVEMENTS, itemName } from './data/catalog';
 import { jobs } from './data/gameData';
@@ -17,7 +18,8 @@ import { getJobDropItems } from './game/collection';
 import { EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipItem, equipmentOptionText, getEquipmentBonus, openAllTreasureChests, openTreasureChest, sellEquipment, toggleEquipmentLock } from './game/equipment';
 import type { CropId } from './game/farming';
 import { formatResourceName } from './game/formatters';
-import { clearSave, createInitialState, loadState, saveState } from './game/state';
+import { loadUserSettings } from './game/settings';
+import { clearSave, createInitialState, loadState, SAVE_KEY, saveState } from './game/state';
 import { getLifePlan } from './game/progression';
 import { buyPrestigeUpgrade, retire } from './game/prestige';
 import { getActiveArea, isJobUnlocked } from './game/requirements';
@@ -218,15 +220,24 @@ export default function App() {
   const [logOpen, setLogOpen] = useState(false);
   const [areaOpen, setAreaOpen] = useState(false);
   const [upgradesOpen, setUpgradesOpen] = useState(false);
+  // 起動時点のスナップショット。初回レンダー（＝初回セーブ書き込みより前）で確定させる。
+  // hasSave は「前回までのセーブがあるか」、showTitle は端末設定のタイトル表示 ON/OFF。
+  const [bootInfo] = useState(() => {
+    let hasSave = false;
+    try { hasSave = Boolean(localStorage.getItem(SAVE_KEY)); } catch { hasSave = false; }
+    return { hasSave, showTitle: loadUserSettings().showTitleScreen };
+  });
+  const [titleDone, setTitleDone] = useState(false);
   const [state, setState] = useState<GameState>(() => loadState(initialState));
   const [floatingGains, setFloatingGains] = useState<FloatingGain[]>([]);
   const [achievementToasts, setAchievementToasts] = useState<AchievementToast[]>([]);
   const [chestReveal, setChestReveal] = useState<ChestReveal | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
   const previousGains = useRef(snapshotGains(state));
   const previousAchievements = useRef(new Set(state.achievements || []));
   const previousFeedbackEvents = useRef(new Set((state.feedbackEvents || []).map((event) => event.id)));
 
-  useEffect(() => { saveState(state); }, [state]);
+  useEffect(() => { setSaveFailed(!saveState(state)); }, [state]);
   useEffect(() => { initBgm(); }, []);
   useEffect(() => { setBgmAdventure(jobs[state.activeJob]?.type === 'adventure'); }, [state.activeJob]);
   useEffect(() => {
@@ -345,6 +356,7 @@ export default function App() {
       <ChestOpeningOverlay reveal={chestReveal} equipItem={handleEquipItem} onClose={() => setChestReveal(null)} />
       <OfflineReturnCard state={state} onClose={() => setState((prev) => ({ ...prev, offlineSummary: null }))} />
       <Header state={state} foundCount={foundCount} musingCount={readMusings.length} dailyReady={dailyReady} dailyStreak={dailyStreak} claimDaily={handleClaimDaily} openEquipment={() => { playUiSound('open'); setEquipmentOpen(true); }} openCollection={() => { playUiSound('open'); setCollectionOpen(true); }} openPrestige={() => { playUiSound('open'); setPrestigeOpen(true); }} openSettings={() => { playUiSound('open'); setSettingsOpen(true); }} openStats={() => { playUiSound('open'); setStatsOpen(true); }} />
+      {saveFailed && <div className="saveWarning" role="alert"><div><small>セーブに失敗しました</small><b>いまの進み具合が保存できていません</b><p>ブラウザの空き容量やプライベートモードを確認してください。進むたびに保存をやり直すので、直ればこの表示は自動で消えます。</p></div></div>}
       <div className="layout">
         <div className="side">
           <JobMenu state={state} selectJob={handleSelectJob} />
@@ -365,6 +377,7 @@ export default function App() {
       {prestigeOpen && <PrestigeModal state={state} buyPrestigeUpgrade={handleBuyPrestigeUpgrade} retire={() => { handleRetire(); setPrestigeOpen(false); }} onClose={() => setPrestigeOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} reset={() => { reset(); setSettingsOpen(false); }} />}
       {statsOpen && <StatsModal state={state} onClose={() => setStatsOpen(false)} />}
+      {!titleDone && bootInfo.showTitle && <TitleScreen hasSave={bootInfo.hasSave} onFinish={() => setTitleDone(true)} onOpenSettings={() => { setTitleDone(true); playUiSound('open'); setSettingsOpen(true); }} />}
     </div>
   );
 }

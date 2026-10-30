@@ -1,6 +1,7 @@
 import type { EquipmentItem, EquipmentOption, EquipmentOptionTarget, EquipmentRarity, EquipmentSlot, FeedbackEvent, GameState, JobType, ResourceKey, TreasureChest, TreasureChestType } from '../types';
 import { enqueueMusing } from './musings';
 import { getPrestigeChestMultiplier } from './prestige';
+import { loadUserSettings } from './settings';
 
 export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
   weapon: '武器',
@@ -297,6 +298,31 @@ export function getEquipmentSellValue(item: EquipmentItem) {
   return base + item.options.reduce((sum, option) => sum + Math.ceil(option.value * 1.7), 0);
 }
 
+// 装備の総合力。自動装備の比較用で、物差しは既存の売却額算出
+// （レアリティ基礎値＋オプション値の合計＝効果の総量）と揃える。
+export function getEquipmentPower(item: EquipmentItem) {
+  return getEquipmentSellValue(item);
+}
+
+// 自動装備（設定ONのとき）: 手に入れた装備が、同じ枠の現在の装備より強い場合だけ付け替える。
+// 枠が空いていれば無条件で装備する。同等以下なら何もしない（既存の遊び方を変えない）。
+export function maybeAutoEquip(state: GameState, item: EquipmentItem): GameState {
+  if (!loadUserSettings().autoEquip) return state;
+  const currentUid = state.equipped?.[item.slot];
+  const current = currentUid ? (state.equipmentInventory || []).find((candidate) => candidate.uid === currentUid) : undefined;
+  if (current && getEquipmentPower(item) <= getEquipmentPower(current)) return state;
+  const autoEvent: FeedbackEvent = { id: `auto-equip-${item.uid}`, type: 'equipmentDrop', label: `自動装備 ${item.name}` };
+  return {
+    ...state,
+    equipped: { ...(state.equipped || {}), [item.slot]: item.uid },
+    feedbackEvents: [...(state.feedbackEvents || []), autoEvent].slice(-24),
+    eventLog: [
+      `自動装備：${item.name}を装備した。${current ? `今までの${current.name}より強い。` : '空いていた枠に、そのまま入れた。'}付け替えの手間が消えた。`,
+      ...(state.eventLog || []),
+    ].slice(0, 24),
+  };
+}
+
 export function equipItem(prev: GameState, uid: string): GameState {
   const item = prev.equipmentInventory.find((candidate) => candidate.uid === uid);
   if (!item) return prev;
@@ -397,7 +423,7 @@ export function openTreasureChest(prev: GameState, uid: string): GameState {
       ...prev.eventLog,
     ].slice(0, 24),
   };
-  return enqueueMusing(next, {
+  return enqueueMusing(maybeAutoEquip(next, equipment), {
     id: equipment.rarity === 'legendary' ? `legendary-equipment-${equipment.baseId}` : 'first-open-chest',
     job: '勇者',
     area: '宝箱',

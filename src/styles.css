@@ -87,6 +87,10 @@ button:disabled { cursor:not-allowed; opacity:.48; }
 .returnBanner b { display:block; margin-top:2px; }
 .returnBanner p { margin:3px 0 0; color:var(--text-soft); font-size:.84rem; line-height:1.45; }
 .returnBanner button { white-space:nowrap; }
+.saveWarning { margin:0 0 14px; padding:13px 14px; border:1px solid rgba(220,38,38,.55); border-radius:8px; background:var(--danger-soft); box-shadow:0 10px 28px rgba(68,64,60,.14); }
+.saveWarning small { display:block; color:var(--danger); font-weight:900; font-size:.72rem; }
+.saveWarning b { display:block; margin-top:2px; }
+.saveWarning p { margin:3px 0 0; color:var(--text-soft); font-size:.84rem; line-height:1.45; }
 .returnBanner.tier-overnight { border-color:rgba(161,98,7,.45); background:linear-gradient(135deg, rgba(255,253,248,.98), rgba(250,240,220,.96)); }
 .returnBanner.tier-days { border-color:rgba(161,98,7,.62); background:linear-gradient(135deg, rgba(255,250,235,.99), rgba(244,230,196,.97)); box-shadow:0 18px 52px rgba(161,98,7,.30); }
 .returnBanner .returnCapped { margin-top:6px; font-size:.76rem; }
@@ -430,6 +434,12 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
 .bookTabs button.active, .musingFilters button.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
 .bookGrid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
 .bookGrid.single { grid-template-columns:minmax(0, 1fr); }
+.howToSteps { margin:10px 0 0; padding-left:22px; }
+.howToSteps li { margin:10px 0; color:var(--text); line-height:1.5; }
+.howToSteps li p { margin:2px 0 0; color:var(--text-soft); font-size:.88rem; }
+.howToNotes { margin-top:14px; }
+.howToNotes b { display:block; margin-top:12px; }
+.howToNotes p { margin:2px 0 0; color:var(--text-soft); font-size:.88rem; line-height:1.5; }
 .discoverSection, .achievement, .musingArchive, .monsterArchive { margin:10px 0; padding:12px; background:var(--surface-strong); border:1px solid var(--line); border-radius:8px; }
 .discoverSection > div:first-child { display:flex; justify-content:space-between; color:var(--text-soft); font-size:.86rem; margin-bottom:8px; }
 .discoverSection > div:first-child span { color:var(--accent); }
@@ -2572,4 +2582,32 @@ button.primary:active:not(:disabled) {
   .statsPanel .statsSummary { grid-template-columns:repeat(2, minmax(0, 1fr)); }
   .statsRow { flex-direction:column; gap:2px; }
   .statsRow b { text-align:left; }
+}
+
+/* タイトル画面＋ロード表示（ゲームの顔）。本編の上に重なる全画面オーバーレイ。 */
+.titleScreen { position:fixed; inset:0; z-index:120; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; background:var(--bg-deep); animation:overlayFade .3s ease-out both; transition:opacity .28s ease; }
+.titleScreen.leaving { opacity:0; pointer-events:none; }
+.titleArt { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 30%; }
+.titleShade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(247,244,236,.52) 0%, rgba(247,244,236,.8) 52%, rgba(227,234,223,.95) 100%); }
+.titleContent { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; text-align:center; width:min(520px, 100%); padding:24px 18px 64px; animation:titleRise .5s cubic-bezier(.17,.84,.32,1) both; }
+.titleKicker { display:inline-flex; align-items:center; gap:6px; color:var(--accent-text); font-size:.82rem; font-weight:900; letter-spacing:.14em; }
+.titleLogo { margin:14px 0 0; font-family:var(--font-title); font-weight:800; font-size:clamp(2.5rem, 11vw, 4.1rem); line-height:1.18; color:var(--text); text-shadow:0 2px 0 rgba(255,253,248,.75), 0 10px 28px rgba(68,64,60,.18); }
+.titleLogoDot { color:var(--accent); }
+.titleTagline { margin:14px 0 0; color:var(--text-soft); font-size:.95rem; font-weight:700; }
+.titleLoading { display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:34px; min-height:118px; }
+.titleProgress { width:min(260px, 70vw); height:8px; border-radius:999px; background:rgba(41,32,24,.16); overflow:hidden; }
+.titleProgress i { display:block; height:100%; width:4%; border-radius:999px; background:var(--accent); animation:titleLoad .9s linear forwards; }
+.titleTip { margin:0; color:var(--text-soft); font-size:.9rem; font-weight:700; animation:openingTextPulse .9s ease-in-out infinite alternate; }
+.titleSkipHint { color:var(--faint); font-size:.74rem; font-weight:700; }
+.titleActions { display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:30px; min-height:118px; animation:revealCardIn .34s cubic-bezier(.17,.84,.32,1) both; }
+.titleStart { min-width:min(280px, 78vw); min-height:56px; padding:12px 22px; border-radius:10px; font-size:1.15rem; box-shadow:0 14px 34px rgba(15,143,111,.32); }
+.titleSettingsButton { min-height:44px; padding:8px 18px; background:rgba(255,253,248,.85); }
+.titleSaveNote { margin:2px 0 0; color:var(--muted); font-size:.8rem; font-weight:700; }
+.titleFooter { position:absolute; left:0; right:0; bottom:0; z-index:1; display:flex; justify-content:space-between; gap:12px; padding:14px 18px calc(14px + env(safe-area-inset-bottom)); color:var(--text-soft); font-size:.78rem; font-weight:700; }
+@keyframes titleLoad { from { width:4%; } to { width:100%; } }
+@keyframes titleRise { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .titleContent, .titleActions { animation:none; }
+  .titleTip { animation:none; }
+  .titleProgress i { animation-duration:.05s; }
 }

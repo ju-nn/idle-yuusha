@@ -5,6 +5,9 @@ export type UserSettings = {
   se: number;
   simplifiedComboSe: boolean;
   textSpeed: 'normal' | 'fast';
+  autoSell: boolean;
+  autoEquip: boolean;
+  showTitleScreen: boolean;
 };
 
 export const defaultSettings: UserSettings = {
@@ -12,6 +15,9 @@ export const defaultSettings: UserSettings = {
   se: 75,
   simplifiedComboSe: false,
   textSpeed: 'normal',
+  autoSell: false,
+  autoEquip: false,
+  showTitleScreen: true,
 };
 
 export function loadUserSettings(): UserSettings {

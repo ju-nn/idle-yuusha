@@ -8,6 +8,8 @@ import { runOfflineTicks } from './tick';
 
 export const SAVE_KEY = 'yuusha-does-not-want-to-work-codex-handoff-v1';
 export const SAVE_VERSION = 4;
+// アプリ本体の表示用バージョン（タイトル画面・フッター表示用）。セーブ版数とは別管理。
+export const APP_VERSION = '1.0.0';
 
 export const introMusing: Musing = {
   id: 'intro_001',
@@ -287,8 +289,15 @@ export function loadState(initialState: GameState): GameState {
   }
 }
 
-export function saveState(state: GameState) {
-  localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, saveVersion: SAVE_VERSION, lastSavedAt: Date.now() }));
+export function saveState(state: GameState): boolean {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, saveVersion: SAVE_VERSION, lastSavedAt: Date.now() }));
+    return true;
+  } catch {
+    // 容量不足やプライベートモード等で保存できない場合、呼び出し側が警告を出す。
+    // ここで例外を握りつぶすのは、セーブ失敗でゲーム自体を止めないため。
+    return false;
+  }
 }
 
 export function clearSave() {

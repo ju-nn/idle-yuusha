@@ -5,6 +5,9 @@ import { enqueueMusing } from './musings';
 import { addAchievement, addItems, announceJobUnlocks } from './progression';
 import { isAreaUnlocked, isJobUnlocked } from './requirements';
 import { CROPS, getCropRewards, type CropId } from './farming';
+import { autoSellGainedItems, autoSellLogText } from './automation';
+import { getSellPriceMultiplier } from './equipment';
+import { loadUserSettings } from './settings';
 
 function localDateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -158,6 +161,17 @@ export function harvestCrop(prev: GameState): GameState {
   const { rewards, bonusCount } = getCropRewards((prev.farming.cropId || 'daikon') as CropId, prev.farming.readyAt);
   const bonusText = bonusCount > 0 ? ` 完熟おまけ+${bonusCount}段階。` : '';
   const eventLog = [`出来事報酬：${rewardText(rewards)}`, `${crop.name}を収穫した。畑が静かに勝っていた。${bonusText}`, ...prev.eventLog].slice(0, 24);
+  // 自動売却（設定ONのとき）: 収穫した素材はその場でGに変える。重要アイテムは対象外。
+  let harvestItems = addItems(prev.items, rewards);
+  let harvestGold = 0;
+  if (loadUserSettings().autoSell) {
+    const autoSold = autoSellGainedItems(prev.items || {}, harvestItems, getSellPriceMultiplier(prev));
+    if (autoSold.sold.length) {
+      harvestItems = autoSold.items;
+      harvestGold = autoSold.gold;
+      eventLog.unshift(autoSellLogText(autoSold.sold));
+    }
+  }
   let achievements = addAchievement(prev, 'first_daikon', eventLog);
   achievements = addAchievement({ ...prev, achievements }, 'first_combo', eventLog);
   if (crop.growthMs >= 2 * 60 * 60_000) {
@@ -179,7 +193,8 @@ export function harvestCrop(prev: GameState): GameState {
   const next: GameState = {
     ...prev,
     farming: { plantedAt: null, readyAt: null, cropId: null },
-    items: addItems(prev.items, rewards),
+    gold: prev.gold + harvestGold,
+    items: harvestItems,
     combo: { ...(prev.combo || { streak: 0, boons: {} }), boons: { ...(prev.combo?.boons || {}), home_meal: Math.max(prev.combo?.boons?.home_meal || 0, 5) } },
     achievements,
     eventLog,

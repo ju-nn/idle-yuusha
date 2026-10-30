@@ -9,6 +9,8 @@ import { getPrestigeGoldMultiplier, getPrestigeMusingRewardMultiplier, getPresti
 import { getActiveArea, isJobUnlocked } from './requirements';
 import { countOwnedUpgrades, getEffectiveDurationTicksForState } from './timing';
 import { addAchievement, announceJobUnlocks, clamp, getFailChance, grantItemRewards, isUniqueItem, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
+import { autoSellGainedItems, autoSellLogText } from './automation';
+import { loadUserSettings } from './settings';
 
 const IDLE_MUSINGS = [
   '時間だけは定時退勤せず進む。見習いたくはない。',
@@ -521,10 +523,24 @@ export function runTick(prev: GameState): GameState {
     }
   }
 
+  // 自動売却（設定ONのとき）: このサイクルで増えた素材アイテムをその場でGに変える。
+  // 対象は素材のみで、重要・記録・拠点整備は売らない。初発見の品は1個だけ残す。
+  let autoSellGold = 0;
+  if (loadUserSettings().autoSell) {
+    const autoSold = autoSellGainedItems(prev.items || {}, nextItems, getSellPriceMultiplier(prev));
+    if (autoSold.sold.length) {
+      autoSellGold = autoSold.gold;
+      Object.keys(nextItems).forEach((key) => delete nextItems[key]);
+      Object.assign(nextItems, autoSold.items);
+      addFeedback('sale');
+      eventLog.push(autoSellLogText(autoSold.sold));
+    }
+  }
+
   const reward = area.rewards;
   const baseGoldGain = job.type === 'adventure' || !reward.gold ? 0 : randInt(reward.gold[0], reward.gold[1]);
   // 収入の永続強化は稼いだ分にだけ掛ける（冒険費用などの支出は割り引かない）。
-  const earnedGold = baseGoldGain + sellGold + adventureGold + bonusGold;
+  const earnedGold = baseGoldGain + sellGold + adventureGold + bonusGold + autoSellGold;
   let goldGain = Math.floor(earnedGold * getPrestigeGoldMultiplier(prev)) - adventureEntryCost;
   if (goldGain > 0 && prev.activeJob !== 'merchant' && consumeBoon('market_sense')) {
     const marketBonus = Math.max(1, Math.floor(goldGain * 0.12));

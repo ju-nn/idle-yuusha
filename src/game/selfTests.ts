@@ -11,6 +11,8 @@ import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } f
 import { xpToNext } from './progression';
 import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
 import { buyPrestigeUpgrade, canRetire, getPrestigeScore, getRetirementPoints, retire } from './prestige';
+import { autoSellGainedItems, isAutoSellTarget } from './automation';
+import { getEquipmentPower } from './equipment';
 import { createInitialState, migrateState, SAVE_VERSION } from './state';
 
 const initialState = createInitialState(jobs);
@@ -28,6 +30,14 @@ export function runSelfTests() {
   console.assert(formatResourceName('wood') === '木材', 'wood should be formatted as 木材');
   console.assert(addItems({}, [{ item: 'small_fish', amount: 2 }]).small_fish === 2, 'addItems should add item amounts');
   console.assert(addItems({ field_note: 1 }, [{ item: 'field_note', amount: 3 }]).field_note === 1, 'important items should stay unique');
+  console.assert(isAutoSellTarget('small_fish') === true && isAutoSellTarget('quiet_scale') === false && isAutoSellTarget('life_stamp') === false && isAutoSellTarget('upgrade_small_shelf') === false, 'auto sell should target materials only');
+  const autoSoldFirst = autoSellGainedItems({}, { small_fish: 3, quiet_scale: 1 }, 1);
+  console.assert(autoSoldFirst.items.small_fish === 1 && autoSoldFirst.gold === 6 && autoSoldFirst.items.quiet_scale === 1, 'auto sell should keep one copy of a first discovery and never sell important items');
+  const autoSoldMore = autoSellGainedItems({ small_fish: 1 }, { small_fish: 4 }, 1);
+  console.assert(autoSoldMore.items.small_fish === 1 && autoSoldMore.gold === 9, 'auto sell should sell all later gains of a known material');
+  const weakItem = { uid: 't-weak', baseId: 'better_stick', name: '弱い棒', description: '', slot: 'weapon' as const, rarity: 'common' as const, options: [{ id: 'attack:all', target: 'attack' as const, value: 4 }], obtainedAt: 0 };
+  const strongItem = { ...weakItem, uid: 't-strong', name: '強い棒', rarity: 'rare' as const, options: [{ id: 'attack:all', target: 'attack' as const, value: 20 }] };
+  console.assert(getEquipmentPower(strongItem) > getEquipmentPower(weakItem), 'equipment power should rank a rarer, stronger item higher');
   console.assert(getActiveArea('fishing', 'missing').id === 'pond', 'missing area should fallback to first area');
   console.assert(rollDrops([]).length === 0, 'empty drops should roll empty');
   console.assert(rewardText([{ item: 'small_fish', amount: 1 }]).includes('小魚'), 'rewardText should show item names');

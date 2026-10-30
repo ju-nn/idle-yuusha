@@ -7,3 +7,5 @@ import './styles.css';
 applyUserSettings(loadUserSettings());
 runSelfTests();
 createRoot(document.getElementById('root')!).render(<App />);
+// アプリがマウントされたので、index.html 側の実ロード画面（スプラッシュ）を外す。
+document.getElementById('boot-splash')?.remove();

@@ -108,16 +108,30 @@ export function StatsModal({ state, onClose }: { state: GameState; onClose: () =
   </div></Modal>;
 }
 
-export function EquipmentModal({ state, equipItem, sellEquipment, toggleLock, openChest, openAllChests, onClose }: { state: GameState; equipItem: (uid: string) => void; sellEquipment: (uid: string) => void; toggleLock: (uid: string) => void; openChest: (uid: string) => void; openAllChests: () => void; onClose: () => void }) {
+function EquippedSlots({ state, sellEquipment, toggleLock }: { state: GameState; sellEquipment: (uid: string) => void; toggleLock: (uid: string) => void }) {
   const inventory = state.equipmentInventory || [];
-  const chests = state.treasureChests || [];
   const slots: EquipmentSlot[] = ['weapon', 'armor', 'charm'];
-  return <Modal title="宝箱と装備" description="放置で貯まった宝箱を開け、出た装備で生活効率を上げる。" onClose={onClose} wide><div className="equipmentPanel"><div className="chestSection"><div className="equipmentInventoryHead"><b>未開封の宝箱</b><span>{chests.length}/{getChestLimit(state)}</span></div>{chests.length > 1 && <button className="primary openAllButton" onClick={openAllChests}>まとめて開ける</button>}{chests.length === 0 ? <p className="sub">宝箱はまだありません。放置して戻った時、ここに小さな楽しみが積もります。</p> : <div className="chestGrid">{chests.map((chest) => <div className={`chestCard ${chest.type}`} key={chest.uid}><img src={chestClosed} alt="" aria-hidden="true" /><small>{CHEST_LABELS[chest.type].name}</small><b>{chest.name}</b><p>{chest.description}</p><button className="primary" onClick={() => openChest(chest.uid)}>開ける</button></div>)}</div>}</div><div className="equippedSlots">{slots.map((slot) => {
+  return <div className="equippedSlots">{slots.map((slot) => {
     const equipped = inventory.find((item) => item.uid === state.equipped?.[slot]);
     return <div className="equippedSlot" key={slot}><small>{EQUIPMENT_SLOT_LABELS[slot]}</small>{equipped ? <EquipmentCard item={equipped} equipped sellEquipment={sellEquipment} toggleLock={toggleLock} /> : <p className="sub">未装備。ここだけ身軽。</p>}</div>;
-  })}</div><div className="equipmentInventoryHead"><b>所持装備</b><span>{inventory.length}/{getEquipmentLimit(state)}</span></div>{inventory.length === 0 ? <p className="sub">まだ装備はありません。宝箱を開けると、生活の味方が出ます。</p> : <div className="equipmentGrid">{inventory.map((item) => <EquipmentCard key={item.uid} item={item} equipped={state.equipped?.[item.slot] === item.uid} currentEquipped={inventory.find((other) => other.uid === state.equipped?.[item.slot])} equipItem={equipItem} sellEquipment={sellEquipment} toggleLock={toggleLock} />)}</div>}</div></Modal>;
+  })}</div>;
 }
 
+function EquipmentInventoryList({ state, equipItem, sellEquipment, toggleLock }: { state: GameState; equipItem: (uid: string) => void; sellEquipment: (uid: string) => void; toggleLock: (uid: string) => void }) {
+  const inventory = state.equipmentInventory || [];
+  return <><div className="equipmentInventoryHead"><b>所持装備</b><span>{inventory.length}/{getEquipmentLimit(state)}</span></div>{inventory.length === 0 ? <p className="sub">まだ装備はありません。宝箱を開けると、生活の味方が出ます。</p> : <div className="equipmentGrid">{inventory.map((item) => <EquipmentCard key={item.uid} item={item} equipped={state.equipped?.[item.slot] === item.uid} currentEquipped={inventory.find((other) => other.uid === state.equipped?.[item.slot])} equipItem={equipItem} sellEquipment={sellEquipment} toggleLock={toggleLock} />)}</div>}</>;
+}
+
+export function ChestModal({ state, openChest, openAllChests, openEquipmentScreen, onClose }: { state: GameState; openChest: (uid: string) => void; openAllChests: () => void; openEquipmentScreen: () => void; onClose: () => void }) {
+  const chests = state.treasureChests || [];
+  const inventoryCount = state.equipmentInventory?.length || 0;
+  return <Modal title="宝箱" description="放置で貯まった宝箱を開ける場所。出た装備は「装備」画面で付け替える。" onClose={onClose} wide><div className="equipmentPanel"><div className="chestSection"><div className="equipmentInventoryHead"><b>未開封の宝箱</b><span>{chests.length}/{getChestLimit(state)}</span></div>{chests.length > 1 && <button className="primary openAllButton" onClick={openAllChests}>まとめて開ける</button>}{chests.length === 0 ? <p className="sub">宝箱はまだありません。放置して戻った時、ここに小さな楽しみが積もります。</p> : <div className="chestGrid">{chests.map((chest) => <div className={`chestCard ${chest.type}`} key={chest.uid}><img src={chestClosed} alt="" aria-hidden="true" /><small>{CHEST_LABELS[chest.type].name}</small><b>{chest.name}</b><p>{chest.description}</p><button className="primary" onClick={() => openChest(chest.uid)}>開ける</button></div>)}</div>}</div><div className="equipGuide"><p className="sub">開けた装備は、装備画面で装備中との比較を見ながら付け替えられます。</p><button onClick={openEquipmentScreen}>装備画面を開く（所持装備 {inventoryCount}個）</button></div></div></Modal>;
+}
+
+export function EquipmentModal({ state, equipItem, sellEquipment, toggleLock, onClose }: { state: GameState; equipItem: (uid: string) => void; sellEquipment: (uid: string) => void; toggleLock: (uid: string) => void; onClose: () => void }) {
+  const settings = loadUserSettings();
+  return <Modal title="装備" description="装備中の3枠と所持装備を、ここで付け替える。宝箱を開けるのは「宝箱」から。" onClose={onClose} wide><div className="equipmentPanel"><EquippedSlots state={state} sellEquipment={sellEquipment} toggleLock={toggleLock} /><div className="equipGuide"><p className="sub">自動装備は{settings.autoEquip ? 'ON' : 'OFF'}、アイテム自動売却は{settings.autoSell ? 'ON' : 'OFF'}です。切り替えは「設定」の自動化トグルから。</p></div><EquipmentInventoryList state={state} equipItem={equipItem} sellEquipment={sellEquipment} toggleLock={toggleLock} /></div></Modal>;
+}
 function EquipmentCard({ item, equipped, currentEquipped, equipItem, sellEquipment, toggleLock }: { item: EquipmentItem; equipped?: boolean; currentEquipped?: EquipmentItem; equipItem?: (uid: string) => void; sellEquipment: (uid: string) => void; toggleLock: (uid: string) => void }) {
   // 装備選択時点の比較：同じ枠に今つけている装備があれば、その効果をカード内に並べる。
   // タップだけの端末でも読めるよう、ホバー限定の title ではなく常時表示の行にする。

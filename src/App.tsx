@@ -4,7 +4,7 @@ import chestSheetUrl from './assets/sprites/hero/chest-open-sheet.png';
 import { Header } from './components/Header';
 import { AreaGrid, CurrentJobCard, UpgradePanel } from './components/JobPanels';
 import { JobMenu } from './components/JobMenu';
-import { CollectionModal, EquipmentModal, LogModal, PrestigeModal, SettingsModal, StatsModal } from './components/Modals';
+import { ChestModal, CollectionModal, EquipmentModal, LogModal, PrestigeModal, SettingsModal, StatsModal } from './components/Modals';
 import { ItemSprite } from './components/GameIcon';
 import { MusingPanel } from './components/MusingPanel';
 import { TitleScreen } from './components/TitleScreen';
@@ -213,6 +213,7 @@ function OfflineReturnCard({ state, onClose }: { state: GameState; onClose: () =
 
 export default function App() {
   const [collectionOpen, setCollectionOpen] = useState(false);
+  const [chestOpen, setChestOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [prestigeOpen, setPrestigeOpen] = useState(false);
@@ -355,7 +356,7 @@ export default function App() {
       <AchievementToasts toasts={achievementToasts} />
       <ChestOpeningOverlay reveal={chestReveal} equipItem={handleEquipItem} onClose={() => setChestReveal(null)} />
       <OfflineReturnCard state={state} onClose={() => setState((prev) => ({ ...prev, offlineSummary: null }))} />
-      <Header state={state} foundCount={foundCount} musingCount={readMusings.length} dailyReady={dailyReady} dailyStreak={dailyStreak} claimDaily={handleClaimDaily} openEquipment={() => { playUiSound('open'); setEquipmentOpen(true); }} openCollection={() => { playUiSound('open'); setCollectionOpen(true); }} openPrestige={() => { playUiSound('open'); setPrestigeOpen(true); }} openSettings={() => { playUiSound('open'); setSettingsOpen(true); }} openStats={() => { playUiSound('open'); setStatsOpen(true); }} />
+      <Header state={state} foundCount={foundCount} musingCount={readMusings.length} dailyReady={dailyReady} dailyStreak={dailyStreak} claimDaily={handleClaimDaily} openChest={() => { playUiSound('open'); setChestOpen(true); }} openEquipment={() => { playUiSound('open'); setEquipmentOpen(true); }} openCollection={() => { playUiSound('open'); setCollectionOpen(true); }} openPrestige={() => { playUiSound('open'); setPrestigeOpen(true); }} openSettings={() => { playUiSound('open'); setSettingsOpen(true); }} openStats={() => { playUiSound('open'); setStatsOpen(true); }} />
       {saveFailed && <div className="saveWarning" role="alert"><div><small>セーブに失敗しました</small><b>いまの進み具合が保存できていません</b><p>ブラウザの空き容量やプライベートモードを確認してください。進むたびに保存をやり直すので、直ればこの表示は自動で消えます。</p></div></div>}
       <div className="layout">
         <div className="side">
@@ -372,7 +373,8 @@ export default function App() {
       {logOpen && <LogModal logs={state.eventLog} onClose={() => setLogOpen(false)} />}
       {areaOpen && <Modal title={`${activeJob.name}の仕事エリア`} description="行き先を選ぶ。広い画面で条件と効率を確認できます。" onClose={() => setAreaOpen(false)} wide><div className="detailModalBody"><AreaGrid job={activeJob} state={state} selectArea={(id) => { handleSelectArea(id); setAreaOpen(false); }} /></div></Modal>}
       {upgradesOpen && <Modal title={`${activeJob.name}の拠点整備`} description="生活を少し楽にする導入候補。足りない素材もここで確認できます。" onClose={() => setUpgradesOpen(false)} wide><div className="detailModalBody"><UpgradePanel state={state} job={activeJob} buyUpgrade={handleBuyUpgrade} /></div></Modal>}
-      {equipmentOpen && <EquipmentModal state={state} equipItem={handleEquipItem} sellEquipment={handleSellEquipment} toggleLock={handleToggleEquipmentLock} openChest={handleOpenChest} openAllChests={handleOpenAllChests} onClose={() => setEquipmentOpen(false)} />}
+      {chestOpen && <ChestModal state={state} openChest={handleOpenChest} openAllChests={handleOpenAllChests} openEquipmentScreen={() => { setChestOpen(false); playUiSound('open'); setEquipmentOpen(true); }} onClose={() => setChestOpen(false)} />}
+      {equipmentOpen && <EquipmentModal state={state} equipItem={handleEquipItem} sellEquipment={handleSellEquipment} toggleLock={handleToggleEquipmentLock} onClose={() => setEquipmentOpen(false)} />}
       {collectionOpen && <CollectionModal state={state} musings={readMusings} achievements={state.achievements} onClose={() => setCollectionOpen(false)} />}
       {prestigeOpen && <PrestigeModal state={state} buyPrestigeUpgrade={handleBuyPrestigeUpgrade} retire={() => { handleRetire(); setPrestigeOpen(false); }} onClose={() => setPrestigeOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} reset={() => { reset(); setSettingsOpen(false); }} />}

@@ -468,6 +468,8 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
 .monsterArchive.defeated b { color:var(--danger); }
 .monsterArchive p { color:var(--muted); font-size:.86rem; line-height:1.55; margin:.45rem 0 0; }
 .equipmentPanel { flex:1 1 auto; min-height:0; overflow:auto; padding:14px; }
+.equipGuide { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; padding:10px; border:1px solid rgba(124,74,35,.18); border-radius:8px; background:rgba(255,253,248,.72); }
+.equipGuide p { margin:0; }
 .chestSection { margin-bottom:12px; padding:10px; border:1px solid rgba(251,191,36,.34); border-radius:8px; background:linear-gradient(135deg, rgba(254,243,199,.72), rgba(255,253,248,.74)); }
 .chestGrid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:9px; }
 .chestCard { min-width:0; padding:10px; border:1px solid rgba(161,98,7,.26); border-radius:8px; background:rgba(255,253,248,.82); box-shadow:0 8px 18px rgba(68,64,60,.1); animation:chestGlow 1.8s ease-in-out infinite alternate; }

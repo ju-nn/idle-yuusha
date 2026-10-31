@@ -412,17 +412,18 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
 .compactUpgrade .buyProgress span { display:none; }
 .compactUpgrade button { grid-column:2; min-height:24px; padding:4px 8px; font-size:.72rem; white-space:nowrap; }
 .modalBackdrop { position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(41,32,24,.58); backdrop-filter:blur(10px); animation:overlayFade .2s ease-out both; }
-.modal { width:min(840px, 100%); max-height:88vh; overflow:hidden; border:1px solid var(--line-strong); border-radius:10px; background:linear-gradient(180deg, var(--surface) 0%, var(--surface-strong) 100%); box-shadow:0 24px 80px rgba(0,0,0,.34); animation:revealCardIn .26s cubic-bezier(.17,.84,.32,1) both; }
+.modal { width:min(840px, 100%); max-height:88vh; max-height:88dvh; overflow:hidden; display:flex; flex-direction:column; border:1px solid var(--line-strong); border-radius:10px; background:linear-gradient(180deg, var(--surface) 0%, var(--surface-strong) 100%); box-shadow:0 24px 80px rgba(0,0,0,.34); animation:revealCardIn .26s cubic-bezier(.17,.84,.32,1) both; }
 .modal.wide { width:min(1120px, 100%); }
-.modalHead { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; padding:16px; border-bottom:1px dashed rgba(161,98,7,.3); }
+.modalHead { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; padding:16px; border-bottom:1px dashed rgba(161,98,7,.3); flex:none; }
+.collectionSummary, .bookTabs { flex:none; }
 .modalHead h2 { margin:.1rem 0; }
 .modalHead p { margin:.2rem 0; color:var(--muted); }
 .modalHead button { flex:0 0 auto; white-space:nowrap; }
-.detailModalBody { max-height:72vh; overflow:auto; padding:16px; }
+.detailModalBody { flex:1 1 auto; min-height:0; overflow:auto; padding:16px; }
 .detailModalBody .card { box-shadow:none; }
 .detailModalBody .areaGrid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
 .detailModalBody .upgradeGrid { max-height:none; overflow:visible; grid-template-columns:repeat(3, minmax(0, 1fr)); }
-.logList, .bookGrid { max-height:72vh; overflow:auto; padding:16px; }
+.logList, .bookGrid { flex:1 1 auto; min-height:0; overflow:auto; padding:16px; }
 .collectionSummary { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:10px; padding:14px 16px 0; }
 .summaryPill { border:1px solid var(--line); border-radius:8px; background:var(--surface); padding:10px; }
 .summaryPill span { display:block; color:var(--muted); font-size:.78rem; }
@@ -434,6 +435,16 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
 .bookTabs button.active, .musingFilters button.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
 .bookGrid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
 .bookGrid.single { grid-template-columns:minmax(0, 1fr); }
+/* 図鑑モーダルのスマホ収まり対策（2026-10-30 実機報告）: サマリー7件が2列×4段で
+   約344pxを占有し、見出し・タブと合わせると一覧領域がモーダル下端の外に出て
+   スクロールしても末尾に届かなかった。図鑑のサマリーだけ4列×2段に圧縮する。 */
+@media (max-width: 900px) {
+ .collectionSummary.bookSummary { grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; padding:10px 12px 0; }
+ .bookSummary .summaryPill { padding:6px 7px; }
+ .bookSummary .summaryPill span { font-size:.68rem; }
+ .bookSummary .summaryPill b { font-size:.92rem; margin-top:1px; }
+ .bookTabs { gap:6px; padding:10px 12px 0; }
+}
 .howToSteps { margin:10px 0 0; padding-left:22px; }
 .howToSteps li { margin:10px 0; color:var(--text); line-height:1.5; }
 .howToSteps li p { margin:2px 0 0; color:var(--text-soft); font-size:.88rem; }
@@ -456,7 +467,7 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
 .monsterArchive.defeated { border-color:rgba(220,38,38,.24); background:rgba(254,226,226,.42); }
 .monsterArchive.defeated b { color:var(--danger); }
 .monsterArchive p { color:var(--muted); font-size:.86rem; line-height:1.55; margin:.45rem 0 0; }
-.equipmentPanel { max-height:calc(88vh - 86px); overflow:auto; padding:14px; }
+.equipmentPanel { flex:1 1 auto; min-height:0; overflow:auto; padding:14px; }
 .chestSection { margin-bottom:12px; padding:10px; border:1px solid rgba(251,191,36,.34); border-radius:8px; background:linear-gradient(135deg, rgba(254,243,199,.72), rgba(255,253,248,.74)); }
 .chestGrid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:9px; }
 .chestCard { min-width:0; padding:10px; border:1px solid rgba(161,98,7,.26); border-radius:8px; background:rgba(255,253,248,.82); box-shadow:0 8px 18px rgba(68,64,60,.1); animation:chestGlow 1.8s ease-in-out infinite alternate; }
@@ -495,7 +506,7 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
 .achievement.unlocked { border-color:rgba(52,211,153,.35); background:rgba(52,211,153,.07); }
 .achievement.unlocked b { color:var(--accent-text); }
 .achievement p { color:var(--muted); font-size:.86rem; line-height:1.55; }
-.settingsPanel { max-height:calc(88vh - 86px); overflow:auto; padding:16px; display:flex; flex-direction:column; gap:12px; }
+.settingsPanel { flex:1 1 auto; min-height:0; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:12px; }
 .settingSlider, .settingRow, .settingToggle, .dangerZone { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:center; gap:12px; padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--surface); }
 .settingSlider { grid-template-columns:120px minmax(140px, 1fr) 72px; }
 .settingSlider span { display:inline-flex; align-items:center; gap:7px; font-weight:800; color:var(--text-soft); }

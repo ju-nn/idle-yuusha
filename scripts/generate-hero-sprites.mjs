@@ -905,6 +905,44 @@ function monsterQuietStatue(f) {
   rect(c, 20 + sway, 16, 3, 1, K); rect(c, 25 + sway, 16, 3, 1, K);
   return c;
 }
+function monsterSleepyMushroom(f) {
+  const c = canvas(48, 48);
+  const nod = f === 1 ? 2 : 0;
+  // 茎と寝ぼけた傘
+  rect(c, 20, 30, 8, 12, [226, 220, 205]);
+  rect(c, 12, 16 + nod, 24, 14, [196, 84, 84]);
+  px(c, 17, 20 + nod, [255, 220, 220]); px(c, 26, 18 + nod, [255, 220, 220]); px(c, 30, 22 + nod, [255, 220, 220]);
+  // 閉じた目と「Z」の気配
+  rect(c, 18, 32, 3, 1, K); rect(c, 27, 32, 3, 1, K);
+  px(c, 36, 14, K); px(c, 38, 12, K); px(c, 40, 10, K);
+  return c;
+}
+function monsterLeftBackpack(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 置き去りのリュック
+  rect(c, 14 + sway, 16, 20, 24, [150, 100, 60]);
+  rect(c, 14 + sway, 16, 20, 4, [120, 78, 44]);
+  rect(c, 18 + sway, 26, 12, 8, [180, 130, 80]);
+  rect(c, 12 + sway, 20, 3, 12, K); rect(c, 33 + sway, 20, 3, 12, K);
+  // こちらを見る目
+  px(c, 20 + sway, 22, K); px(c, 27 + sway, 22, K);
+  rect(c, 14 + sway, 40, 20, 2, GRAY_D);
+  return c;
+}
+function monsterForgottenHelmet(f) {
+  const c = canvas(48, 48);
+  const tilt = f === 1 ? 1 : 0;
+  // 忘れられたヘルメット
+  rect(c, 12 + tilt, 16, 24, 16, GRAY);
+  rect(c, 12 + tilt, 16, 24, 3, GRAY_D);
+  rect(c, 8 + tilt, 30, 32, 3, GRAY_D);
+  // バイザーの光
+  rect(c, 18 + tilt, 24, 12, 2, CYAN);
+  px(c, 20 + tilt, 20, GOLD); px(c, 27 + tilt, 20, GOLD);
+  rect(c, 20 + tilt, 36, 8, 4, GRAY_D);
+  return c;
+}
 const MONSTER_BUILDERS = {
   slime: monsterSlime, goblin: monsterGoblin, wolf: monsterWolf, rust_armor: monsterRustArmor,
   bill_wraith: monsterBillWraith, tax_mimic: monsterTaxMimic, quiet_king: monsterQuietKing,
@@ -914,6 +952,7 @@ const MONSTER_BUILDERS = {
   sigh_moss: monsterSighMoss, rolling_rock: monsterRollingRock, dark_mushroom: monsterDarkMushroom,
   whisper_vine: monsterWhisperVine, cliff_goat: monsterCliffGoat, shadow_rat: monsterShadowRat,
   rusty_messenger: monsterRustyMessenger, cracked_flagstone: monsterCrackedFlagstone, quiet_statue: monsterQuietStatue,
+  sleepy_mushroom: monsterSleepyMushroom, left_backpack: monsterLeftBackpack, forgotten_helmet: monsterForgottenHelmet,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);

@@ -1060,6 +1060,12 @@ const EQUIP_ICON_BUILDERS = {
   zabuton_armor: (c) => { rect(c, 7, 16, 18, 7, [196, 120, 110]); rect(c, 7, 16, 18, 2, [220, 150, 140]); rect(c, 9, 12, 14, 4, [220, 150, 140]); px(c, 12, 18, WHITE); px(c, 18, 18, WHITE); rect(c, 7, 23, 18, 2, [176, 104, 96]); },
   toothbrush_charm: (c) => { line(c, 10, 26, 10, 10, [110, 186, 224]); line(c, 11, 26, 11, 10, WATER_D); rect(c, 10, 6, 2, 4, WHITE); px(c, 13, 7, WHITE); px(c, 16, 6, WHITE); px(c, 19, 8, WHITE); px(c, 22, 7, WHITE); px(c, 13, 12, WHITE); px(c, 19, 12, WHITE); },
   balcony_stargazing_charm: (c) => { rect(c, 6, 20, 20, 3, WOOD_D); rect(c, 6, 23, 20, 2, WOOD); px(c, 10, 6, GOLD); px(c, 18, 4, WHITE); px(c, 22, 9, GOLD); px(c, 13, 11, WHITE); px(c, 20, 14, WHITE); px(c, 9, 14, GOLD); },
+  alarm_clock_sword: (c) => { line(c, 10, 26, 20, 10, METAL); line(c, 11, 27, 21, 11, WHITE); rect(c, 18, 4, 10, 10, GOLD); px(c, 20, 6, K); px(c, 26, 6, K); line(c, 23, 9, 23, 12, K); line(c, 23, 9, 26, 9, K); rect(c, 8, 26, 4, 3, WOOD_D); },
+  stationery_scissors_sword: (c) => { line(c, 8, 24, 20, 8, METAL); line(c, 20, 8, 26, 4, METAL); line(c, 8, 24, 14, 14, METAL_D); rect(c, 6, 22, 5, 5, RED2); rect(c, 10, 26, 5, 5, RED2); px(c, 22, 6, WHITE); },
+  futon_armor: (c) => { rect(c, 8, 9, 16, 16, [240, 226, 190]); rect(c, 8, 9, 16, 3, WHITE); for (const y of [15, 19]) rect(c, 8, y, 16, 1, [200, 180, 150]); px(c, 12, 13, TEAL); px(c, 18, 21, TEAL); },
+  loungewear_armor: (c) => { rect(c, 9, 8, 14, 14, [170, 190, 205]); rect(c, 6, 9, 4, 10, [170, 190, 205]); rect(c, 22, 9, 4, 10, [170, 190, 205]); rect(c, 9, 22, 14, 3, [130, 150, 170]); px(c, 13, 13, WHITE); px(c, 18, 16, WHITE); },
+  plant_watering_charm: (c) => { rect(c, 9, 14, 14, 10, TEAL); rect(c, 9, 14, 14, 2, WATER_D); line(c, 23, 16, 27, 12, TEAL); px(c, 15, 8, [90, 180, 90]); px(c, 17, 6, [90, 180, 90]); px(c, 19, 9, [90, 180, 90]); px(c, 13, 10, [90, 180, 90]); },
+  sunset_walk_charm: (c) => { rect(c, 6, 16, 20, 4, [250, 180, 90]); rect(c, 6, 20, 20, 2, [240, 140, 70]); px(c, 20, 6, GOLD); px(c, 10, 8, WHITE); px(c, 14, 5, WHITE); px(c, 22, 10, GOLD); line(c, 8, 24, 24, 24, WOOD_D); },
 };
 for (const [id, draw] of Object.entries(EQUIP_ICON_BUILDERS)) saveSingle(iconCanvas(draw), `equip-${id}.png`);
 saveSingle(iconCanvas((c) => { rect(c, 10, 10, 12, 12, GRAY); rect(c, 10, 10, 12, 2, GRAY_D); px(c, 15, 15, WHITE); px(c, 16, 15, WHITE); px(c, 15, 16, WHITE); }), 'equip-fallback.png');

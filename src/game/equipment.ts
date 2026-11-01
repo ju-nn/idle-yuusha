@@ -105,6 +105,12 @@ const BASES: EquipmentBase[] = [
   { baseId: 'zabuton_armor', name: '座布団の鎧', slot: 'armor', minRarity: 'rare', description: '座った瞬間、戦う気も一緒に座り込む。動かない強さがある。' },
   { baseId: 'toothbrush_charm', name: '寝る前の歯磨きのお守り', slot: 'charm', description: '一日をきちんと閉じる力がつく。明日への準備はもう済んでいる。' },
   { baseId: 'balcony_stargazing_charm', name: '星空のベランダのお守り', slot: 'charm', onlyRarity: 'legendary', description: '夜風に当たると、明日への元気が少し戻ってくる気がする。' },
+  { baseId: 'alarm_clock_sword', name: '目覚まし時計の剣', slot: 'weapon', description: '鳴った瞬間に起きる決意だけは鋭い。スヌーズは許さない。' },
+  { baseId: 'stationery_scissors_sword', name: '文房具のはさみの剣', slot: 'weapon', minRarity: 'rare', description: '紙も敵も、切れ味のいい線で片づける。' },
+  { baseId: 'futon_armor', name: '布団の鎧', slot: 'armor', description: '朝、布団から出るのが惜しい温かさで守る。' },
+  { baseId: 'loungewear_armor', name: '部屋着の鎧', slot: 'armor', minRarity: 'rare', description: 'くつろいだ姿勢のまま戦える。緊張だけは着替えた。' },
+  { baseId: 'plant_watering_charm', name: '水やりのお守り', slot: 'charm', description: '少しずつ育てる力がつく。今日の一杯が明日の芽になる。' },
+  { baseId: 'sunset_walk_charm', name: '夕方の散歩のお守り', slot: 'charm', onlyRarity: 'legendary', description: '夕日の下を歩くと、今日の疲れが少しだけほどける。' },
 ];
 
 type OptionTemplate = {

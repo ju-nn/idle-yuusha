@@ -1111,6 +1111,12 @@ const EQUIP_ICON_BUILDERS = {
   loungewear_armor: (c) => { rect(c, 9, 8, 14, 14, [170, 190, 205]); rect(c, 6, 9, 4, 10, [170, 190, 205]); rect(c, 22, 9, 4, 10, [170, 190, 205]); rect(c, 9, 22, 14, 3, [130, 150, 170]); px(c, 13, 13, WHITE); px(c, 18, 16, WHITE); },
   plant_watering_charm: (c) => { rect(c, 9, 14, 14, 10, TEAL); rect(c, 9, 14, 14, 2, WATER_D); line(c, 23, 16, 27, 12, TEAL); px(c, 15, 8, [90, 180, 90]); px(c, 17, 6, [90, 180, 90]); px(c, 19, 9, [90, 180, 90]); px(c, 13, 10, [90, 180, 90]); },
   sunset_walk_charm: (c) => { rect(c, 6, 16, 20, 4, [250, 180, 90]); rect(c, 6, 20, 20, 2, [240, 140, 70]); px(c, 20, 6, GOLD); px(c, 10, 8, WHITE); px(c, 14, 5, WHITE); px(c, 22, 10, GOLD); line(c, 8, 24, 24, 24, WOOD_D); },
+  laundry_pole_sword: (c) => { line(c, 6, 26, 22, 8, METAL); line(c, 7, 27, 23, 9, WHITE); rect(c, 19, 4, 6, 6, WHITE); rect(c, 19, 4, 6, 2, [200, 206, 216]); rect(c, 12, 12, 5, 5, [170, 190, 205]); px(c, 24, 6, METAL_D); },
+  sticky_note_dagger: (c) => { line(c, 10, 26, 22, 10, METAL); line(c, 11, 27, 23, 11, WHITE); rect(c, 20, 4, 8, 8, [250, 220, 90]); rect(c, 20, 4, 8, 2, [240, 200, 70]); px(c, 22, 7, RED2); px(c, 25, 9, RED2); rect(c, 8, 24, 4, 4, GOLD); },
+  rain_boots_armor: (c) => { rect(c, 8, 6, 6, 14, [90, 170, 180]); rect(c, 18, 6, 6, 14, [90, 170, 180]); rect(c, 8, 20, 8, 5, TEAL); rect(c, 18, 20, 8, 5, TEAL); px(c, 10, 10, WHITE); px(c, 20, 13, WHITE); px(c, 12, 22, WHITE); px(c, 22, 22, WHITE); },
+  apron_armor: (c) => { rect(c, 9, 8, 14, 17, [220, 150, 140]); rect(c, 9, 8, 14, 3, [196, 120, 110]); line(c, 11, 8, 11, 4, BROWN); line(c, 21, 8, 21, 4, BROWN); rect(c, 11, 16, 10, 5, PAPER); px(c, 13, 18, RED2); px(c, 18, 18, RED2); px(c, 15, 20, TEAL); },
+  morning_window_charm: (c) => { rect(c, 7, 7, 18, 18, WOOD_D); rect(c, 9, 9, 14, 14, [170, 210, 240]); line(c, 16, 9, 16, 23, WOOD_D); line(c, 9, 16, 23, 16, WOOD_D); px(c, 12, 12, GOLD); px(c, 13, 11, GOLD); px(c, 20, 10, WHITE); px(c, 11, 20, WHITE); },
+  first_snow_charm: (c) => { rect(c, 8, 8, 16, 16, BLUE); rect(c, 8, 8, 16, 2, WATER_D); px(c, 12, 12, WHITE); px(c, 20, 14, WHITE); px(c, 16, 18, WHITE); px(c, 14, 16, WHITE); px(c, 18, 11, WHITE); px(c, 11, 20, GOLD); px(c, 21, 20, GOLD); px(c, 16, 10, WHITE); },
 };
 for (const [id, draw] of Object.entries(EQUIP_ICON_BUILDERS)) saveSingle(iconCanvas(draw), `equip-${id}.png`);
 saveSingle(iconCanvas((c) => { rect(c, 10, 10, 12, 12, GRAY); rect(c, 10, 10, 12, 2, GRAY_D); px(c, 15, 15, WHITE); px(c, 16, 15, WHITE); px(c, 15, 16, WHITE); }), 'equip-fallback.png');

@@ -111,6 +111,12 @@ const BASES: EquipmentBase[] = [
   { baseId: 'loungewear_armor', name: '部屋着の鎧', slot: 'armor', minRarity: 'rare', description: 'くつろいだ姿勢のまま戦える。緊張だけは着替えた。' },
   { baseId: 'plant_watering_charm', name: '水やりのお守り', slot: 'charm', description: '少しずつ育てる力がつく。今日の一杯が明日の芽になる。' },
   { baseId: 'sunset_walk_charm', name: '夕方の散歩のお守り', slot: 'charm', onlyRarity: 'legendary', description: '夕日の下を歩くと、今日の疲れが少しだけほどける。' },
+  { baseId: 'laundry_pole_sword', name: '物干し竿の剣', slot: 'weapon', description: 'ベランダの日常が、そのまま間合いになる。洗濯物は干したまま。' },
+  { baseId: 'sticky_note_dagger', name: '付箋の短剣', slot: 'weapon', minRarity: 'rare', description: '「忘れるな」の一言が、意外と刺さる。貼れば貼るほど鋭い。' },
+  { baseId: 'rain_boots_armor', name: '長靴の鎧', slot: 'armor', description: '水たまりを避けない勇気で守る。足元だけはもう濡れない。' },
+  { baseId: 'apron_armor', name: 'エプロンの鎧', slot: 'armor', minRarity: 'rare', description: '台所の守りは、戦場でも同じくらい頼れる。ポケットに勇気が入っている。' },
+  { baseId: 'morning_window_charm', name: '朝の窓辺のお守り', slot: 'charm', description: '朝日が入る窓辺に立つだけで、今日の出足が少し軽くなる。' },
+  { baseId: 'first_snow_charm', name: '初雪のお守り', slot: 'charm', onlyRarity: 'legendary', description: '初雪が降った朝の静けさを閉じ込めた。見るだけで心が整う。' },
 ];
 
 type OptionTemplate = {

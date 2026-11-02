@@ -117,6 +117,12 @@ const BASES: EquipmentBase[] = [
   { baseId: 'apron_armor', name: 'エプロンの鎧', slot: 'armor', minRarity: 'rare', description: '台所の守りは、戦場でも同じくらい頼れる。ポケットに勇気が入っている。' },
   { baseId: 'morning_window_charm', name: '朝の窓辺のお守り', slot: 'charm', description: '朝日が入る窓辺に立つだけで、今日の出足が少し軽くなる。' },
   { baseId: 'first_snow_charm', name: '初雪のお守り', slot: 'charm', onlyRarity: 'legendary', description: '初雪が降った朝の静けさを閉じ込めた。見るだけで心が整う。' },
+  { baseId: 'broom_spear', name: 'ほうきの槍', slot: 'weapon', description: '掃除のついでに敵も掃き出す。柄の長さがそのまま間合いになる。' },
+  { baseId: 'extension_cord_whip', name: '延長コードの鞭', slot: 'weapon', minRarity: 'rare', description: 'コンセントの届く範囲だけは、誰にも負けない。絡め取ってから片づける。' },
+  { baseId: 'rubber_gloves_armor', name: 'ゴム手袋の鎧', slot: 'armor', description: '水仕事の守りは戦場でも同じ。濡れも汚れも、ここでは通さない。' },
+  { baseId: 'hot_water_bottle_armor', name: '湯たんぽの鎧', slot: 'armor', minRarity: 'rare', description: 'お腹に抱えた温かさで守る。冷えた夜の味方を、そのまま鎧にした。' },
+  { baseId: 'evening_newspaper_charm', name: '夕刊のお守り', slot: 'charm', description: '今日のニュースを読み終えた安心感がつく。世の中が少しだけ分かる気がする。' },
+  { baseId: 'streetlight_charm', name: '帰り道の街灯のお守り', slot: 'charm', onlyRarity: 'legendary', description: '帰り道を照らす明かりを閉じ込めた。暗い道でも、家までの道筋だけは見える。' },
 ];
 
 type OptionTemplate = {

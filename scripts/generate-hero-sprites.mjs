@@ -995,6 +995,43 @@ function monsterMoonlitGardener(f) {
   px(c, 37 + sway, 28, K);
   return c;
 }
+function monsterLostUmbrella(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 迷子の傘（閉じた傘を逆さに立てた姿）
+  rect(c, 22 + sway, 30, 4, 14, [150, 100, 60]);
+  rect(c, 14 + sway, 12, 20, 16, [196, 84, 84]);
+  rect(c, 14 + sway, 12, 20, 3, [150, 60, 60]);
+  rect(c, 24 + sway, 12, 2, 16, [226, 220, 205]);
+  px(c, 19 + sway, 20, K); px(c, 27 + sway, 20, K);
+  rect(c, 20 + sway, 28, 8, 2, [150, 100, 60]);
+  px(c, 38, 10, CYAN); px(c, 40, 8, CYAN);
+  return c;
+}
+function monsterLeftWaterBottle(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 置き去りの水筒（金属ボトル）
+  rect(c, 18 + sway, 8, 12, 6, METAL_D);
+  rect(c, 16 + sway, 14, 16, 26, CYAN);
+  rect(c, 16 + sway, 14, 16, 3, METAL);
+  rect(c, 20 + sway, 40, 8, 2, GRAY_D);
+  px(c, 20 + sway, 22, K); px(c, 27 + sway, 22, K);
+  rect(c, 14 + sway, 20, 3, 12, K); rect(c, 31 + sway, 20, 3, 12, K);
+  return c;
+}
+function monsterForgottenFlashlight(f) {
+  const c = canvas(48, 48);
+  const tilt = f === 1 ? 1 : 0;
+  // 忘れられた懐中電灯（横向きに置かれた姿）
+  rect(c, 10 + tilt, 20, 26, 10, GRAY_D);
+  rect(c, 10 + tilt, 20, 26, 2, GRAY);
+  rect(c, 36 + tilt, 18, 4, 14, GOLD);
+  px(c, 40 + tilt, 22, WHITE); px(c, 40 + tilt, 26, WHITE);
+  px(c, 18 + tilt, 23, K); px(c, 26 + tilt, 23, K);
+  rect(c, 12 + tilt, 32, 20, 2, GRAY);
+  return c;
+}
 const MONSTER_BUILDERS = {
   slime: monsterSlime, goblin: monsterGoblin, wolf: monsterWolf, rust_armor: monsterRustArmor,
   bill_wraith: monsterBillWraith, tax_mimic: monsterTaxMimic, quiet_king: monsterQuietKing,
@@ -1006,6 +1043,7 @@ const MONSTER_BUILDERS = {
   rusty_messenger: monsterRustyMessenger, cracked_flagstone: monsterCrackedFlagstone, quiet_statue: monsterQuietStatue,
   sleepy_mushroom: monsterSleepyMushroom, left_backpack: monsterLeftBackpack, forgotten_helmet: monsterForgottenHelmet,
   old_notice_board: monsterOldNoticeBoard, sealed_gate_door: monsterSealedGateDoor, moonlit_gardener: monsterMoonlitGardener,
+  lost_umbrella: monsterLostUmbrella, left_water_bottle: monsterLeftWaterBottle, forgotten_flashlight: monsterForgottenFlashlight,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);

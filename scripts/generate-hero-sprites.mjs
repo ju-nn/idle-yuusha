@@ -943,6 +943,58 @@ function monsterForgottenHelmet(f) {
   rect(c, 20 + tilt, 36, 8, 4, GRAY_D);
   return c;
 }
+function monsterOldNoticeBoard(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 古い掲示板（木枠と貼り紙）
+  rect(c, 12 + sway, 14, 24, 26, [150, 100, 60]);
+  rect(c, 12 + sway, 14, 24, 3, [120, 78, 44]);
+  rect(c, 15 + sway, 18, 8, 10, WHITE);
+  rect(c, 24 + sway, 18, 8, 10, WHITE);
+  rect(c, 15 + sway, 28, 8, 10, [226, 220, 205]);
+  px(c, 19 + sway, 18, GOLD); px(c, 28 + sway, 18, GOLD);
+  px(c, 19 + sway, 28, GOLD); px(c, 28 + sway, 28, GOLD);
+  // こちらを見る目（貼り紙の隙間から）
+  px(c, 22 + sway, 23, K); px(c, 26 + sway, 23, K);
+  rect(c, 14 + sway, 40, 20, 3, [120, 78, 44]);
+  return c;
+}
+function monsterSealedGateDoor(f) {
+  const c = canvas(48, 48);
+  const shift = f === 1 ? 1 : 0;
+  // 閉ざされた門扉（鉄の扉と閂）
+  rect(c, 10 + shift, 6, 28, 38, GRAY_D);
+  rect(c, 10 + shift, 6, 28, 3, GRAY);
+  rect(c, 22 + shift, 6, 4, 38, METAL_D);
+  rect(c, 10 + shift, 20, 28, 4, METAL);
+  rect(c, 12 + shift, 20, 4, 4, GOLD);
+  // 鍵穴からのぞく目
+  px(c, 19 + shift, 14, GOLD); px(c, 27 + shift, 14, GOLD);
+  px(c, 23 + shift, 30, K); px(c, 25 + shift, 30, K);
+  rect(c, 12 + shift, 44, 24, 2, GRAY);
+  return c;
+}
+function monsterMoonlitGardener(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 月夜の庭師（夜色の長い外套）
+  rect(c, 18 + sway, 38, 5, 8, [28, 30, 48]); rect(c, 25 + sway, 38, 5, 8, [28, 30, 48]);
+  for (let y = 20; y <= 46; y++) {
+    const w = 7 + Math.round((y - 20) * 0.28);
+    rect(c, 24 - w + sway, y, w * 2, 1, y > 40 ? [28, 30, 48] : [44, 48, 74]);
+  }
+  // 月光の帽子と影の顔
+  rect(c, 14 + sway, 8, 20, 3, [28, 30, 48]);
+  rect(c, 17 + sway, 5, 14, 3, [28, 30, 48]);
+  rect(c, 18 + sway, 11, 12, 8, [52, 58, 50]);
+  px(c, 21 + sway, 14, CYAN); px(c, 27 + sway, 14, CYAN);
+  // 三日月と剪定ばさみ
+  px(c, 36 + sway, 10, GOLD); px(c, 38 + sway, 11, GOLD); px(c, 39 + sway, 13, GOLD);
+  line(c, 34 + sway, 24, 40 + sway, 32, METAL_D);
+  line(c, 34 + sway, 32, 40 + sway, 24, METAL_D);
+  px(c, 37 + sway, 28, K);
+  return c;
+}
 const MONSTER_BUILDERS = {
   slime: monsterSlime, goblin: monsterGoblin, wolf: monsterWolf, rust_armor: monsterRustArmor,
   bill_wraith: monsterBillWraith, tax_mimic: monsterTaxMimic, quiet_king: monsterQuietKing,
@@ -953,6 +1005,7 @@ const MONSTER_BUILDERS = {
   whisper_vine: monsterWhisperVine, cliff_goat: monsterCliffGoat, shadow_rat: monsterShadowRat,
   rusty_messenger: monsterRustyMessenger, cracked_flagstone: monsterCrackedFlagstone, quiet_statue: monsterQuietStatue,
   sleepy_mushroom: monsterSleepyMushroom, left_backpack: monsterLeftBackpack, forgotten_helmet: monsterForgottenHelmet,
+  old_notice_board: monsterOldNoticeBoard, sealed_gate_door: monsterSealedGateDoor, moonlit_gardener: monsterMoonlitGardener,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);

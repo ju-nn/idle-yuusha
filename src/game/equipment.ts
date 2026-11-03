@@ -123,6 +123,12 @@ const BASES: EquipmentBase[] = [
   { baseId: 'hot_water_bottle_armor', name: '湯たんぽの鎧', slot: 'armor', minRarity: 'rare', description: 'お腹に抱えた温かさで守る。冷えた夜の味方を、そのまま鎧にした。' },
   { baseId: 'evening_newspaper_charm', name: '夕刊のお守り', slot: 'charm', description: '今日のニュースを読み終えた安心感がつく。世の中が少しだけ分かる気がする。' },
   { baseId: 'streetlight_charm', name: '帰り道の街灯のお守り', slot: 'charm', onlyRarity: 'legendary', description: '帰り道を照らす明かりを閉じ込めた。暗い道でも、家までの道筋だけは見える。' },
+  { baseId: 'mop_lance', name: 'モップのランス', slot: 'weapon', description: '床を拭くついでに、敵の足元も拭い去る。濡れた床は誰の味方でもない。' },
+  { baseId: 'rice_cooker_hammer', name: '炊飯器のハンマー', slot: 'weapon', minRarity: 'rare', description: '炊き上がりの合図とともに振り下ろす。ほんのり米の匂いがする一撃。' },
+  { baseId: 'cardboard_armor', name: '段ボールの鎧', slot: 'armor', description: '引っ越しの残りで作った鎧。軽さは正義だが、雨の日は解散する。' },
+  { baseId: 'electric_blanket_armor', name: '電気毛布の鎧', slot: 'armor', minRarity: 'rare', description: '温度設定は「弱」。戦場でも、まず体が温かいことが正義になる。' },
+  { baseId: 'grocery_list_charm', name: '買い物メモのお守り', slot: 'charm', description: '買うものを書いたメモ。持っていると、余計な出費と敵の見分けが少しつく。' },
+  { baseId: 'dawn_silence_charm', name: '夜明けの静けさのお守り', slot: 'charm', onlyRarity: 'legendary', description: '誰も起きていない時間の静けさを閉じ込めた。世界が動き出す前の、短い自由。' },
 ];
 
 type OptionTemplate = {

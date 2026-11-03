@@ -123,12 +123,12 @@ const BASES: EquipmentBase[] = [
   { baseId: 'hot_water_bottle_armor', name: '湯たんぽの鎧', slot: 'armor', minRarity: 'rare', description: 'お腹に抱えた温かさで守る。冷えた夜の味方を、そのまま鎧にした。' },
   { baseId: 'evening_newspaper_charm', name: '夕刊のお守り', slot: 'charm', description: '今日のニュースを読み終えた安心感がつく。世の中が少しだけ分かる気がする。' },
   { baseId: 'streetlight_charm', name: '帰り道の街灯のお守り', slot: 'charm', onlyRarity: 'legendary', description: '帰り道を照らす明かりを閉じ込めた。暗い道でも、家までの道筋だけは見える。' },
-  { baseId: 'mop_lance', name: 'モップのランス', slot: 'weapon', description: '床を拭くついでに、敵の足元も拭い去る。濡れた床は誰の味方でもない。' },
-  { baseId: 'rice_cooker_hammer', name: '炊飯器のハンマー', slot: 'weapon', minRarity: 'rare', description: '炊き上がりの合図とともに振り下ろす。ほんのり米の匂いがする一撃。' },
-  { baseId: 'cardboard_armor', name: '段ボールの鎧', slot: 'armor', description: '引っ越しの残りで作った鎧。軽さは正義だが、雨の日は解散する。' },
-  { baseId: 'electric_blanket_armor', name: '電気毛布の鎧', slot: 'armor', minRarity: 'rare', description: '温度設定は「弱」。戦場でも、まず体が温かいことが正義になる。' },
-  { baseId: 'grocery_list_charm', name: '買い物メモのお守り', slot: 'charm', description: '買うものを書いたメモ。持っていると、余計な出費と敵の見分けが少しつく。' },
-  { baseId: 'dawn_silence_charm', name: '夜明けの静けさのお守り', slot: 'charm', onlyRarity: 'legendary', description: '誰も起きていない時間の静けさを閉じ込めた。世界が動き出す前の、短い自由。' },
+  { baseId: 'waribashi_swords', name: '割り箸の双剣', slot: 'weapon', description: '割った瞬間から二刀流。折れても、もう一膳あるのが心強い。' },
+  { baseId: 'tv_remote_wand', name: 'テレビリモコンの杖', slot: 'weapon', minRarity: 'rare', description: '向けた先の敵が、なぜか一時停止する。音量ボタンは威力調整に使える。' },
+  { baseId: 'cardboard_box_armor', name: '段ボール箱の鎧', slot: 'armor', description: '入れば身を隠せるし、運べば引っ越しもできる。防御というより、箱の安心感。' },
+  { baseId: 'sleeping_bag_armor', name: '寝袋の鎧', slot: 'armor', minRarity: 'rare', description: 'どこでも寝られる覚悟が、そのまま防御になる。朝露だけは少し染みる。' },
+  { baseId: 'radio_exercise_charm', name: '朝のラジオ体操のお守り', slot: 'charm', description: 'ラジオの号令で体がほぐれる。腕を大きく回すと、運も少し回り出す。' },
+  { baseId: 'midnight_convenience_charm', name: '深夜のコンビニのお守り', slot: 'charm', onlyRarity: 'legendary', description: '夜中の明かりと温かいおにぎりの安心感を閉じ込めた。何があっても、ここだけは開いている。' },
 ];
 
 type OptionTemplate = {

@@ -1032,172 +1032,6 @@ function monsterForgottenFlashlight(f) {
   rect(c, 12 + tilt, 32, 20, 2, GRAY);
   return c;
 }
-function monsterLostPicnicBasket(f) {
-  const c = canvas(48, 48);
-  const sway = f === 1 ? 1 : 0;
-  // 置き忘れのピクニックかご（編みかごとチェックの布）
-  rect(c, 12 + sway, 22, 24, 18, [196, 158, 104]);
-  rect(c, 12 + sway, 22, 24, 3, WOOD_D);
-  for (const y of [29, 35]) rect(c, 12 + sway, y, 24, 2, WOOD_D);
-  for (const x of [18, 24, 30]) rect(c, x + sway, 25, 2, 15, WOOD_D);
-  // 蓋とチェック柄の布
-  rect(c, 10 + sway, 16, 28, 6, WHITE);
-  for (const x of [14, 22, 30]) rect(c, x + sway, 16, 3, 6, RED);
-  rect(c, 10 + sway, 20, 28, 2, RED);
-  // 蓋の隙間からのぞく目
-  px(c, 20 + sway, 27, K); px(c, 27 + sway, 27, K);
-  rect(c, 14 + sway, 40, 20, 2, WOOD_D);
-  return c;
-}
-function monsterMossTurtle(f) {
-  const c = canvas(48, 48);
-  const bob = f === 1 ? 1 : 0;
-  // 苔ガメ（苔むした甲羅）
-  for (let y = 22; y <= 36; y++) {
-    const w = 6 + Math.round(Math.sin((y - 22) / 14 * Math.PI) * 10);
-    rect(c, 24 - w, y + bob, w * 2, 1, GREEN_D);
-  }
-  rect(c, 14, 24 + bob, 20, 3, GREEN);
-  px(c, 18, 26 + bob, GREEN); px(c, 27, 25 + bob, [120, 190, 110]); px(c, 22, 29 + bob, GREEN);
-  px(c, 30, 30 + bob, [120, 190, 110]); px(c, 16, 31 + bob, GREEN);
-  // 頭と足
-  rect(c, 36, 30 + bob, 6, 5, [120, 170, 100]);
-  px(c, 39, 32 + bob, K);
-  rect(c, 14, 37 + bob, 5, 3, GREEN_D); rect(c, 29, 37 + bob, 5, 3, GREEN_D);
-  rect(c, 10, 38 + bob, 28, 2, [90, 120, 70]);
-  return c;
-}
-function monsterTiltedSignpost(f) {
-  const c = canvas(48, 48);
-  // 傾いた道しるべ（柱と矢印板）
-  for (let y = 12; y <= 42; y++) rect(c, 22 + Math.round((y - 12) * 0.08), y, 4, 1, WOOD_D);
-  rect(c, 10, 14, 18, 6, WOOD);
-  rect(c, 24, 22, 16, 6, WOOD);
-  px(c, 27, 17, WOOD_D); px(c, 12, 25, WOOD_D);
-  // 板の裏からのぞく目
-  px(c, 16, 17, K); px(c, 32, 25, K);
-  rect(c, 16, 42, 16, 3, GRAY_D);
-  px(c, 34, 10, GOLD);
-  return c;
-}
-function monsterSummitCrow(f) {
-  const c = canvas(48, 48);
-  const tilt = f === 1 ? 1 : 0;
-  // 山頂のカラス（岩の上に止まる黒い鳥）
-  rect(c, 12, 40, 24, 5, GRAY_D);
-  rect(c, 16, 36, 16, 4, GRAY);
-  // 体と尾
-  rect(c, 16 + tilt, 20, 18, 12, [40, 40, 48]);
-  rect(c, 14 + tilt, 28, 6, 8, [30, 30, 38]);
-  rect(c, 18 + tilt, 22, 12, 3, [58, 58, 70]);
-  // 頭とくちばし
-  rect(c, 30 + tilt, 14, 9, 9, [40, 40, 48]);
-  px(c, 39 + tilt, 17, GOLD); px(c, 40 + tilt, 18, GOLD); px(c, 39 + tilt, 19, [200, 150, 50]);
-  px(c, 33 + tilt, 17, WHITE);
-  // 脚
-  rect(c, 22 + tilt, 32, 2, 4, GOLD); rect(c, 28 + tilt, 32, 2, 4, GOLD);
-  return c;
-}
-function monsterCrystalCrab(f) {
-  const c = canvas(48, 48);
-  const sway = f === 1 ? 1 : 0;
-  // 水晶ガニ（甲羅に水晶が生えたカニ）
-  rect(c, 12 + sway, 24, 24, 12, [168, 84, 90]);
-  rect(c, 12 + sway, 24, 24, 3, [140, 62, 70]);
-  // 背中の水晶
-  px(c, 18 + sway, 16, CYAN); px(c, 19 + sway, 18, CYAN); px(c, 19 + sway, 20, WATER);
-  px(c, 24 + sway, 13, CYAN); px(c, 25 + sway, 15, CYAN); px(c, 25 + sway, 18, WATER); px(c, 25 + sway, 21, WATER);
-  px(c, 30 + sway, 17, CYAN); px(c, 31 + sway, 19, WATER);
-  // 目玉
-  rect(c, 19 + sway, 20, 2, 4, [140, 62, 70]); rect(c, 27 + sway, 20, 2, 4, [140, 62, 70]);
-  px(c, 19 + sway, 19, K); px(c, 28 + sway, 19, K);
-  // ハサミと脚
-  rect(c, 4 + sway, 20, 7, 6, [168, 84, 90]); px(c, 5 + sway, 18, [140, 62, 70]);
-  rect(c, 37 + sway, 20, 7, 6, [168, 84, 90]); px(c, 41 + sway, 18, [140, 62, 70]);
-  for (const x of [13, 20, 27, 33]) { line(c, x + sway, 36, x - 2 + sway, 42, [140, 62, 70]); }
-  return c;
-}
-function monsterIcicleSnail(f) {
-  const c = canvas(48, 48);
-  const sway = f === 1 ? 1 : 0;
-  // つららのカタツムリ（氷の殻）
-  rect(c, 10 + sway, 34, 26, 6, [150, 190, 200]);
-  rect(c, 10 + sway, 34, 26, 2, [120, 165, 180]);
-  // 渦巻きの殻
-  for (let y = 16; y <= 33; y++) for (let x = 12; x <= 31; x++) {
-    const d = Math.hypot(x - 21.5, y - 24.5);
-    if (d <= 9) px(c, x + sway, y, d > 6.5 ? WATER : [170, 215, 240]);
-  }
-  px(c, 21 + sway, 24, WHITE); px(c, 20 + sway, 23, WHITE);
-  // 垂れるつらら
-  for (const x of [15, 21, 27]) { px(c, x + sway, 34, WATER); px(c, x + sway, 36, WATER_D); }
-  // 頭と触角
-  rect(c, 34 + sway, 28, 6, 7, [150, 190, 200]);
-  line(c, 37 + sway, 28, 35 + sway, 22, [120, 165, 180]); line(c, 39 + sway, 28, 40 + sway, 22, [120, 165, 180]);
-  px(c, 35 + sway, 21, CYAN); px(c, 40 + sway, 21, CYAN);
-  px(c, 37 + sway, 30, K);
-  return c;
-}
-function monsterRustedBell(f) {
-  const c = canvas(48, 48);
-  const sway = f === 1 ? 1 : 0;
-  // 錆びた呼び鈴（大きなベル）
-  rect(c, 21 + sway, 6, 6, 4, RUST_D);
-  for (let y = 10; y <= 34; y++) {
-    const w = 5 + Math.round((y - 10) * 0.42);
-    rect(c, 24 - w + sway, y, w * 2, 1, y % 6 === 0 ? RUST_D : RUST);
-  }
-  rect(c, 12 + sway, 34, 24, 4, RUST_D);
-  px(c, 18 + sway, 18, RUST_L); px(c, 28 + sway, 24, RUST_L); px(c, 22 + sway, 28, RUST_D);
-  // ひびと目
-  line(c, 27 + sway, 12, 25 + sway, 20, RUST_D); line(c, 25 + sway, 20, 27 + sway, 26, RUST_D);
-  px(c, 20 + sway, 22, K); px(c, 26 + sway, 22, K);
-  // 舌（音を鳴らす玉）
-  px(c, 23 + sway, 40, GOLD); px(c, 24 + sway, 41, GOLD);
-  rect(c, 16 + sway, 43, 16, 2, GRAY_D);
-  return c;
-}
-function monsterFountainKoi(f) {
-  const c = canvas(48, 48);
-  const bob = f === 1 ? 1 : 0;
-  // 噴水のコイ（乾いた噴水で泳ぐつもりの鯉）
-  rect(c, 10, 36 + bob, 28, 5, [232, 120, 60]);
-  rect(c, 10, 36 + bob, 28, 2, [200, 96, 44]);
-  // 尾びれと背びれ
-  rect(c, 4, 32 + bob, 7, 6, [232, 120, 60]); rect(c, 4, 40 + bob, 7, 4, [200, 96, 44]);
-  rect(c, 22, 31 + bob, 8, 5, [200, 96, 44]);
-  // 斑点と目
-  px(c, 16, 38 + bob, WHITE); px(c, 24, 39 + bob, WHITE); px(c, 30, 37 + bob, [250, 220, 170]);
-  px(c, 35, 38 + bob, K);
-  // ひげと水しぶき（水はない）
-  line(c, 38, 41 + bob, 42, 43 + bob, [200, 96, 44]);
-  px(c, 14, 28 + bob, WATER); px(c, 20, 25 + bob, WATER); px(c, 27, 28 + bob, CYAN);
-  rect(c, 8, 45, 32, 2, GRAY);
-  return c;
-}
-function monsterThroneCat(f) {
-  const c = canvas(48, 48);
-  const tail = f === 1 ? 2 : 0;
-  // 玉座の猫（中庭の玉座に座る猫）
-  rect(c, 10, 12, 28, 30, GOLD);
-  rect(c, 13, 15, 22, 24, [150, 48, 52]);
-  px(c, 24, 8, GOLD); px(c, 22, 6, GOLD); px(c, 26, 6, GOLD);
-  rect(c, 14, 40, 20, 4, [120, 90, 40]);
-  // 猫の体
-  rect(c, 18, 26, 12, 12, [200, 170, 130]);
-  rect(c, 16, 36, 5, 4, [200, 170, 130]); rect(c, 27, 36, 5, 4, [200, 170, 130]);
-  // 頭と耳
-  rect(c, 18, 16, 12, 10, [200, 170, 130]);
-  px(c, 18, 13, [200, 170, 130]); px(c, 19, 14, [240, 200, 170]);
-  px(c, 29, 13, [200, 170, 130]); px(c, 28, 14, [240, 200, 170]);
-  // 閉じ目と鼻（戦う気はない）
-  rect(c, 20, 21, 3, 1, K); rect(c, 25, 21, 3, 1, K);
-  px(c, 23, 24, [180, 110, 110]);
-  // しっぽ（フレームで揺れる）
-  rect(c, 30, 34 - tail, 6, 3, [200, 170, 130]);
-  px(c, 35, 33 - tail, [170, 140, 105]);
-  return c;
-}
 const MONSTER_BUILDERS = {
   slime: monsterSlime, goblin: monsterGoblin, wolf: monsterWolf, rust_armor: monsterRustArmor,
   bill_wraith: monsterBillWraith, tax_mimic: monsterTaxMimic, quiet_king: monsterQuietKing,
@@ -1210,9 +1044,6 @@ const MONSTER_BUILDERS = {
   sleepy_mushroom: monsterSleepyMushroom, left_backpack: monsterLeftBackpack, forgotten_helmet: monsterForgottenHelmet,
   old_notice_board: monsterOldNoticeBoard, sealed_gate_door: monsterSealedGateDoor, moonlit_gardener: monsterMoonlitGardener,
   lost_umbrella: monsterLostUmbrella, left_water_bottle: monsterLeftWaterBottle, forgotten_flashlight: monsterForgottenFlashlight,
-  lost_picnic_basket: monsterLostPicnicBasket, moss_turtle: monsterMossTurtle, tilted_signpost: monsterTiltedSignpost,
-  summit_crow: monsterSummitCrow, crystal_crab: monsterCrystalCrab, icicle_snail: monsterIcicleSnail,
-  rusted_bell: monsterRustedBell, fountain_koi: monsterFountainKoi, throne_cat: monsterThroneCat,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);
@@ -1331,12 +1162,6 @@ const ITEM_ICON_BUILDERS = {
   torn_delivery_slip: (c) => { rect(c, 9, 6, 14, 20, PAPER); rect(c, 9, 6, 14, 2, [222, 214, 190]); line(c, 12, 11, 20, 11, GRAY_D); line(c, 12, 15, 18, 15, GRAY_D); line(c, 12, 19, 16, 19, GRAY_D); px(c, 20, 24, WATER); px(c, 21, 23, WATER); },
   cracked_phone_stand: (c) => { rect(c, 8, 22, 16, 4, METAL_D); rect(c, 12, 8, 8, 14, METAL); rect(c, 14, 10, 4, 10, [84, 156, 214]); line(c, 14, 10, 16, 18, WHITE); line(c, 16, 18, 14, 14, WHITE); px(c, 17, 12, WHITE); },
   anonymous_letter: (c) => { rect(c, 8, 9, 16, 14, PAPER); rect(c, 8, 9, 16, 2, [222, 214, 190]); line(c, 8, 9, 16, 16, GRAY_D); line(c, 24, 9, 16, 16, GRAY_D); px(c, 16, 15, RED2); px(c, 12, 13, GRAY_D); },
-  cracked_mug: (c) => { rect(c, 9, 10, 12, 14, WHITE); rect(c, 9, 10, 12, 2, [120, 80, 50]); rect(c, 21, 13, 4, 8, WHITE); line(c, 13, 12, 15, 18, GRAY_D); line(c, 15, 18, 13, 22, GRAY_D); px(c, 17, 15, GRAY_D); rect(c, 9, 24, 12, 2, [200, 206, 216]); },
-  bent_hanger: (c) => { px(c, 15, 5, METAL_D); px(c, 16, 6, METAL_D); line(c, 16, 8, 7, 20, METAL_D); line(c, 16, 8, 25, 18, METAL_D); line(c, 7, 20, 24, 24, METAL_D); px(c, 24, 23, METAL); px(c, 11, 14, METAL); px(c, 20, 12, METAL); },
-  dried_ink_pen: (c) => { line(c, 8, 24, 20, 12, BLUE); line(c, 9, 25, 21, 13, BLUE); rect(c, 20, 8, 5, 5, METAL_D); px(c, 7, 25, GRAY_D); px(c, 25, 6, GRAY); rect(c, 14, 16, 4, 3, GOLD); },
-  faded_timetable: (c) => { rect(c, 8, 6, 16, 20, PAPER); rect(c, 8, 6, 16, 2, [222, 214, 190]); for (const y of [12, 17, 22]) rect(c, 10, y, 12, 1, [200, 196, 180]); for (const x of [13, 18]) rect(c, x, 10, 1, 14, [200, 196, 180]); px(c, 11, 9, RED2); },
-  split_chopstick: (c) => { line(c, 10, 6, 13, 26, WOOD); line(c, 14, 6, 17, 26, WOOD); line(c, 20, 6, 22, 16, WOOD_D); line(c, 23, 18, 25, 26, WOOD_D); px(c, 21, 17, WOOD); px(c, 11, 10, WOOD_D); },
-  tangled_earphones: (c) => { rect(c, 8, 8, 5, 7, WHITE); rect(c, 19, 7, 5, 7, WHITE); px(c, 10, 11, K); px(c, 21, 10, K); line(c, 10, 15, 14, 20, GRAY_D); line(c, 21, 14, 17, 21, GRAY_D); line(c, 14, 20, 20, 24, GRAY_D); line(c, 20, 24, 12, 26, GRAY_D); px(c, 16, 22, METAL_D); },
   upgrade_better_rod: (c) => { line(c, 8, 26, 24, 6, WOOD_D); line(c, 24, 6, 24, 16, [230, 236, 240]); px(c, 24, 17, RED2); px(c, 24, 18, WHITE); px(c, 12, 20, GOLD); px(c, 17, 14, GOLD); },
   upgrade_wrist_care: (c) => { rect(c, 9, 10, 14, 12, WHITE); rect(c, 9, 10, 14, 2, [222, 226, 232]); rect(c, 9, 15, 14, 2, [240, 200, 200]); rect(c, 9, 19, 14, 2, [222, 226, 232]); px(c, 15, 12, RED2); px(c, 16, 12, RED2); px(c, 15, 13, RED2); px(c, 16, 13, RED2); },
   upgrade_small_shelf: (c) => { rect(c, 6, 8, 20, 2, WOOD); rect(c, 6, 18, 20, 2, WOOD); rect(c, 6, 26, 20, 2, WOOD); rect(c, 6, 8, 2, 20, WOOD_D); rect(c, 24, 8, 2, 20, WOOD_D); rect(c, 10, 12, 4, 6, BLUE); rect(c, 16, 13, 3, 5, RED2); rect(c, 12, 21, 5, 5, TEAL); },
@@ -1401,12 +1226,12 @@ const EQUIP_ICON_BUILDERS = {
   hot_water_bottle_armor: (c) => { rect(c, 10, 8, 12, 16, RED2); rect(c, 10, 8, 12, 3, [226, 96, 84]); rect(c, 13, 5, 6, 3, BROWN); px(c, 13, 12, WHITE); px(c, 18, 18, WHITE); px(c, 14, 20, [226, 96, 84]); rect(c, 10, 24, 12, 2, [160, 40, 34]); },
   evening_newspaper_charm: (c) => { rect(c, 8, 6, 16, 20, PAPER); rect(c, 8, 6, 16, 2, [222, 214, 190]); rect(c, 11, 10, 10, 2, RED2); rect(c, 11, 14, 10, 1, GRAY_D); rect(c, 11, 17, 10, 1, GRAY_D); rect(c, 11, 20, 7, 1, GRAY_D); px(c, 20, 23, GRAY_D); },
   streetlight_charm: (c) => { rect(c, 14, 12, 4, 16, METAL_D); rect(c, 11, 6, 10, 6, GOLD); rect(c, 13, 12, 6, 2, GOLD); px(c, 16, 9, WHITE); px(c, 10, 12, GOLD); px(c, 22, 12, GOLD); px(c, 8, 16, GOLD); px(c, 24, 16, GOLD); rect(c, 12, 28, 8, 2, METAL_D); },
-  mop_lance: (c) => { line(c, 16, 4, 16, 18, WOOD); line(c, 15, 4, 15, 18, WOOD_D); for (const x of [11, 14, 17, 20]) { line(c, x, 19, x - 1, 27, [200, 206, 216]); } rect(c, 11, 18, 11, 2, METAL_D); px(c, 16, 3, METAL); },
-  rice_cooker_hammer: (c) => { rect(c, 8, 14, 16, 11, WHITE); rect(c, 8, 14, 16, 3, [200, 206, 216]); rect(c, 12, 10, 8, 4, METAL_D); px(c, 15, 19, RED2); px(c, 18, 19, GRAY_D); rect(c, 6, 17, 2, 5, [200, 206, 216]); rect(c, 24, 17, 2, 5, [200, 206, 216]); rect(c, 10, 25, 12, 2, METAL_D); },
-  cardboard_armor: (c) => { rect(c, 8, 8, 16, 17, [196, 158, 104]); rect(c, 8, 8, 16, 2, WOOD_D); line(c, 16, 8, 16, 25, WOOD_D); line(c, 8, 16, 24, 16, WOOD_D); px(c, 11, 11, [168, 124, 74]); px(c, 19, 20, [168, 124, 74]); rect(c, 5, 10, 3, 9, [196, 158, 104]); rect(c, 24, 10, 3, 9, [196, 158, 104]); },
-  electric_blanket_armor: (c) => { rect(c, 8, 9, 16, 15, [150, 90, 80]); rect(c, 8, 9, 16, 3, [176, 104, 96]); for (const y of [15, 19]) rect(c, 8, y, 16, 1, [220, 150, 140]); line(c, 22, 24, 26, 27, K); rect(c, 26, 26, 3, 3, K); px(c, 12, 12, GOLD); px(c, 18, 21, GOLD); },
-  grocery_list_charm: (c) => { rect(c, 9, 6, 14, 20, PAPER); rect(c, 9, 6, 14, 2, [222, 214, 190]); rect(c, 11, 11, 3, 3, GRAY); rect(c, 11, 16, 3, 3, GRAY); rect(c, 11, 21, 3, 3, GRAY); px(c, 12, 12, TEAL); px(c, 12, 17, TEAL); rect(c, 16, 12, 6, 1, GRAY_D); rect(c, 16, 17, 6, 1, GRAY_D); rect(c, 16, 22, 4, 1, GRAY_D); },
-  dawn_silence_charm: (c) => { rect(c, 9, 7, 14, 18, [44, 48, 74]); rect(c, 9, 7, 14, 2, [28, 30, 48]); px(c, 12, 11, WHITE); px(c, 19, 10, GOLD); px(c, 15, 14, WHITE); rect(c, 11, 20, 10, 2, [250, 180, 90]); rect(c, 13, 18, 6, 2, [240, 140, 70]); px(c, 16, 4, GOLD); },
+  waribashi_swords: (c) => { line(c, 9, 26, 19, 6, WOOD); line(c, 10, 27, 20, 7, WOOD_D); line(c, 23, 26, 13, 6, WOOD); line(c, 22, 27, 12, 7, WOOD_D); px(c, 19, 5, METAL); px(c, 13, 5, METAL); rect(c, 7, 25, 5, 3, BROWN); rect(c, 20, 25, 5, 3, BROWN); },
+  tv_remote_wand: (c) => { rect(c, 12, 8, 8, 18, [52, 58, 66]); rect(c, 12, 8, 8, 3, RED2); px(c, 14, 13, RED2); px(c, 17, 13, GREEN); px(c, 14, 16, BLUE); px(c, 17, 16, GOLD); px(c, 15, 20, WHITE); px(c, 16, 22, WHITE); line(c, 16, 8, 16, 3, GRAY_D); px(c, 16, 2, GOLD); px(c, 14, 4, GOLD); px(c, 18, 4, GOLD); },
+  cardboard_box_armor: (c) => { rect(c, 8, 8, 16, 16, [196, 158, 104]); rect(c, 8, 8, 16, 2, WOOD_D); rect(c, 8, 8, 16, 1, [220, 190, 140]); rect(c, 15, 8, 2, 16, [170, 130, 80]); rect(c, 8, 15, 16, 2, [170, 130, 80]); px(c, 12, 12, BROWN); px(c, 20, 20, BROWN); rect(c, 10, 24, 12, 3, WOOD_D); },
+  sleeping_bag_armor: (c) => { rect(c, 9, 5, 14, 22, [96, 168, 92]); rect(c, 9, 5, 14, 3, GREEN_D); rect(c, 9, 24, 14, 3, GREEN_D); line(c, 15, 5, 15, 27, GRAY_D); px(c, 18, 10, WHITE); px(c, 18, 16, GOLD); px(c, 12, 20, WHITE); rect(c, 9, 12, 14, 1, [120, 190, 110]); },
+  radio_exercise_charm: (c) => { rect(c, 7, 12, 18, 12, [52, 58, 66]); rect(c, 7, 12, 18, 2, GRAY_D); px(c, 11, 17, GOLD); px(c, 13, 17, GOLD); px(c, 15, 17, GOLD); px(c, 18, 17, WHITE); px(c, 20, 17, WHITE); line(c, 22, 12, 27, 4, METAL_D); px(c, 27, 3, GOLD); px(c, 10, 9, RED2); px(c, 13, 7, RED2); px(c, 16, 9, RED2); },
+  midnight_convenience_charm: (c) => { rect(c, 6, 10, 20, 16, BLUE); rect(c, 6, 10, 20, 3, GOLD); rect(c, 10, 18, 5, 8, WHITE); rect(c, 17, 18, 5, 8, WHITE); rect(c, 6, 26, 20, 2, METAL_D); px(c, 12, 13, WHITE); px(c, 20, 13, WHITE); px(c, 16, 7, GOLD); px(c, 8, 4, WHITE); px(c, 22, 5, WHITE); },
 };
 for (const [id, draw] of Object.entries(EQUIP_ICON_BUILDERS)) saveSingle(iconCanvas(draw), `equip-${id}.png`);
 saveSingle(iconCanvas((c) => { rect(c, 10, 10, 12, 12, GRAY); rect(c, 10, 10, 12, 2, GRAY_D); px(c, 15, 15, WHITE); px(c, 16, 15, WHITE); px(c, 15, 16, WHITE); }), 'equip-fallback.png');

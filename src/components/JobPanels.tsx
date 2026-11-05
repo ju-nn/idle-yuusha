@@ -8,7 +8,7 @@ import { describeRequirement, isAreaUnlocked, isJobUnlocked } from '../game/requ
 import { countOwnedUpgrades, GAME_SPEED_DIVISOR, getEffectiveDurationTicksForState } from '../game/timing';
 import type { Area, GameState, Job, ResourceKey, Upgrade } from '../types';
 import { HeroScene } from './HeroScene';
-import { SCENE_ART } from '../assets/sceneArt';
+import { SCENE_ART } from '../assets/sceneArtAll';
 import { Icon, JobIcon } from './Icon';
 import { MonsterThumb } from './GameIcon';
 import { Card } from './shared';

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { SCENE_ART } from '../assets/sceneArt';
+import { SCENE_ART } from '../assets/sceneArtAll';
 import { APP_VERSION } from '../game/state';
 import { Icon } from './Icon';
 

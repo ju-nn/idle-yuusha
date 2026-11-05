@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { SCENE_ART } from '../assets/sceneArt';
+import { SCENE_ART } from '../assets/sceneArtAll';
 
 // シーン表示は 2026-10-27 の方針転換で、プログラム生成スプライトの合成から
 // ドット絵風イラスト（静止画）へ置き換えた。キャラクターのアニメーションは行わない。

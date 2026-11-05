@@ -3,7 +3,7 @@ import { describeRequirement, isJobUnlocked } from '../game/requirements';
 import { countOwnedUpgrades, getWorkSpeedMultiplier } from '../game/timing';
 import type { GameState, Job } from '../types';
 import { Icon } from './Icon';
-import { SCENE_ART } from '../assets/sceneArt';
+import { SCENE_ART } from '../assets/sceneArtAll';
 
 export function JobMenu({ state, selectJob }: { state: GameState; selectJob: (key: string) => void }) {
   return <section className="jobMenuPanel" aria-label="仕事選択"><div className="panelTitle"><h2>仕事</h2><small>選んで切替</small></div><div className="jobList">{Object.entries(jobs).map(([key, job]) => <JobButton key={key} id={key} job={job} state={state} selectJob={selectJob} />)}</div></section>;

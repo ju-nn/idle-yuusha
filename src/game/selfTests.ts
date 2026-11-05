@@ -13,6 +13,10 @@ import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
 import { buyPrestigeUpgrade, canRetire, getPrestigeScore, getRetirementPoints, retire } from './prestige';
 import { autoSellGainedItems, isAutoSellTarget } from './automation';
 import { getEquipmentPower } from './equipment';
+import { getSynergyAdventureFailReduction, getSynergyAttackBonus, getSynergyChains, getSynergyDropChanceMultiplier, getSynergyEntryCostReductionPct, getSynergyHarvestBonus, getSynergySellBonusPct, getSynergyUpgradeDiscountPct, getChainHintForJob, getUpgradeGoldCost } from './synergy';
+import { getCropRewards } from './farming';
+import { getHeroAttack } from './combat';
+import { getFailChance } from './progression';
 import { createInitialState, migrateState, SAVE_VERSION } from './state';
 
 const initialState = createInitialState(jobs);
@@ -146,5 +150,40 @@ export function runSelfTests() {
   // バランス調整（2026-10-28）: レベル曲線の緩和が想定値どおりであること。
   console.assert(xpToNext(1) === 40 && xpToNext(2) === 70 && xpToNext(5) === 280 && xpToNext(10) === 1030, 'xp curve should match the softened 2026-10-28 values');
   console.assert(jobs.fishing.areas[0].failChance === 0.10, 'first fishing area fail chance should be softened to 10%');
+  // システム間シナジー（2026-11-05）: 派生計算だけで、初期状態は無効・育成で上限付きに効くこと。
+  console.assert(getSynergySellBonusPct(initialState) === 0 && getSynergyAttackBonus(initialState) === 0 && getSynergyAdventureFailReduction(initialState) === 0 && getSynergyEntryCostReductionPct(initialState) === 0 && getSynergyHarvestBonus(initialState) === 0 && getSynergyUpgradeDiscountPct(initialState) === 0 && getSynergyDropChanceMultiplier(initialState) === 1, 'fresh state should have no synergy bonus');
+  const synergyState = {
+    ...initialState,
+    jobData: {
+      ...initialState.jobData,
+      fishing: { level: 7, xp: 0, seenMusings: [] },
+      mining: { level: 6, xp: 0, seenMusings: [] },
+      rest: { level: 5, xp: 0, seenMusings: [] },
+      nightwatch: { level: 6, xp: 0, seenMusings: [] },
+      woodcutting: { level: 8, xp: 0, seenMusings: [] },
+      housekeeping: { level: 7, xp: 0, seenMusings: [] },
+      booktrade: { level: 7, xp: 0, seenMusings: [] },
+    },
+  };
+  console.assert(getSynergySellBonusPct(synergyState) === 10, 'fishing Lv7 should give +10% sell synergy');
+  console.assert(getSynergyAttackBonus(synergyState) === 3, 'mining Lv6 should give +3 attack synergy');
+  console.assert(getSynergyAdventureFailReduction(synergyState) === 0.04, 'rest Lv5 should give -4% adventure fail synergy');
+  console.assert(getSynergyEntryCostReductionPct(synergyState) === 10, 'nightwatch Lv6 should give -10% entry cost synergy');
+  console.assert(getSynergyHarvestBonus(synergyState) === 3, 'woodcutting Lv8 should give +3 harvest synergy');
+  console.assert(getSynergyUpgradeDiscountPct(synergyState) === 12, 'housekeeping Lv7 should give -12% upgrade discount synergy');
+  console.assert(getUpgradeGoldCost(synergyState, 100) === 88, 'upgrade gold cost should include housekeeping synergy');
+  console.assert(Math.abs(getSynergyDropChanceMultiplier(synergyState) - 1.1) < 1e-9, 'booktrade Lv7 should give x1.10 drop chance synergy');
+  console.assert(getSynergyChains(synergyState).length === 7, 'there should be seven synergy chains');
+  console.assert(getSynergyChains(synergyState).filter((chain) => Boolean(chain.active)).length === 7, 'all seven synergy chains should activate for the grown state');
+  console.assert(getChainHintForJob(synergyState, 'fishing') === '商人 売却+10%', 'job menu chain hint should show the active fishing chain');
+  console.assert(getChainHintForJob(initialState, 'fishing') === '商人 売却（Lv3から）', 'job menu chain hint should show the inactive fishing chain');
+  console.assert(getChainHintForJob(initialState, 'office') === null, 'jobs without a chain should have no menu hint');
+  console.assert(getCropRewards('daikon', Date.now() - 1000, Date.now(), synergyState).rewards[0].amount === 6, 'daikon harvest should include woodcutting synergy');
+  console.assert(getCropRewards('daikon', Date.now() - 1000, Date.now(), initialState).rewards[0].amount === 3, 'daikon harvest should be unchanged without woodcutting synergy');
+  console.assert(getAdventureEntryCost(initialState, 100) === 100 && getAdventureEntryCost(synergyState, 100) === 90, 'adventure entry cost should include nightwatch synergy');
+  const forestArea = jobs.adventure.areas[0];
+  console.assert(getFailChance(forestArea, jobs.adventure.upgrades, {}, synergyState) === Math.max(0, (forestArea.failChance ?? 0) - 0.04), 'adventure fail chance should include rest synergy');
+  console.assert(getFailChance(jobs.fishing.areas[0], jobs.fishing.upgrades, {}, synergyState) === (jobs.fishing.areas[0].failChance ?? 0), 'rest synergy should not touch non-adventure fail chance');
+  console.assert(getHeroAttack(synergyState, 3, jobs.adventure) === getHeroAttack(initialState, 3, jobs.adventure) + 3, 'hero attack should include mining synergy');
 }
 

@@ -1,5 +1,7 @@
 import type { GameState } from '../types';
 
+import { getSynergyHarvestBonus } from './synergy';
+
 export const CROPS = {
   daikon: {
     name: 'しょぼい大根',
@@ -68,11 +70,16 @@ export function getFarmingProgress(farming: GameState['farming'], now = Date.now
   return { percent: Math.min(100, Math.floor((elapsed / total) * 100)), remaining, ready: remaining <= 0 };
 }
 
-export function getCropRewards(cropId: CropId, readyAt: number, now = Date.now()) {
+export function getCropRewards(cropId: CropId, readyAt: number, now = Date.now(), state?: GameState) {
   const crop = CROPS[cropId] || CROPS.daikon;
   const overgrownMs = Math.max(0, now - readyAt);
   const bonusCount = Math.min(crop.maxBonus, Math.floor(overgrownMs / crop.bonusEveryMs));
   const rewards: { item: string; amount: number }[] = crop.rewards.map((reward) => ({ ...reward }));
+  // 連鎖：木こりLvが上がると、収穫の主産物が増える（完熟おまけとは別枠）。
+  const harvestBonus = state ? getSynergyHarvestBonus(state) : 0;
+  if (harvestBonus > 0 && rewards.length > 0) {
+    rewards[0] = { ...rewards[0], amount: rewards[0].amount + harvestBonus };
+  }
   if (bonusCount > 0) {
     rewards.push({ item: crop.bonusItem.item, amount: crop.bonusItem.amount * bonusCount });
   }

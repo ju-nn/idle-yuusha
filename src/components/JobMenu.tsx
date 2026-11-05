@@ -1,5 +1,6 @@
 import { jobs } from '../data/gameData';
 import { describeRequirement, isJobUnlocked } from '../game/requirements';
+import { getChainForJob, getChainHintForJob } from '../game/synergy';
 import { countOwnedUpgrades, getWorkSpeedMultiplier } from '../game/timing';
 import type { GameState, Job } from '../types';
 import { Icon } from './Icon';
@@ -25,8 +26,12 @@ function JobButton({ id, job, state, selectJob }: { id: string; job: Job; state:
   const compare = unlocked && !active && activeJob
     ? ` / 基礎速度：現在 ${activeJob.name} x${activeSpeed.toFixed(2)} → この仕事 x${baseSpeed.toFixed(2)}`
     : '';
-  const title = unlocked ? `${job.name} Lv.${data.level}：${job.description}${compare}` : `${job.name}の解禁条件：${unlockHint}`;
-  return <button onClick={() => selectJob(id)} disabled={!unlocked} className={`jobButton ${active ? 'active' : ''}`} aria-pressed={active} title={title}>{unlocked && SCENE_ART[id] ? <img className="jobArt" src={SCENE_ART[id]} alt="" aria-hidden="true" draggable={false} /> : <span className="jobIcon"><Icon name="lock" /></span>}<span className="jobButtonText"><b>{unlocked ? job.name : '？？？'}</b><small>{unlocked ? `Lv.${data.level}` : unlockHint}</small></span>{active && unlocked && <span className="badge">中</span>}</button>;
+  // 連鎖ヒント：この仕事を育てると、別の仕事が強くなる。未解禁の仕事には出さない。
+  const chain = unlocked ? getChainForJob(state, id) : undefined;
+  const chainHint = unlocked ? getChainHintForJob(state, id) : null;
+  const chainTitle = chain ? ` / 連鎖：${chain.label}（${chain.active || chain.inactive}）` : '';
+  const title = unlocked ? `${job.name} Lv.${data.level}：${job.description}${compare}${chainTitle}` : `${job.name}の解禁条件：${unlockHint}`;
+  return <button onClick={() => selectJob(id)} disabled={!unlocked} className={`jobButton ${active ? 'active' : ''}`} aria-pressed={active} title={title}>{unlocked && SCENE_ART[id] ? <img className="jobArt" src={SCENE_ART[id]} alt="" aria-hidden="true" draggable={false} /> : <span className="jobIcon"><Icon name="lock" /></span>}<span className="jobButtonText"><b>{unlocked ? job.name : '？？？'}</b><small>{unlocked ? `Lv.${data.level}${chainHint ? ` · ${chainHint}` : ''}` : unlockHint}</small></span>{active && unlocked && <span className="badge">中</span>}</button>;
 }
 
 function getUnlockHint(job: Job, state: GameState) {

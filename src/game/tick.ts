@@ -9,6 +9,7 @@ import { getPrestigeGoldMultiplier, getPrestigeMusingRewardMultiplier, getPresti
 import { getActiveArea, isJobUnlocked } from './requirements';
 import { countOwnedUpgrades, getEffectiveDurationTicksForState } from './timing';
 import { addAchievement, announceJobUnlocks, clamp, getFailChance, grantItemRewards, isUniqueItem, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
+import { getSynergyDropChanceMultiplier } from './synergy';
 import { autoSellGainedItems, autoSellLogText } from './automation';
 import { loadUserSettings } from './settings';
 
@@ -151,7 +152,7 @@ export function runTick(prev: GameState): GameState {
   }
 
   // 失敗判定
-  const failChance = getFailChance(area, job.upgrades, prev.items || {});
+  const failChance = getFailChance(area, job.upgrades, prev.items || {}, prev);
   if (failChance > 0 && Math.random() < failChance) {
     const failText = pickFailMusing(area);
     const next = {
@@ -190,7 +191,7 @@ export function runTick(prev: GameState): GameState {
   let musingState = prev;
   const nextItems = { ...(prev.items || {}) };
   const resources = { ...prev.resources };
-  const gainedDrops = rollDrops(area.drops).filter((d) => !isUniqueItem(d.item) || !prev.items?.[d.item]);
+  const gainedDrops = rollDrops(area.drops, getSynergyDropChanceMultiplier(prev)).filter((d) => !isUniqueItem(d.item) || !prev.items?.[d.item]);
   const newItems = gainedDrops.filter((d) => !prev.items?.[d.item]).map((d) => d.item);
   let achievements = prev.achievements || [];
   let defeatedMonsters = prev.defeatedMonsters || [];
@@ -404,7 +405,7 @@ export function runTick(prev: GameState): GameState {
         adventureHpCost = Math.min(recoveredHp, Math.ceil(battle.hpCost * 0.7) + 1);
         adventureMpCost = Math.min(recoveredMp, Math.max(1, Math.ceil(battle.mpCost * 0.7)));
       } else {
-      const monsterDrops = rollDrops(monster.drops).filter((d) => !isUniqueItem(d.item) || !nextItems[d.item]);
+      const monsterDrops = rollDrops(monster.drops, getSynergyDropChanceMultiplier(prev)).filter((d) => !isUniqueItem(d.item) || !nextItems[d.item]);
       if (monsterDrops.length) combatEvents.push(`戦利品：${monsterDrops.map((d) => `${itemName(d.item)}+${d.amount}`).join(' / ')}`);
       monsterDrops.forEach((d) => {
         nextItems[d.item] = isUniqueItem(d.item) ? 1 : (nextItems[d.item] || 0) + d.amount;

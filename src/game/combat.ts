@@ -1,5 +1,6 @@
 import type { GameState, Job, Monster } from '../types';
 import { getEquipmentBonus } from './equipment';
+import { getSynergyAttackBonus } from './synergy';
 
 export type BattleResult = {
   won: boolean;
@@ -15,7 +16,9 @@ export type BattleResult = {
 export function getHeroAttack(state: GameState, level: number, job: Job) {
   const weaponBonus = (state.items.hinoki_stick || 0) ? 3 : 0;
   const upgradeBonus = job.upgrades.filter((upgrade) => state.items[upgrade.id]).length * 2;
-  const baseAttack = Math.max(4, 5 + Math.floor(level * 1.7) + weaponBonus + upgradeBonus);
+  // 連鎖：採掘Lvが冒険の攻撃力を押し上げる（装備・アップグレードとは別枠）。
+  const synergyBonus = getSynergyAttackBonus(state);
+  const baseAttack = Math.max(4, 5 + Math.floor(level * 1.7) + weaponBonus + upgradeBonus + synergyBonus);
   return Math.max(4, Math.floor(baseAttack * (1 + getEquipmentBonus(state, 'attack') / 100)));
 }
 

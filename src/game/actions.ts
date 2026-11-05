@@ -7,6 +7,7 @@ import { isAreaUnlocked, isJobUnlocked } from './requirements';
 import { CROPS, getCropRewards, type CropId } from './farming';
 import { autoSellGainedItems, autoSellLogText } from './automation';
 import { getSellPriceMultiplier } from './equipment';
+import { getUpgradeGoldCost } from './synergy';
 import { loadUserSettings } from './settings';
 
 function localDateKey(date = new Date()) {
@@ -158,7 +159,7 @@ export const plantDaikon = (prev: GameState) => plantCrop(prev, 'daikon');
 export function harvestCrop(prev: GameState): GameState {
   if (!prev.farming?.readyAt || Date.now() < prev.farming.readyAt) return prev;
   const crop = CROPS[(prev.farming.cropId || 'daikon') as CropId] || CROPS.daikon;
-  const { rewards, bonusCount } = getCropRewards((prev.farming.cropId || 'daikon') as CropId, prev.farming.readyAt);
+  const { rewards, bonusCount } = getCropRewards((prev.farming.cropId || 'daikon') as CropId, prev.farming.readyAt, Date.now(), prev);
   const bonusText = bonusCount > 0 ? ` 完熟おまけ+${bonusCount}段階。` : '';
   const eventLog = [`出来事報酬：${rewardText(rewards)}`, `${crop.name}を収穫した。畑が静かに勝っていた。${bonusText}`, ...prev.eventLog].slice(0, 24);
   // 自動売却（設定ONのとき）: 収穫した素材はその場でGに変える。重要アイテムは対象外。
@@ -205,7 +206,9 @@ export function harvestCrop(prev: GameState): GameState {
 export const harvestDaikon = harvestCrop;
 
 export function buyUpgrade(prev: GameState, u: Upgrade): GameState {
-  if (prev.items?.[u.id] || prev.gold < u.cost.gold) return prev;
+  // 連鎖：家事代行Lvが上がると、拠点整備の金コストが安くなる（素材は対象外）。
+  const goldCost = getUpgradeGoldCost(prev, u.cost.gold);
+  if (prev.items?.[u.id] || prev.gold < goldCost) return prev;
   for (const [key, value] of Object.entries(u.cost.resources || {})) {
     if ((prev.resources[key as ResourceKey] || 0) < value) return prev;
   }
@@ -228,7 +231,7 @@ export function buyUpgrade(prev: GameState, u: Upgrade): GameState {
   };
   const next: GameState = {
     ...prev,
-    gold: prev.gold - u.cost.gold,
+    gold: prev.gold - goldCost,
     resources,
     items: { ...(prev.items || {}), [u.id]: 1 },
     maxHp: prev.maxHp + (u.effects.maxHp || 0),

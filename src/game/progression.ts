@@ -3,6 +3,7 @@ import { jobs } from '../data/gameData';
 import { checkRequirement, describeRequirement, isJobUnlocked } from './requirements';
 import type { Area, GameState, Musing, Requirement, ResourceKey, Upgrade } from '../types';
 import { enqueueMusing } from './musings';
+import { getSynergyAdventureFailReduction, getUpgradeGoldCost } from './synergy';
 
 export { describeUpgradeEffects, formatResourceName, rewardText } from './formatters';
 export { getFarmingProgress } from './farming';
@@ -43,7 +44,7 @@ export function grantItemRewards(base: Record<string, number>, rewards: Musing['
   });
   return { items: next, granted };
 }
-export function rollDrops(drops: Area['drops'] = []) { return drops.filter((d) => Math.random() <= d.chance).map((d) => ({ ...d, amount: randInt(d.amount[0], d.amount[1]) })); }
+export function rollDrops(drops: Area['drops'] = [], chanceMultiplier = 1) { return drops.filter((d) => Math.random() <= Math.min(0.95, d.chance * chanceMultiplier)).map((d) => ({ ...d, amount: randInt(d.amount[0], d.amount[1]) })); }
 export function pickFreshMusing(area: Area, seen: string[] = []) { const indexed = area.musings.map((m, i) => ({ ...m, key: `${area.id}::${i}` })); const unseen = indexed.filter((m) => !seen.includes(m.key)); const selected = unseen.length ? pick(unseen) : pick(indexed); return { ...selected, fresh: !seen.includes(selected.key) }; }
 export function getGoal(state: GameState) {
   if (state.currentMusing && !state.currentMusing.readAt) return 'ぼやきの「次へ」を押して、今起きた出来事を読む。';
@@ -110,7 +111,8 @@ function upgradeReadiness(upgrade: Upgrade, state: GameState, jobKey: string) {
   if (state.items?.[upgrade.id]) return 100;
   const jobLevel = state.jobData?.[jobKey]?.level || 1;
   const levelRatio = upgrade.level ? Math.min(1, jobLevel / upgrade.level) : 1;
-  const goldRatio = upgrade.cost.gold > 0 ? Math.min(1, (state.gold || 0) / upgrade.cost.gold) : 1;
+  const discountedGold = getUpgradeGoldCost(state, upgrade.cost.gold);
+  const goldRatio = discountedGold > 0 ? Math.min(1, (state.gold || 0) / discountedGold) : 1;
   const resourceRatios = Object.entries(upgrade.cost.resources || {}).map(([key, value]) => {
     if (!value) return 1;
     return Math.min(1, ((state.resources || {})[key as ResourceKey] || 0) / value);
@@ -335,13 +337,15 @@ export function announceJobUnlocks(prev: GameState, next: GameState, now = Date.
   return state;
 }
 
-export function getFailChance(area: Area, jobUpgrades: import('../types').Upgrade[], ownedItems: Record<string, number>): number {
+export function getFailChance(area: Area, jobUpgrades: import('../types').Upgrade[], ownedItems: Record<string, number>, state?: GameState): number {
   const base = area.failChance ?? 0;
   if (base === 0) return 0;
   const reduction = jobUpgrades
     .filter((u) => ownedItems[u.id] && u.effects.failReduction)
     .reduce((sum, u) => sum + (u.effects.failReduction ?? 0), 0);
-  return Math.max(0, base - reduction);
+  // 連鎖：冒険エリア（出発費のあるエリア）では、休憩Lvが失敗率をさらに下げる。
+  const synergyReduction = state && area.adventureCost ? getSynergyAdventureFailReduction(state) : 0;
+  return Math.max(0, base - reduction - synergyReduction);
 }
 
 export function pickFailMusing(area: Area): string {

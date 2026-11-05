@@ -1,5 +1,6 @@
 import type { EquipmentItem, EquipmentOption, EquipmentOptionTarget, EquipmentRarity, EquipmentSlot, FeedbackEvent, GameState, JobType, ResourceKey, TreasureChest, TreasureChestType } from '../types';
 import { enqueueMusing } from './musings';
+import { getSynergyEntryCostReductionPct, getSynergySellBonusPct } from './synergy';
 import { getPrestigeChestMultiplier } from './prestige';
 import { loadUserSettings } from './settings';
 
@@ -289,13 +290,16 @@ export function getResourceGainMultiplier(state: GameState, resource: ResourceKe
 }
 
 export function getSellPriceMultiplier(state: GameState) {
-  return 1 + getEquipmentBonus(state, 'sellPrice') / 100;
+  // 連鎖：釣りLvが商人の売却額を押し上げる（装備ボーナスとは別枠）。
+  return 1 + getEquipmentBonus(state, 'sellPrice') / 100 + getSynergySellBonusPct(state) / 100;
 }
 
 export function getAdventureEntryCost(state: GameState, baseCost = 0) {
   if (baseCost <= 0) return 0;
   const multiplier = Math.max(0.5, 1 - getEquipmentBonus(state, 'adventureCost') / 100);
-  return Math.max(1, Math.floor(baseCost * multiplier));
+  // 連鎖：夜間警備Lvが出発費をさらに下げる（装備ボーナスとは別枠）。
+  const synergyMultiplier = 1 - getSynergyEntryCostReductionPct(state) / 100;
+  return Math.max(1, Math.floor(baseCost * multiplier * synergyMultiplier));
 }
 
 export function equipmentOptionText(option: EquipmentOption) {

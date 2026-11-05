@@ -8,6 +8,7 @@ import { formatResourceName } from '../game/formatters';
 import { MUSING_LABELS } from '../game/musings';
 import { canRetire, getNextPrestigeCost, getPrestigeScore, getPrestigeSpeedMultiplier, getPrestigeStage, getRetirementPoints, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, RETIRE_REQUIRED_SCORE } from '../game/prestige';
 import { getFailChance, xpToNext } from '../game/progression';
+import { getSynergyChains } from '../game/synergy';
 import { isJobUnlocked, getActiveArea } from '../game/requirements';
 import { GAME_SPEED_DIVISOR, countOwnedUpgrades, getEffectiveDurationTicksForState, getWorkSpeedMultiplier } from '../game/timing';
 import { applyUserSettings, loadUserSettings, saveUserSettings, type UserSettings } from '../game/settings';
@@ -37,7 +38,7 @@ export function StatsModal({ state, onClose }: { state: GameState; onClose: () =
   const ownedUpgrades = countOwnedUpgrades(activeJob.upgrades.map((u) => u.id), state.items || {});
   const ticks = getEffectiveDurationTicksForState(activeArea.seconds, activeData.level, ownedUpgrades, state, state.activeJob);
   const cycleSeconds = Math.max(1, Math.ceil(ticks / GAME_SPEED_DIVISOR));
-  const failChance = getFailChance(activeArea, activeJob.upgrades, state.items || {});
+  const failChance = getFailChance(activeArea, activeJob.upgrades, state.items || {}, state);
   const successRate = 1 - failChance;
   const speedMultiplier = getWorkSpeedMultiplier(activeData.level, ownedUpgrades)
     * (1 + (getEquipmentBonus(state, 'jobSpeed', state.activeJob) + getEquipmentBonus(state, 'jobSpeed')) / 100)
@@ -88,6 +89,15 @@ export function StatsModal({ state, onClose }: { state: GameState; onClose: () =
         })}
       </div>
       <p className="sub">基礎速度はレベルと拠点整備だけの倍率です。装備と永続強化は現在の仕事の効率にだけ上乗せされます。</p>
+    </div>
+    <div>
+      <div className="sectionHead"><h3>連鎖ボーナス</h3></div>
+      <div className="statsRows">
+        {getSynergyChains(state).map((chain) => (
+          <div className="statsRow" key={chain.id}><span>{chain.label}</span><b>{chain.active || chain.inactive}</b></div>
+        ))}
+      </div>
+      <p className="sub">ある仕事の育成が、別の仕事を強くする連鎖です。セーブには何も書きません。育てる仕事を変えると、効く先の数字も変わります。</p>
     </div>
     <div>
       <div className="sectionHead"><h3>全体と上限</h3></div>

@@ -1198,6 +1198,92 @@ function monsterThroneCat(f) {
   px(c, 35, 33 - tail, [170, 140, 105]);
   return c;
 }
+const THRONE_D = [184, 128, 30], DEMON_R = [168, 52, 48], DEMON_D = [120, 36, 34];
+function monsterThroneMimic(f) {
+  const c = canvas(48, 48);
+  const jaw = f === 1 ? 2 : 0;
+  // 玉座ミミック（座る場所そのものが敵）
+  rect(c, 10, 6, 28, 26, GOLD); // 背もたれ
+  rect(c, 10, 6, 28, 3, THRONE_D);
+  px(c, 14, 9, GOLD); px(c, 34, 9, GOLD);
+  rect(c, 8, 30, 32, 10, GOLD); // 座面
+  rect(c, 8, 30, 32, 2, THRONE_D);
+  rect(c, 10, 40, 6, 6, THRONE_D); rect(c, 32, 40, 6, 6, THRONE_D); // 脚
+  // 目（背もたれに二つ）
+  rect(c, 17, 14, 4, 4, WHITE); rect(c, 27, 14, 4, 4, WHITE);
+  px(c, 19, 16, K); px(c, 29, 16, K);
+  // 歯の並んだ口（座面の前面）
+  rect(c, 14, 32 + jaw, 20, 3, K);
+  for (let x = 14; x < 34; x += 4) { px(c, x, 32 + jaw, WHITE); px(c, x + 2, 34 + jaw, WHITE); }
+  if (f === 1) { px(c, 24, 12, RED); px(c, 23, 20, RED); } // 怒りのきらめき
+  return c;
+}
+function monsterRetiredHero(f) {
+  const c = canvas(48, 48);
+  const lean = f === 1 ? 1 : 0;
+  // 引退した先輩勇者（剣を地面に刺して、もう戦わない）
+  rect(c, 22 + lean, 10, 4, 26, METAL_D); // 刺さった剣の柄
+  rect(c, 20 + lean, 8, 8, 3, WOOD_D);
+  rect(c, 23 + lean, 36, 2, 10, METAL); // 刃（地面に）
+  // 体（ゆるいチュニック）
+  rect(c, 16 + lean, 18, 16, 22, TUNIC_D);
+  rect(c, 16 + lean, 18, 16, 2, TUNIC);
+  rect(c, 14 + lean, 40, 6, 4, [150, 120, 100]); rect(c, 28 + lean, 40, 6, 4, [150, 120, 100]); // スリッパ
+  // 頭（白髪まじり）と閉じ目
+  rect(c, 18 + lean, 8, 12, 10, SKIN);
+  rect(c, 18 + lean, 8, 12, 3, GRAY);
+  px(c, 20 + lean, 7, GRAY); px(c, 28 + lean, 7, GRAY);
+  rect(c, 20 + lean, 13, 3, 1, K); rect(c, 25 + lean, 13, 3, 1, K);
+  px(c, 23 + lean, 16, [180, 110, 110]);
+  return c;
+}
+function monsterSilentDemonKing(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 静かな魔王（声より先に圧が来る）
+  for (let y = 18; y <= 46; y++) {
+    const w = 9 + Math.round((y - 18) * 0.3);
+    rect(c, 24 - w + sway, y, w * 2, 1, y > 42 ? DEMON_D : DEMON_R);
+  }
+  rect(c, 23 + sway, 20, 2, 24, DEMON_D);
+  px(c, 24 + sway, 30, GOLD); px(c, 24 + sway, 38, GOLD);
+  rect(c, 13 + sway, 19, 6, 4, DEMON_D); rect(c, 29 + sway, 19, 6, 4, DEMON_D);
+  // 角
+  rect(c, 16 + sway, 4, 3, 6, [240, 220, 180]); rect(c, 29 + sway, 4, 3, 6, [240, 220, 180]);
+  // 顔（影の中に白い顔）
+  rect(c, 18 + sway, 9, 12, 10, KING_F);
+  rect(c, 18 + sway, 9, 12, 2, [198, 192, 176]);
+  px(c, 21 + sway, 14, RED); px(c, 27 + sway, 14, RED); // 赤い目
+  rect(c, 22 + sway, 17, 4, 1, [178, 172, 158]);
+  // 王冠
+  rect(c, 17 + sway, 5, 14, 3, GOLD);
+  for (const x of [17, 21, 25, 29]) rect(c, x + sway, 2, 2, 3, GOLD);
+  px(c, 23 + sway, 6, BLUE);
+  if (f === 1) { px(c, 18 + sway, 3, WHITE); px(c, 30 + sway, 4, WHITE); }
+  return c;
+}
+function monsterHouseholdDemonKing(f) {
+  const c = canvas(48, 48);
+  const wave = f === 1 ? 2 : 0;
+  // 家計の魔王（請求書を掲げた最終形態）
+  rect(c, 16, 14, 16, 26, DEMON_R);
+  rect(c, 16, 14, 16, 2, DEMON_D);
+  rect(c, 14, 40, 7, 5, DEMON_D); rect(c, 27, 40, 7, 5, DEMON_D);
+  // 角と目
+  rect(c, 15, 3, 4, 6, GOLD); rect(c, 29, 3, 4, 6, GOLD);
+  rect(c, 17, 8, 14, 8, [226, 190, 170]);
+  rect(c, 20, 11, 3, 2, K); rect(c, 25, 11, 3, 2, K);
+  px(c, 24, 14, [120, 40, 40]);
+  // 掲げた請求書（紙が揺れる）
+  rect(c, 34, 8 + wave, 10, 14, PAPER);
+  rect(c, 36, 12 + wave, 6, 1, GRAY_D); rect(c, 36, 15 + wave, 6, 1, GRAY_D); rect(c, 36, 18 + wave, 4, 1, GRAY_D);
+  px(c, 39, 20 + wave, RED);
+  rect(c, 32, 16, 4, 4, DEMON_R); // 腕
+  // 腰の金袋
+  rect(c, 21, 30, 6, 6, GOLD);
+  px(c, 24, 29, THRONE_D);
+  return c;
+}
 const MONSTER_BUILDERS = {
   slime: monsterSlime, goblin: monsterGoblin, wolf: monsterWolf, rust_armor: monsterRustArmor,
   bill_wraith: monsterBillWraith, tax_mimic: monsterTaxMimic, quiet_king: monsterQuietKing,
@@ -1213,6 +1299,8 @@ const MONSTER_BUILDERS = {
   lost_picnic_basket: monsterLostPicnicBasket, moss_turtle: monsterMossTurtle, tilted_signpost: monsterTiltedSignpost,
   summit_crow: monsterSummitCrow, crystal_crab: monsterCrystalCrab, icicle_snail: monsterIcicleSnail,
   rusted_bell: monsterRustedBell, fountain_koi: monsterFountainKoi, throne_cat: monsterThroneCat,
+  throne_mimic: monsterThroneMimic, retired_hero: monsterRetiredHero,
+  silent_demon_king: monsterSilentDemonKing, household_demon_king: monsterHouseholdDemonKing,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);
@@ -1284,6 +1372,7 @@ const ITEM_ICON_BUILDERS = {
   overdue_notice: (c) => { rect(c, 8, 4, 16, 24, PAPER); rect(c, 11, 9, 10, 1, GRAY_D); rect(c, 11, 13, 10, 1, GRAY_D); rect(c, 11, 17, 7, 1, GRAY_D); for (let a = 0; a < 8; a++) { const sx = 19 + Math.round(3 * Math.cos(a * Math.PI / 4)), sy = 22 + Math.round(3 * Math.sin(a * Math.PI / 4)); px(c, sx, sy, RED2); } px(c, 19, 20, RED2); px(c, 19, 22, RED2); px(c, 19, 24, RED2); },
   castle_key_fragment: (c) => { rect(c, 7, 12, 8, 8, GOLD); rect(c, 9, 14, 4, 4, [250, 246, 232]); rect(c, 15, 15, 6, 3, GOLD); rect(c, 19, 18, 3, 4, GOLD); px(c, 22, 14, GOLD); px(c, 23, 13, [250, 246, 232]); px(c, 24, 15, GOLD); px(c, 16, 13, [184, 128, 30]); },
   quiet_crown: (c) => { rect(c, 7, 17, 18, 6, GOLD); for (const x of [7, 12, 17, 22]) rect(c, x, 12, 3, 5, GOLD); px(c, 13, 19, BLUE); px(c, 19, 19, RED2); rect(c, 7, 23, 18, 2, [184, 128, 30]); },
+  throne_key: (c) => { rect(c, 7, 12, 8, 8, GOLD); rect(c, 9, 14, 4, 4, [250, 246, 232]); rect(c, 15, 15, 7, 3, GOLD); rect(c, 20, 18, 3, 4, GOLD); px(c, 22, 14, GOLD); px(c, 23, 13, [250, 246, 232]); px(c, 24, 15, GOLD); px(c, 16, 13, [184, 128, 30]); px(c, 10, 18, BLUE); },
   life_stamp: (c) => { rect(c, 13, 5, 6, 8, WOOD_D); rect(c, 10, 13, 12, 4, WOOD); rect(c, 8, 17, 16, 9, RED2); rect(c, 10, 19, 12, 5, [226, 96, 84]); px(c, 14, 20, WHITE); px(c, 17, 20, WHITE); px(c, 15, 22, WHITE); },
   employee_badge: (c) => { rect(c, 10, 8, 12, 17, WHITE); rect(c, 10, 8, 12, 3, BLUE); rect(c, 14, 4, 4, 4, METAL_D); px(c, 13, 14, GRAY); px(c, 18, 14, GRAY); px(c, 13, 13, GRAY); px(c, 18, 13, GRAY); rect(c, 12, 19, 8, 1, GRAY_D); rect(c, 12, 22, 8, 1, GRAY_D); },
   mute_button: (c) => { rect(c, 8, 8, 16, 16, [84, 92, 104]); rect(c, 10, 10, 12, 12, [120, 130, 144]); px(c, 13, 14, WHITE); px(c, 19, 14, WHITE); px(c, 14, 15, WHITE); px(c, 18, 15, WHITE); line(c, 12, 20, 20, 12, RED2); },

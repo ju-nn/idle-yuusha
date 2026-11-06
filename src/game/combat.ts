@@ -32,6 +32,20 @@ export function getHeroGuard(state: GameState, job: Job) {
   return Math.min(12, upgradeGuard + shieldGuard + equipmentGuard);
 }
 
+// ボス連戦ボーナス: 玉座の間でボスに連勝するほど、勝利XPが増える。
+// 1連勝は +0%、2連勝は +10%、上限 +50%（6連勝）。
+export function bossStreakBonusPct(streak: number) {
+  if (!streak || streak < 2) return 0;
+  return Math.min(50, (streak - 1) * 10);
+}
+
+// 連勝数の遷移: ボスに勝てば +1、負ければ 0。遭遇なし・エリア移動も 0 扱いで
+// 呼び出し側（tick）がリセットする。
+export function nextBossStreak(prevStreak: number, won: boolean) {
+  if (!won) return 0;
+  return (prevStreak || 0) + 1;
+}
+
 export function simulateMonsterBattle(state: GameState, job: Job, monster: Monster, level: number): BattleResult {
   const heroAttack = getHeroAttack(state, level, job);
   const guard = getHeroGuard(state, job);
@@ -44,7 +58,7 @@ export function simulateMonsterBattle(state: GameState, job: Job, monster: Monst
   const turns = won ? turnsToWin : Math.max(1, Math.min(turnsToWin, Math.floor(state.hp / damagePerTurn) || 1));
   const remainingMonsterHp = won ? 0 : Math.max(1, monster.hp - heroAttack * turns);
   const logs = [
-    `${monster.name}と遭遇：HP${monster.hp} / 攻撃${monster.attack}`,
+    `${monster.boss ? '【ボス】' : ''}${monster.name}と遭遇：HP${monster.hp} / 攻撃${monster.attack}`,
     `勇者の攻撃力：${heroAttack}。${turnsToWin}手で片づける計算。計算だけは勇敢だ。`,
     won
       ? `勝利：${turnsToWin}手 / 消耗 HP${hpCost}・MP${mpCost}。帰宅後の風呂が本編。`

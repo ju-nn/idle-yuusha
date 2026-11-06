@@ -235,10 +235,19 @@ const jobs: Record<string, Job> = {
       { id: 'fountain_koi', name: '噴水のコイ', hp: 118, attack: 19, rewards: { gold: [72, 114], xp: 66 }, drops: [D('castle_key_fragment', 0.5, [1, 1]), D('quiet_crown', 0.3, [1, 1])] },
       { id: 'throne_cat', name: '玉座の猫', hp: 124, attack: 20, rewards: { gold: [76, 120], xp: 70 }, drops: [D('quiet_crown', 0.35, [1, 1]), D('castle_key_fragment', 0.4, [1, 1])] },
     ], musings: [M('静かな中庭に入った。ラスボスの前室というより、誰も掃除していない高級物件だ。\n\n勇者「広い家に憧れたこともある。でも掃除範囲を見たら、急にワンルームが王国に見える」', [{ item: 'castle_key_fragment', amount: 1 }], 'unlock'), M('城の奥は静かだった。静かすぎて、財布の中身まで聞こえそうだった。\n\n勇者「静けさは好きだけど、ここまで静かだと請求の足音が目立つな」', [{ item: 'field_note', amount: 1 }])] },
+    { id: 'throne_room', name: '玉座の間', summary: '城の最奥。ボスしか出ない。勝つたびに連戦ボーナスが積み上がる。', unlock: { type: 'item', item: 'quiet_crown', amount: 1 }, seconds: 16, adventureCost: 120, rewards: { xp: 40 }, drops: [D('castle_key_fragment', 0.22, [1, 1]), D('quiet_crown', 0.06, [1, 1])], failChance: 0.30, failMusings: ['玉座の重圧に足が止まった。権威、実は体力勝負だ', '玉座の間の静けさに気圧された。静かすぎると心臓がうるさい', '廊下の絨毯で滑った。歴史ある床ほど滑る', '玉座を見たら座りたくなった。座る勇気と立つ勇気、両方要る'], encounterChance: 0.70, monsters: [
+      { id: 'throne_mimic', name: '玉座ミミック', hp: 150, attack: 22, boss: true, rewards: { gold: [90, 150], xp: 80 }, drops: [D('castle_key_fragment', 0.6, [1, 1]), D('quiet_crown', 0.25, [1, 1])] },
+      { id: 'retired_hero', name: '引退した先輩勇者', hp: 180, attack: 24, boss: true, rewards: { gold: [110, 170], xp: 95 }, drops: [D('quiet_crown', 0.3, [1, 1]), D('throne_key', 0.3, [1, 1])] },
+      { id: 'silent_demon_king', name: '静かな魔王', hp: 210, attack: 26, boss: true, rewards: { gold: [130, 190], xp: 110 }, drops: [D('quiet_crown', 0.35, [1, 1]), D('throne_key', 0.4, [1, 1])] },
+      { id: 'household_demon_king', name: '家計の魔王', hp: 240, attack: 28, boss: true, rewards: { gold: [150, 220], xp: 130 }, drops: [D('throne_key', 0.5, [1, 1]), D('quiet_crown', 0.4, [1, 1])] },
+    ], musings: [M('玉座の間に足を踏み入れた。ラスボスの部屋というより、誰も座らない高級な椅子が一脚ある部屋だった。\n\n勇者「魔王より先に、この椅子の座り心地が気になる。座ったら負けな気がするし、座らなかったら損な気もする」', [{ item: 'castle_key_fragment', amount: 1 }], 'unlock'), M('玉座の間は静かだった。静かすぎて、自分の呼吸の請求書が聞こえそうだった。\n\n勇者「ここまで来たら、もう逃げる理由のほうが豪華だな。勝っても負けても、帰りの風呂だけは確定している」', [{ item: 'castle_key_fragment', amount: 1 }])] },
   ], upgrades: [
     { id: 'adventure_shield', name: '木の盾', description: '攻撃を少し防ぐ。不安は防がない。', cost: { gold: 70, resources: { wood: 15, ore: 5 } }, effects: { maxHp: 18, failReduction: 0.10 }, log: '盾を手に入れた。モンスターの攻撃を少し受け流せるようになった。', level: 2 },
     { id: 'adventure_potion', name: '回復薬セット', description: '戦闘後の回復が少し楽になる。', cost: { gold: 85, resources: { ore: 12 } }, effects: { maxMp: 15, maxHp: 10, failReduction: 0.10 }, log: '回復の準備ができた。戦闘での生存率が少し上がった。', level: 4 },
     { id: 'adventure_return_charm', name: '折りたたみ帰還札', description: '帰る判断を早くする札。逃げ道があると、前に出る勇気も少し出る。', cost: { gold: 180, resources: { ore: 24, wood: 18 } }, effects: { maxHp: 18, maxMp: 12, failReduction: 0.08 }, log: '帰り道を畳んで持てるようになった。危険な探索の失敗も少し減った。', level: 6 },
+    { id: 'adventure_throne_key', name: '王城の合鍵', description: '玉座の間への備え。重い扉ほど、開けた先の報酬も重い。', cost: { gold: 400, resources: { ore: 40, wood: 30 } }, effects: { maxHp: 25, maxMp: 15, failReduction: 0.08 }, log: '王城の合鍵を手に入れた。ボス戦の消耗が少し軽くなった。', level: 8 },
+    { id: 'adventure_throne_map', name: '玉座の間取り図', description: '玉座の間の見取り図。逃げ道と玉座の位置が、やけに丁寧に描かれている。', cost: { gold: 650, resources: { ore: 60, wood: 40 } }, effects: { maxHp: 30, maxMp: 20, failReduction: 0.08 }, log: '間取り図を手に入れた。ボスの動きが少し読めるようになった。', level: 9 },
+    { id: 'adventure_quiet_crown_stand', name: '静かな王冠の台座', description: '王冠を置く台座。置いた王冠が、勇者のHPを少しだけ支える。', cost: { gold: 1000, resources: { ore: 80, wood: 60 } }, effects: { maxHp: 40, maxMp: 25, failReduction: 0.10 }, log: '王冠の台座を据えた。城の最奥でも、少しだけ落ち着いて戦えるようになった。', level: 10 },
   ],
   levelMusings: {
     1: [

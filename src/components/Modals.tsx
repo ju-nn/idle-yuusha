@@ -341,7 +341,7 @@ function BestiaryBook({ state }: { state: GameState }) {
 
 function MonsterArchive({ monster, defeated }: { monster: Monster; defeated?: boolean }) {
   const dropText = monster.drops.map((drop) => itemName(drop.item)).join(' / ');
-  return <div className={`monsterArchive ${defeated ? 'defeated' : ''}`}><MonsterThumb id={monster.id} size={56} silhouette={!defeated} /><div className="monsterArchiveBody"><div><b>{defeated ? monster.name : '？？？'}</b><span>{defeated ? `HP${monster.hp} / 攻撃${monster.attack}` : '未討伐'}</span></div><p>{defeated ? `落とすもの：${dropText || 'なし'}。勝てたなら、次はできれば会釈だけで済ませたい。` : 'まだ倒していない。名前を知らない不安は、だいたい強そうに見える。'}</p></div></div>;
+  return <div className={`monsterArchive ${defeated ? 'defeated' : ''}`}><MonsterThumb id={monster.id} size={56} silhouette={!defeated} /><div className="monsterArchiveBody"><div><b>{defeated ? monster.name : '？？？'}{monster.boss ? '（ボス）' : ''}</b><span>{defeated ? `HP${monster.hp} / 攻撃${monster.attack}` : '未討伐'}</span></div><p>{defeated ? `落とすもの：${dropText || 'なし'}。勝てたなら、次はできれば会釈だけで済ませたい。` : 'まだ倒していない。名前を知らない不安は、だいたい強そうに見える。'}</p></div></div>;
 }
 
 function MusingBook({ musings }: { musings: Musing[] }) {

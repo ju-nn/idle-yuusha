@@ -1,7 +1,7 @@
 import { itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import type { GameState, ResourceKey } from '../types';
-import { simulateMonsterBattle } from './combat';
+import { bossStreakBonusPct, nextBossStreak, simulateMonsterBattle } from './combat';
 import { getAdventureEntryCost, getChestLimit, getEquipmentBonus, getResourceGainMultiplier, getSellPriceMultiplier, maybeDropChest } from './equipment';
 import { formatResourceName, rewardText } from './formatters';
 import { enqueueMusing } from './musings';
@@ -182,6 +182,9 @@ export function runTick(prev: GameState): GameState {
   let adventureXp = 0;
   let adventureHpCost = 0;
   let adventureMpCost = 0;
+  // ボス連勝数: 玉座の間でのみ積み上がる。敗北・遭遇なし・玉座の間以外での
+  // サイクル完了で 0 に戻る（作業失敗では途切れない）。
+  let bossStreak = prev.bossStreak || 0;
   const adventureEntryCost = job.type === 'adventure' ? getAdventureEntryCost(prev, area.adventureCost || 0) : 0;
   let bonusGold = 0;
   let level = data.level;
@@ -391,6 +394,7 @@ export function runTick(prev: GameState): GameState {
       const battle = simulateMonsterBattle({ ...prev, hp: recoveredHp, mp: recoveredMp }, job, monster, data.level);
       combatEvents.push(...battle.logs);
       if (!battle.won) {
+        bossStreak = 0;
         addFeedback('battleLose');
         addMusing({
           id: `failure-monster-${monster.id}-${now}`,
@@ -413,6 +417,18 @@ export function runTick(prev: GameState): GameState {
       });
       adventureGold = 0;
       adventureXp = monster.rewards.xp || 0;
+      // ボス連戦: 玉座の間のボスに勝つたび連勝数が増え、勝利XPにボーナスが付く。
+      if (monster.boss) {
+        bossStreak = nextBossStreak(prev.bossStreak || 0, true);
+        const streakPct = bossStreakBonusPct(bossStreak);
+        if (streakPct > 0) {
+          adventureXp = Math.floor(adventureXp * (1 + streakPct / 100));
+          combatEvents.push(`連戦ボーナス：ボス${bossStreak}連勝でXP+${streakPct}%。休まない勇気にも、ちゃんと利息が付く。`);
+        } else {
+          combatEvents.push(`連戦開始：ボス1連勝。次も勝てばXPが増える。`);
+        }
+        if (bossStreak >= 3) achievements = addAchievement({ ...prev, achievements }, 'boss_rush_3', eventLog);
+      }
       adventureHpCost = battle.hpCost;
       adventureMpCost = battle.mpCost;
       combatEvents.push(`戦闘結果：+${adventureXp}XP。Gは落ちない。冒険を財布で永久機関にしないための現実。`);
@@ -462,9 +478,12 @@ export function runTick(prev: GameState): GameState {
         }
       }
     } else {
+      bossStreak = 0;
       combatEvents.push(`探索：${area.name}を静かに歩いた。何も出なかった。平和だ。`);
     }
   }
+  // 玉座の間以外でサイクルが完了したら連勝は途切れる。
+  if (area.id !== 'throne_room') bossStreak = 0;
   xp += adventureXp;
   if (nextStreak >= 3) {
     const streakXp = Math.min(8, Math.floor(nextStreak / 3));
@@ -592,6 +611,7 @@ export function runTick(prev: GameState): GameState {
   if (nextItems.hinoki_stick) achievements = addAchievement({ ...prev, achievements }, 'unlock_combat', eventLog);
   if (nextItems.rusty_armor_plate || nextItems.overdue_notice) achievements = addAchievement({ ...prev, achievements }, 'first_castle', eventLog);
   if (nextItems.castle_key_fragment || nextItems.quiet_crown) achievements = addAchievement({ ...prev, achievements }, 'first_inner_castle', eventLog);
+  if (nextItems.throne_key) achievements = addAchievement({ ...prev, achievements }, 'first_throne', eventLog);
   if (nextItems.pebble_ore) achievements = addAchievement({ ...prev, achievements }, 'first_ore', eventLog);
   if (nextItems.employee_badge) achievements = addAchievement({ ...prev, achievements }, 'first_office', eventLog);
   if (nextItems.mute_button) achievements = addAchievement({ ...prev, achievements }, 'first_remote', eventLog);
@@ -654,6 +674,7 @@ export function runTick(prev: GameState): GameState {
     feedbackEvents: feedbackEvents.slice(-24),
     eventLog: [...eventLog, ...prev.eventLog].slice(0, 24),
     defeatedMonsters,
+    bossStreak,
     combo: { lastJob: prev.activeJob, streak: nextStreak, boons: nextBoons },
     seenMusingIds: musingState.seenMusingIds,
     recentMusingIds: musingState.recentMusingIds,

@@ -17,6 +17,7 @@ import { getSynergyAdventureFailReduction, getSynergyAttackBonus, getSynergyChai
 import { getTraitAttackBonus, getTraitChangeCost, getTraitFailReduction, getTraitHarvestBonus, getTraitJobGoldBonusPct, getTraitOfflineMultiplier, getTraitRestXpMultiplier, getTraitSellBonusPct, selectTrait } from './traits';
 import { getCropRewards } from './farming';
 import { getHeroAttack } from './combat';
+import { bossStreakBonusPct, nextBossStreak } from './combat';
 import { getFailChance } from './progression';
 import { getSellPriceMultiplier } from './equipment';
 import { createInitialState, migrateState, SAVE_VERSION } from './state';
@@ -229,5 +230,31 @@ export function runSelfTests() {
   console.assert(migratedBadTrait.trait === null && migratedBadTrait.traitChanges === 0, 'invalid trait values should normalize to unselected');
   const migratedWithTrait = migrateState({ gold: 55, trait: 'easygoing' as const, traitChanges: 2, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
   console.assert(migratedWithTrait.trait === 'easygoing' && migratedWithTrait.traitChanges === 2, 'trait selection should survive migration');
+  // エンドゲーム（2026-11-07 / ロードマップ4）: 玉座の間は静かな王冠で解禁され、ボス4体だけが出ること。
+  const throneRoom = jobs.adventure.areas.find((area) => area.id === 'throne_room');
+  console.assert(throneRoom !== undefined, 'throne room area should exist');
+  console.assert(throneRoom?.unlock?.type === 'item' && 'item' in (throneRoom?.unlock || {}) && (throneRoom?.unlock as { item: string }).item === 'quiet_crown', 'throne room should unlock with quiet crown');
+  console.assert(checkRequirement(throneRoom?.unlock, { ...initialState, items: { quiet_crown: 1 } }) === true, 'quiet crown should unlock the throne room');
+  console.assert(checkRequirement(throneRoom?.unlock, initialState) === false, 'throne room should stay locked without quiet crown');
+  console.assert(describeRequirement(throneRoom?.unlock, initialState).includes('静かな王冠'), 'throne room hint should name the quiet crown');
+  const throneBosses = (throneRoom?.monsters || []).filter((monster) => monster.boss);
+  console.assert((throneRoom?.monsters || []).length === 4 && throneBosses.length === 4, 'throne room should hold exactly four bosses');
+  console.assert(throneBosses.every((monster) => monster.hp >= 150 && monster.attack >= 22), 'throne bosses should outrank courtyard monsters');
+  console.assert(throneBosses.some((monster) => (monster.drops || []).some((drop) => drop.item === 'throne_key')), 'throne bosses should drop the throne key');
+  console.assert(itemName('throne_key') === '玉座の鍵', 'throne key should be a catalog item');
+  // ボス連戦: 連勝数とXPボーナスの純粋計算。
+  console.assert(nextBossStreak(0, true) === 1 && nextBossStreak(2, true) === 3 && nextBossStreak(3, false) === 0, 'boss streak should grow on wins and reset on losses');
+  console.assert(bossStreakBonusPct(0) === 0 && bossStreakBonusPct(1) === 0 && bossStreakBonusPct(2) === 10 && bossStreakBonusPct(3) === 20 && bossStreakBonusPct(6) === 50 && bossStreakBonusPct(99) === 50, 'boss streak bonus should be +10% per win after the first, capped at +50%');
+  // 最上位拠点整備: 冒険Lv8〜10で解禁される3種があり、攻撃力の土台を押し上げること。
+  const topUpgrades = jobs.adventure.upgrades.filter((upgrade) => (upgrade.level || 0) >= 8);
+  console.assert(topUpgrades.length === 3, 'there should be three top-tier adventure upgrades');
+  console.assert(topUpgrades.every((upgrade) => upgrade.cost.gold >= 400 && (upgrade.effects.maxHp || 0) >= 25), 'top-tier upgrades should cost at least 400G and add at least 25 max HP');
+  // 旧セーブ: bossStreak 未記録・不正値は 0 に倒れること。
+  const migratedNoStreak = migrateState({ gold: 55, jobData: { fishing: { level: 2, xp: 0, seenMusings: [] } }, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedNoStreak.bossStreak === 0, 'old save without boss streak should migrate as zero');
+  const migratedBadStreak = migrateState({ gold: 55, bossStreak: -2, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedBadStreak.bossStreak === 0, 'invalid boss streak should normalize to zero');
+  const migratedWithStreak = migrateState({ gold: 55, bossStreak: 3, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedWithStreak.bossStreak === 3, 'boss streak should survive migration');
 }
 

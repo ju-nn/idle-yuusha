@@ -100,6 +100,8 @@ export type Monster = {
   name: string;
   hp: number;
   attack: number;
+  // ボス: 玉座の間の連戦対象。戦闘ログと図鑑で「ボス」として区別する。
+  boss?: boolean;
   rewards: Partial<Record<ResourceKey, [number, number]>> & {
     gold?: [number, number];
     xp?: number;
@@ -215,6 +217,9 @@ export type GameState = {
   monsterHp: number;
   visitedAreas: string[];
   defeatedMonsters: string[];
+  // ボス連勝数: 玉座の間でボスに連勝した回数。敗北・遭遇なし・玉座の間以外での
+  // サイクル完了で 0 に戻る。旧セーブは未記録扱い（0）。
+  bossStreak?: number;
   unlockedJobs: string[];
   seenMusingIds: string[];
   recentMusingIds: string[];

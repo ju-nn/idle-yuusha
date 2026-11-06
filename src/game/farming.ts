@@ -1,6 +1,7 @@
 import type { GameState } from '../types';
 
 import { getSynergyHarvestBonus } from './synergy';
+import { getTraitHarvestBonus } from './traits';
 
 export const CROPS = {
   daikon: {
@@ -76,7 +77,8 @@ export function getCropRewards(cropId: CropId, readyAt: number, now = Date.now()
   const bonusCount = Math.min(crop.maxBonus, Math.floor(overgrownMs / crop.bonusEveryMs));
   const rewards: { item: string; amount: number }[] = crop.rewards.map((reward) => ({ ...reward }));
   // 連鎖：木こりLvが上がると、収穫の主産物が増える（完熟おまけとは別枠）。
-  const harvestBonus = state ? getSynergyHarvestBonus(state) : 0;
+  // 特性：職人気質ならさらに +1（シナジーとは別枠）。
+  const harvestBonus = state ? getSynergyHarvestBonus(state) + getTraitHarvestBonus(state) : 0;
   if (harvestBonus > 0 && rewards.length > 0) {
     rewards[0] = { ...rewards[0], amount: rewards[0].amount + harvestBonus };
   }

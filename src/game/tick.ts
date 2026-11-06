@@ -10,6 +10,7 @@ import { getActiveArea, isJobUnlocked } from './requirements';
 import { countOwnedUpgrades, getEffectiveDurationTicksForState } from './timing';
 import { addAchievement, announceJobUnlocks, clamp, getFailChance, grantItemRewards, isUniqueItem, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
 import { getSynergyDropChanceMultiplier } from './synergy';
+import { getTraitJobGoldBonusPct, getTraitRestXpMultiplier } from './traits';
 import { autoSellGainedItems, autoSellLogText } from './automation';
 import { loadUserSettings } from './settings';
 
@@ -489,9 +490,11 @@ export function runTick(prev: GameState): GameState {
   }
 
   // XPの永続強化は、このサイクルで得た分だけにまとめて掛ける（既存の進み具合は変えない）。
+  // 特性：のんびり屋気質で仕事が休憩なら、さらに ×1.25（永続強化の倍率と掛け合わせ）。
   const gainedXpThisCycle = xp - data.xp;
   if (gainedXpThisCycle > 0) {
-    xp = data.xp + Math.floor(gainedXpThisCycle * getPrestigeXpMultiplier(prev));
+    const traitXpMultiplier = prev.activeJob === 'rest' ? getTraitRestXpMultiplier(prev) : 1;
+    xp = data.xp + Math.floor(gainedXpThisCycle * getPrestigeXpMultiplier(prev) * traitXpMultiplier);
   }
   while (xp >= xpToNext(level)) {
     xp -= xpToNext(level);
@@ -540,8 +543,10 @@ export function runTick(prev: GameState): GameState {
 
   const reward = area.rewards;
   const baseGoldGain = job.type === 'adventure' || !reward.gold ? 0 : randInt(reward.gold[0], reward.gold[1]);
+  // 特性：商人気質なら、仕事の金報酬に +10%（売却額の +15% とは別枠。冒険の出発費は割り引かない）。
+  const traitGoldGain = Math.floor(baseGoldGain * getTraitJobGoldBonusPct(prev) / 100);
   // 収入の永続強化は稼いだ分にだけ掛ける（冒険費用などの支出は割り引かない）。
-  const earnedGold = baseGoldGain + sellGold + adventureGold + bonusGold + autoSellGold;
+  const earnedGold = baseGoldGain + traitGoldGain + sellGold + adventureGold + bonusGold + autoSellGold;
   let goldGain = Math.floor(earnedGold * getPrestigeGoldMultiplier(prev)) - adventureEntryCost;
   if (goldGain > 0 && prev.activeJob !== 'merchant' && consumeBoon('market_sense')) {
     const marketBonus = Math.max(1, Math.floor(goldGain * 0.12));

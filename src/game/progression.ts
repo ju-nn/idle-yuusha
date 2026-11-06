@@ -4,6 +4,7 @@ import { checkRequirement, describeRequirement, isJobUnlocked } from './requirem
 import type { Area, GameState, Musing, Requirement, ResourceKey, Upgrade } from '../types';
 import { enqueueMusing } from './musings';
 import { getSynergyAdventureFailReduction, getUpgradeGoldCost } from './synergy';
+import { getTraitFailReduction } from './traits';
 
 export { describeUpgradeEffects, formatResourceName, rewardText } from './formatters';
 export { getFarmingProgress } from './farming';
@@ -344,8 +345,10 @@ export function getFailChance(area: Area, jobUpgrades: import('../types').Upgrad
     .filter((u) => ownedItems[u.id] && u.effects.failReduction)
     .reduce((sum, u) => sum + (u.effects.failReduction ?? 0), 0);
   // 連鎖：冒険エリア（出発費のあるエリア）では、休憩Lvが失敗率をさらに下げる。
+  // 特性：冒険者気質ならさらに -5%（シナジーとは別枠）。下限 0% は最後に守る。
   const synergyReduction = state && area.adventureCost ? getSynergyAdventureFailReduction(state) : 0;
-  return Math.max(0, base - reduction - synergyReduction);
+  const traitReduction = state && area.adventureCost ? getTraitFailReduction(state) : 0;
+  return Math.max(0, base - reduction - synergyReduction - traitReduction);
 }
 
 export function pickFailMusing(area: Area): string {

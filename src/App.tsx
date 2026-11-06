@@ -25,7 +25,8 @@ import { buyPrestigeUpgrade, retire } from './game/prestige';
 import { getActiveArea, isJobUnlocked } from './game/requirements';
 import { runTick } from './game/tick';
 import { countOwnedUpgrades, getEffectiveDurationTicksForState, getWorkSpeedMultiplier, TICK_INTERVAL_MS } from './game/timing';
-import type { EquipmentItem, GameState } from './types';
+import { selectTrait } from './game/traits';
+import type { EquipmentItem, GameState, TraitId } from './types';
 
 const initialState = createInitialState(jobs);
 const PROGRESS_STEP = 5;
@@ -317,6 +318,7 @@ export default function App() {
   const handleRetire = () => setState((prev) => retire(prev, initialState));
   const handleEquipItem = (uid: string) => setState((prev) => equipItem(prev, uid));
   const handleSellEquipment = (uid: string) => setState((prev) => sellEquipment(prev, uid));
+  const handleSelectTrait = (id: TraitId) => { playUiSound('click'); setState((prev) => selectTrait(prev, id)); };
   const handleToggleEquipmentLock = (uid: string) => setState((prev) => toggleEquipmentLock(prev, uid));
   const showChestReveal = (beforeUid: string | undefined, next: GameState, openedCount = 1) => {
     const item = next.equipmentInventory?.[0];
@@ -378,7 +380,7 @@ export default function App() {
       {collectionOpen && <CollectionModal state={state} musings={readMusings} achievements={state.achievements} onClose={() => setCollectionOpen(false)} />}
       {prestigeOpen && <PrestigeModal state={state} buyPrestigeUpgrade={handleBuyPrestigeUpgrade} retire={() => { handleRetire(); setPrestigeOpen(false); }} onClose={() => setPrestigeOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} reset={() => { reset(); setSettingsOpen(false); }} />}
-      {statsOpen && <StatsModal state={state} onClose={() => setStatsOpen(false)} />}
+      {statsOpen && <StatsModal state={state} onClose={() => setStatsOpen(false)} onSelectTrait={handleSelectTrait} />}
       {!titleDone && bootInfo.showTitle && <TitleScreen hasSave={bootInfo.hasSave} onFinish={() => setTitleDone(true)} onOpenSettings={() => { setTitleDone(true); playUiSound('open'); setSettingsOpen(true); }} />}
     </div>
   );

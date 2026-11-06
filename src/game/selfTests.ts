@@ -14,9 +14,11 @@ import { buyPrestigeUpgrade, canRetire, getPrestigeScore, getRetirementPoints, r
 import { autoSellGainedItems, isAutoSellTarget } from './automation';
 import { getEquipmentPower } from './equipment';
 import { getSynergyAdventureFailReduction, getSynergyAttackBonus, getSynergyChains, getSynergyDropChanceMultiplier, getSynergyEntryCostReductionPct, getSynergyHarvestBonus, getSynergySellBonusPct, getSynergyUpgradeDiscountPct, getChainHintForJob, getUpgradeGoldCost } from './synergy';
+import { getTraitAttackBonus, getTraitChangeCost, getTraitFailReduction, getTraitHarvestBonus, getTraitJobGoldBonusPct, getTraitOfflineMultiplier, getTraitRestXpMultiplier, getTraitSellBonusPct, selectTrait } from './traits';
 import { getCropRewards } from './farming';
 import { getHeroAttack } from './combat';
 import { getFailChance } from './progression';
+import { getSellPriceMultiplier } from './equipment';
 import { createInitialState, migrateState, SAVE_VERSION } from './state';
 
 const initialState = createInitialState(jobs);
@@ -185,5 +187,47 @@ export function runSelfTests() {
   console.assert(getFailChance(forestArea, jobs.adventure.upgrades, {}, synergyState) === Math.max(0, (forestArea.failChance ?? 0) - 0.04), 'adventure fail chance should include rest synergy');
   console.assert(getFailChance(jobs.fishing.areas[0], jobs.fishing.upgrades, {}, synergyState) === (jobs.fishing.areas[0].failChance ?? 0), 'rest synergy should not touch non-adventure fail chance');
   console.assert(getHeroAttack(synergyState, 3, jobs.adventure) === getHeroAttack(initialState, 3, jobs.adventure) + 3, 'hero attack should include mining synergy');
+  // 特性（2026-11-06 / ロードマップ3）: 派生計算だけで、初期状態は無効・選択で上限付きに効くこと。
+  console.assert(initialState.trait === null && initialState.traitChanges === 0, 'fresh state should have no trait selected');
+  console.assert(getTraitAttackBonus(initialState) === 0 && getTraitFailReduction(initialState) === 0 && getTraitHarvestBonus(initialState) === 0 && getTraitSellBonusPct(initialState) === 0 && getTraitJobGoldBonusPct(initialState) === 0 && getTraitOfflineMultiplier(initialState) === 1 && getTraitRestXpMultiplier(initialState) === 1, 'fresh state should have no trait bonus');
+  console.assert(getTraitChangeCost(initialState) === 0, 'first trait choice should be free');
+  const craftsmanState = { ...initialState, trait: 'craftsman' as const, traitChanges: 0 };
+  const adventurerState = { ...initialState, trait: 'adventurer' as const, traitChanges: 0 };
+  const merchantState = { ...initialState, trait: 'merchant' as const, traitChanges: 0 };
+  const easygoingState = { ...initialState, trait: 'easygoing' as const, traitChanges: 0 };
+  console.assert(getTraitHarvestBonus(craftsmanState) === 1, 'craftsman trait should give +1 harvest');
+  console.assert(getCropRewards('daikon', Date.now() - 1000, Date.now(), craftsmanState).rewards[0].amount === 4, 'daikon harvest should include craftsman trait');
+  console.assert(getUpgradeGoldCost(craftsmanState, 100) === 90, 'upgrade gold cost should include craftsman trait discount');
+  console.assert(getUpgradeGoldCost({ ...synergyState, trait: 'craftsman' as const }, 100) === 79, 'craftsman discount should stack separately after housekeeping synergy');
+  console.assert(getTraitAttackBonus(adventurerState) === 3, 'adventurer trait should give +3 attack');
+  console.assert(getHeroAttack(adventurerState, 3, jobs.adventure) === getHeroAttack(initialState, 3, jobs.adventure) + 3, 'hero attack should include adventurer trait');
+  console.assert(getTraitFailReduction(adventurerState) === 0.05, 'adventurer trait should give -5% fail reduction');
+  console.assert(getFailChance(forestArea, jobs.adventure.upgrades, {}, adventurerState) === Math.max(0, (forestArea.failChance ?? 0) - 0.05), 'adventure fail chance should include adventurer trait');
+  console.assert(getFailChance(jobs.fishing.areas[0], jobs.fishing.upgrades, {}, adventurerState) === (jobs.fishing.areas[0].failChance ?? 0), 'adventurer trait should not touch non-adventure fail chance');
+  console.assert(getTraitSellBonusPct(merchantState) === 15 && getTraitJobGoldBonusPct(merchantState) === 10, 'merchant trait should give +15% sell and +10% job gold');
+  console.assert(Math.abs(getSellPriceMultiplier(merchantState) - 1.15) < 1e-9, 'sell price multiplier should include merchant trait');
+  console.assert(getTraitOfflineMultiplier(easygoingState) === 1.2, 'easygoing trait should give x1.20 offline efficiency');
+  console.assert(getTraitRestXpMultiplier(easygoingState) === 1.25, 'easygoing trait should give x1.25 rest xp');
+  console.assert(getTraitRestXpMultiplier(merchantState) === 1, 'rest xp trait bonus should apply only to easygoing');
+  // 特性の選択・変更: 初回無料・変更は 500G×(変更回数+1)・金不足は変更不可。
+  const firstPick = selectTrait({ ...initialState, gold: 40 }, 'merchant');
+  console.assert(firstPick.trait === 'merchant' && firstPick.gold === 40 && firstPick.traitChanges === 0, 'first trait choice should be free and keep change count at 0');
+  console.assert(firstPick.musingQueue.some((m) => m.id === 'trait-first-merchant'), 'first trait choice should queue a one-time event musing');
+  const samePick = selectTrait(firstPick, 'merchant');
+  console.assert(samePick === firstPick, 're-selecting the same trait should change nothing');
+  console.assert(getTraitChangeCost(firstPick) === 500, 'first trait change should cost 500G');
+  const changed = selectTrait({ ...firstPick, gold: 600 }, 'adventurer');
+  console.assert(changed.trait === 'adventurer' && changed.gold === 100 && changed.traitChanges === 1, 'trait change should pay 500G and count one change');
+  console.assert(getTraitChangeCost(changed) === 1000, 'second trait change should cost 1000G');
+  const brokeChange = selectTrait({ ...firstPick, gold: 499 }, 'adventurer');
+  console.assert(brokeChange.trait === 'merchant' && brokeChange.gold === 499, 'trait change without enough gold should not apply');
+  console.assert(brokeChange.musingQueue.some((m) => m.eventSubType === 'not_enough_gold_for_trait'), 'trait change without enough gold should explain via a failure musing');
+  // 旧セーブ: trait フィールドなし（v1〜v4相当）の読み込みが未選択扱いで壊れないこと。
+  const migratedNoTrait = migrateState({ gold: 55, jobData: { fishing: { level: 2, xp: 0, seenMusings: [] } }, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedNoTrait.trait === null && migratedNoTrait.traitChanges === 0 && migratedNoTrait.gold === 55, 'old save without trait fields should migrate as unselected');
+  const migratedBadTrait = migrateState({ gold: 55, trait: 'unknown' as never, traitChanges: -3, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedBadTrait.trait === null && migratedBadTrait.traitChanges === 0, 'invalid trait values should normalize to unselected');
+  const migratedWithTrait = migrateState({ gold: 55, trait: 'easygoing' as const, traitChanges: 2, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedWithTrait.trait === 'easygoing' && migratedWithTrait.traitChanges === 2, 'trait selection should survive migration');
 }
 

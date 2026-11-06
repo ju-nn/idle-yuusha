@@ -14,7 +14,8 @@ import { GAME_SPEED_DIVISOR, countOwnedUpgrades, getEffectiveDurationTicksForSta
 import { applyUserSettings, loadUserSettings, saveUserSettings, type UserSettings } from '../game/settings';
 import { createSaveBackupText, importSaveBackup } from '../game/saveTransfer';
 import { createInitialState } from '../game/state';
-import type { EquipmentItem, EquipmentSlot, GameState, Job, Monster, Musing } from '../types';
+import { TRAITS, getTrait, getTraitBonusLines, getTraitChangeCost, getTraitJobGoldBonusPct, getTraitRestXpMultiplier } from '../game/traits';
+import type { EquipmentItem, EquipmentSlot, GameState, Job, Monster, Musing, TraitId } from '../types';
 import { Icon } from './Icon';
 import { EquipSprite, ItemSprite, MonsterThumb } from './GameIcon';
 import { Card, Modal } from './shared';
@@ -31,7 +32,7 @@ function fmtNum(value: number) {
   return Number.isInteger(value) ? `${value}` : value.toFixed(1);
 }
 
-export function StatsModal({ state, onClose }: { state: GameState; onClose: () => void }) {
+export function StatsModal({ state, onClose, onSelectTrait }: { state: GameState; onClose: () => void; onSelectTrait: (id: TraitId) => void }) {
   const activeJob = jobs[state.activeJob] || jobs.fishing;
   const activeArea = getActiveArea(state.activeJob, state.activeArea) || activeJob.areas[0];
   const activeData = state.jobData[state.activeJob] || { level: 1, xp: 0, seenMusings: [] };
@@ -46,9 +47,10 @@ export function StatsModal({ state, onClose }: { state: GameState; onClose: () =
   const resourceGains = (['fish', 'wood', 'ore'] as const)
     .map((key) => ({ key, amount: avgRange(activeArea.rewards[key]) }))
     .filter((entry) => entry.amount > 0);
-  const goldPerCycle = avgRange(activeArea.rewards.gold)
+  // 特性：商人気質なら仕事の金報酬に +10%、のんびり屋気質で休憩なら XP に +25% が効く。
+  const goldPerCycle = avgRange(activeArea.rewards.gold) * (1 + getTraitJobGoldBonusPct(state) / 100)
     + (activeArea.sell ? avgRange(activeArea.sell.amount) * activeArea.sell.price : 0);
-  const xpPerCycle = activeArea.rewards.xp || 0;
+  const xpPerCycle = (activeArea.rewards.xp || 0) * (state.activeJob === 'rest' ? getTraitRestXpMultiplier(state) : 1);
   const cyclesPerHour = 3600 / cycleSeconds;
   const goldPerHour = goldPerCycle * cyclesPerHour * successRate;
   const xpPerHour = xpPerCycle * cyclesPerHour * successRate;
@@ -98,6 +100,33 @@ export function StatsModal({ state, onClose }: { state: GameState; onClose: () =
         ))}
       </div>
       <p className="sub">ある仕事の育成が、別の仕事を強くする連鎖です。セーブには何も書きません。育てる仕事を変えると、効く先の数字も変わります。</p>
+    </div>
+    <div>
+      <div className="sectionHead"><h3>特性</h3></div>
+      <p className="sub">勇者の生き方を1つだけ選ぶ。初回は無料、変更は500G×（変更回数+1）。選んだ瞬間から効果が出る。タップだけで選べる。</p>
+      <div className="traitGrid">
+        {TRAITS.map((def) => {
+          const current = getTrait(state);
+          const selected = current === def.id;
+          const changeCost = getTraitChangeCost(state);
+          const canAfford = current === null || state.gold >= changeCost;
+          return <div className={`traitCard ${selected ? 'selected' : ''}`} key={def.id}>
+            <div className="traitTop"><b>{def.name}</b>{selected && <span className="traitBadge">選択中</span>}</div>
+            <p>{def.flavor}</p>
+            <ul>{def.effects.map((effect) => <li key={effect}>{effect}</li>)}</ul>
+            <button className="primary" onClick={() => onSelectTrait(def.id)} disabled={selected || !canAfford}>
+              {selected ? '選択中' : current === null ? '無料で選ぶ' : `変更する（${changeCost}G）`}
+            </button>
+            {!selected && current !== null && !canAfford && <p className="sub">所持金が足りない（{state.gold}G / 必要{changeCost}G）。</p>}
+          </div>;
+        })}
+      </div>
+      <div className="statsRows">
+        {getTraitBonusLines(state).length > 0
+          ? getTraitBonusLines(state).map((line) => <div className="statsRow" key={line}><span>特性ボーナス</span><b>{line}</b></div>)
+          : <div className="statsRow"><span>特性ボーナス</span><b>未選択。どれか1つ選ぶと、ここに効いている効果が出る。</b></div>}
+      </div>
+      <p className="sub">特性は1つだけ。変えたくなったら、いつでもここから変えられる。生き方の模様替えは、意外と高い。</p>
     </div>
     <div>
       <div className="sectionHead"><h3>全体と上限</h3></div>

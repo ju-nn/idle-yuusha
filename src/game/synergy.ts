@@ -1,4 +1,5 @@
 import type { GameState } from '../types';
+import { applyTraitUpgradeDiscount } from './traits';
 
 // システム間シナジー（ロードマップ3）。
 // Melvor Idle式の「Aの育成がBを強くする」連鎖を、セーブ形式を変えずに
@@ -50,7 +51,9 @@ export function getSynergyUpgradeDiscountPct(state: GameState): number {
 
 export function getUpgradeGoldCost(state: GameState, baseGold: number): number {
   if (baseGold <= 0) return 0;
-  return Math.max(0, Math.floor(baseGold * (1 - getSynergyUpgradeDiscountPct(state) / 100)));
+  const synergyDiscounted = Math.max(0, Math.floor(baseGold * (1 - getSynergyUpgradeDiscountPct(state) / 100)));
+  // 特性：職人気質ならさらに -10%（シナジー割引とは別枠で両方適用）。
+  return applyTraitUpgradeDiscount(state, synergyDiscounted);
 }
 
 // 古本せどりLv → ドロップ確率：目利きが上がると、戦利品の中から価値あるものを見逃さなくなる。

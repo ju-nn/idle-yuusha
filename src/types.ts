@@ -159,6 +159,9 @@ export type PrestigeState = {
 
 export type OfflineTier = 'short' | 'hours' | 'overnight' | 'days';
 
+// 特性（Trait）: ビルドの方向性。1つだけ有効。未選択は null。
+export type TraitId = 'craftsman' | 'adventurer' | 'merchant' | 'easygoing';
+
 export type GameState = {
   saveVersion?: number;
   offlineSummary?: {
@@ -220,6 +223,9 @@ export type GameState = {
   lastCertainMusingAt?: number;
   lastSavedAt?: number;
   prestige?: PrestigeState;
+  // 特性: 選択中のビルド方向（未選択は null）と変更回数。旧セーブは未選択扱い。
+  trait?: TraitId | null;
+  traitChanges?: number;
 };
 
 export type Achievement = {

@@ -2,8 +2,10 @@ import type { GameState, Job, Musing, OfflineTier } from '../types';
 import { itemKind } from '../data/catalog';
 import { jobs as gameJobs } from '../data/gameData';
 import { createPrestigeState, getPrestigeOfflineMultiplier, normalizePrestigeState } from './prestige';
+import { getTraitOfflineMultiplier } from './traits';
 import { checkRequirement } from './requirements';
 import { TICK_INTERVAL_MS } from './timing';
+import { isValidTraitId } from './traits';
 import { runOfflineTicks } from './tick';
 
 export const SAVE_KEY = 'yuusha-does-not-want-to-work-codex-handoff-v1';
@@ -73,6 +75,8 @@ export function createInitialState(jobs: Record<string, Job>): GameState {
     lastCertainMusingAt: Date.now(),
     lastSavedAt: Date.now(),
     prestige: createPrestigeState(),
+    trait: null,
+    traitChanges: 0,
   };
 }
 
@@ -197,6 +201,9 @@ function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameSt
     lastCertainMusingAt: parsed.lastCertainMusingAt,
     lastSavedAt: parsed.lastSavedAt || Date.now(),
     prestige: normalizePrestigeState(parsed.prestige),
+    // 特性: 旧セーブ（trait フィールドなし）は未選択扱い。不正な値は null に倒す。
+    trait: isValidTraitId(parsed.trait) ? parsed.trait : null,
+    traitChanges: typeof parsed.traitChanges === 'number' && parsed.traitChanges >= 0 ? Math.floor(parsed.traitChanges) : 0,
   };
   // 解禁済み仕事は「条件を満たすもの」だけでなく、保存済みリストと使用実績も union で守る。
   // 移行のたびに条件だけで再計算すると、旧版で使えていた仕事が再ロックされ得るため。
@@ -241,8 +248,8 @@ function applyOfflineProgress(state: GameState): GameState {
   const savedAt = state.lastSavedAt || now;
   const elapsedMs = Math.max(0, now - savedAt);
   const rawTicks = Math.floor(elapsedMs / TICK_INTERVAL_MS);
-  // オフライン効率の永続強化があると、不在中の進行が実時間より少し多めに積もる（上限は従来どおり3日ぶん）。
-  const boostedTicks = Math.floor(rawTicks * getPrestigeOfflineMultiplier(state));
+  // オフライン効率の永続強化とのんびり屋気質があると、不在中の進行が実時間より少し多めに積もる（上限は従来どおり3日ぶん）。
+  const boostedTicks = Math.floor(rawTicks * getPrestigeOfflineMultiplier(state) * getTraitOfflineMultiplier(state));
   const offlineTicks = Math.min(OFFLINE_MAX_TICKS, boostedTicks);
   if (offlineTicks < 3) return { ...state, lastSavedAt: now };
 

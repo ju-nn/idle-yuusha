@@ -8,27 +8,28 @@ import { getAdventureEntryCost } from './equipment';
 import { describeUpgradeEffects, formatResourceName, rewardText } from './formatters';
 import { getFarmingProgress } from './farming';
 import { enqueueMusing, routeAmbientMusing } from './musings';
-import { claimCatVisit, createCatState, getCatGiftGold, getCatGoldMultiplier, getCatXpMultiplier, getPeople, maybeCatVisit, normalizeCatState, refreshCatState } from './companion';
+import { callCat, claimCatVisit, createCatState, getCatCallRemainingMs, getCatGiftGold, getCatGoldMultiplier, getCatXpMultiplier, getPeople, maybeCatVisit, normalizeCatState, refreshCatState } from './companion';
 import { prestigeCostCurve } from './pricing';
 import { addAchievement, addItems, applyMilestoneAchievements, checkMilestoneAchievements, emptyLifetime, getAchievementBonusLines, getAchievementGoldMultiplier, getAchievementProgress, getAllDiscoverableItemIds, getAllMonsterIds, getCollectionBonusLines, getCollectionGoldMultiplier, getCollectionXpMultiplier, getLifePlan, getNextTarget, rollDrops } from './progression';
 import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } from './requirements';
 import { xpToNext } from './progression';
 import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
-import { buyPrestigeUpgrade, buyRebirthUpgrade, canRebirth, canRetire, createPrestigeState, getPrestigeOfflineMultiplier, getPrestigeScore, getPrestigeStage, getRebirthChestLimitBonus, getRebirthOfflineCapHours, getRebirthPoints, getRebirthSpeedMultiplier, getRebirthStage, getRetirementPoints, PRESTIGE_UPGRADES, REBIRTH_UPGRADES, rebirth, retire } from './prestige';
+import { buyPrestigeUpgrade, buyRebirthUpgrade, canRebirth, canRetire, createPrestigeState, getPrestigeOfflineBonus, getPrestigeScore, getPrestigeStage, getRebirthChestLimitBonus, getRebirthOfflineCapHours, getRebirthPoints, getRebirthSpeedMultiplier, getRebirthStage, getRetirementPoints, PRESTIGE_UPGRADES, REBIRTH_UPGRADES, rebirth, retire } from './prestige';
 import { defaultSettings } from './settings';
 import { runTick } from './tick';
 import { autoSellGainedItems, isAutoSellTarget } from './automation';
 import { getEquipmentPower, getChestLimit, isEquipmentBaseInSeason } from './equipment';
 import { getSynergyAdventureFailReduction, getSynergyAttackBonus, getSynergyChains, getSynergyDropChanceMultiplier, getSynergyEntryCostReductionPct, getSynergyHarvestBonus, getSynergySellBonusPct, getSynergyUpgradeDiscountPct, getChainHintForJob, getUpgradeGoldCost } from './synergy';
-import { getTraitAttackBonus, getTraitChangeCost, getTraitFailReduction, getTraitHarvestBonus, getTraitJobGoldBonusPct, getTraitOfflineMultiplier, getTraitRestXpMultiplier, getTraitSellBonusPct, selectTrait } from './traits';
+import { getTraitAttackBonus, getTraitChangeCost, getTraitFailReduction, getTraitHarvestBonus, getTraitJobGoldBonusPct, getTraitOfflineBonus, getTraitRestXpMultiplier, getTraitSellBonusPct, selectTrait } from './traits';
 import { getCropRewards, CROPS } from './farming';
 import { getCurrentSeason, getSeasonCalendar, SEASONAL_ITEM_IDS, seasonStartMusingId } from './seasons';
 import { claimWeeklyGoal, ensureWeeklyState, getWeekKey, getWeeklyGoals } from './weekly';
 import { getHeroAttack } from './combat';
 import { bossStreakBonusPct, nextBossStreak } from './combat';
 import { getFailChance } from './progression';
+import { advanceTutorial, buyUpgrade, dismissTutorial, selectJob } from './actions';
 import { getSellPriceMultiplier } from './equipment';
-import { computeOfflineGains, createInitialState, getOfflineMaxTicks, migrateState, SAVE_VERSION, totalJobXp } from './state';
+import { computeOfflineGains, createInitialState, getOfflineEfficiency, getOfflineMaxTicks, migrateState, SAVE_VERSION, totalJobXp } from './state';
 
 const initialState = createInitialState(jobs);
 
@@ -198,7 +199,7 @@ export function runSelfTests() {
   console.assert(getHeroAttack(synergyState, 3, jobs.adventure) === getHeroAttack(initialState, 3, jobs.adventure) + 3, 'hero attack should include mining synergy');
   // 特性（2026-11-06 / ロードマップ3）: 派生計算だけで、初期状態は無効・選択で上限付きに効くこと。
   console.assert(initialState.trait === null && initialState.traitChanges === 0, 'fresh state should have no trait selected');
-  console.assert(getTraitAttackBonus(initialState) === 0 && getTraitFailReduction(initialState) === 0 && getTraitHarvestBonus(initialState) === 0 && getTraitSellBonusPct(initialState) === 0 && getTraitJobGoldBonusPct(initialState) === 0 && getTraitOfflineMultiplier(initialState) === 1 && getTraitRestXpMultiplier(initialState) === 1, 'fresh state should have no trait bonus');
+  console.assert(getTraitAttackBonus(initialState) === 0 && getTraitFailReduction(initialState) === 0 && getTraitHarvestBonus(initialState) === 0 && getTraitSellBonusPct(initialState) === 0 && getTraitJobGoldBonusPct(initialState) === 0 && getTraitOfflineBonus(initialState) === 0 && getTraitRestXpMultiplier(initialState) === 1, 'fresh state should have no trait bonus');
   console.assert(getTraitChangeCost(initialState) === 0, 'first trait choice should be free');
   const craftsmanState = { ...initialState, trait: 'craftsman' as const, traitChanges: 0 };
   const adventurerState = { ...initialState, trait: 'adventurer' as const, traitChanges: 0 };
@@ -215,7 +216,7 @@ export function runSelfTests() {
   console.assert(getFailChance(jobs.fishing.areas[0], jobs.fishing.upgrades, {}, adventurerState) === (jobs.fishing.areas[0].failChance ?? 0), 'adventurer trait should not touch non-adventure fail chance');
   console.assert(getTraitSellBonusPct(merchantState) === 15 && getTraitJobGoldBonusPct(merchantState) === 10, 'merchant trait should give +15% sell and +10% job gold');
   console.assert(Math.abs(getSellPriceMultiplier(merchantState) - 1.15) < 1e-9, 'sell price multiplier should include merchant trait');
-  console.assert(getTraitOfflineMultiplier(easygoingState) === 1.2, 'easygoing trait should give x1.20 offline efficiency');
+  console.assert(getTraitOfflineBonus(easygoingState) === 0.1, 'easygoing trait should add +10% offline efficiency');
   console.assert(getTraitRestXpMultiplier(easygoingState) === 1.25, 'easygoing trait should give x1.25 rest xp');
   console.assert(getTraitRestXpMultiplier(merchantState) === 1, 'rest xp trait bonus should apply only to easygoing');
   // 特性の選択・変更: 初回無料・変更は 500G×(変更回数+1)・金不足は変更不可。
@@ -453,10 +454,15 @@ export function runSelfTests() {
   console.assert(retiredWeekly.weekly?.weekKey === weekState.weekly?.weekKey, 'retire should keep weekly progress');
   const rebirthedWeekly = rebirth({ ...rebirthReady, lifetime: { ...emptyLifetime(), cycles: 100 }, weekly: weekState.weekly }, initialState);
   console.assert(rebirthedWeekly.weekly?.weekKey === weekState.weekly?.weekKey, 'rebirth should keep weekly progress');
-  // オフライン深化（ロードマップ11）：効率の伸びしろと上限の拡張。
-  // 寝ている間の勘は6段階まで（最大 +90%）、転生の余裕は4段階まで（上限 5日ぶん）。
+  // オフライン深化（ロードマップ11）と 2026-11-07 の見直し：
+  // 基本は実時間の 50% から始まり、寝ている間の勘は6段階まで
+  // （+5%/段階・最大+30%）、のんびり屋気質で +10%、上限は最大 90%。
+  // 転生の余裕は4段階まで（上限 5日ぶん）。
   const offlineMaxed = { ...initialState, prestige: { ...createInitialState(jobs).prestige!, upgrades: { memory_offline: 6 }, rebirthUpgrades: { rebirth_offline: 4 } } };
-  console.assert(getPrestigeStage(offlineMaxed, 'memory_offline') === 6 && getPrestigeOfflineMultiplier(offlineMaxed) === 1.9, 'memory offline 6 should give +90% offline efficiency');
+  console.assert(getPrestigeStage(offlineMaxed, 'memory_offline') === 6 && getPrestigeOfflineBonus(offlineMaxed) === 0.3, 'memory offline 6 should add +30% offline efficiency');
+  console.assert(getOfflineEfficiency(initialState) === 0.5, 'offline efficiency should start at 50% of real time');
+  console.assert(getOfflineEfficiency(offlineMaxed) === 0.8, 'offline efficiency with max memory offline should be 80%');
+  console.assert(getOfflineEfficiency({ ...offlineMaxed, trait: 'easygoing' as const }) === 0.9, 'offline efficiency should cap at 90% with memory offline and easygoing');
   console.assert(getRebirthStage(offlineMaxed, 'rebirth_offline') === 4 && getRebirthOfflineCapHours(offlineMaxed) === 120 && getOfflineMaxTicks(offlineMaxed) === 120 * 60 * 60, 'rebirth offline 4 should extend the offline cap to 120 hours');
   const offlineOverflow = { ...initialState, prestige: { ...createInitialState(jobs).prestige!, upgrades: { memory_offline: 9 }, rebirthUpgrades: { rebirth_offline: 9 } } };
   console.assert(getPrestigeStage(offlineOverflow, 'memory_offline') === 6 && getRebirthStage(offlineOverflow, 'rebirth_offline') === 4, 'offline stages should clamp to their new maxima');
@@ -515,6 +521,36 @@ export function runSelfTests() {
   console.assert(catExpired.cat?.buff === null, 'refresh should clear an expired cat buff');
   const catNoClaim = claimCatVisit(initialState, 100_000);
   console.assert(catNoClaim === initialState, 'petting without a visit should be a no-op');
+  // 2回目以降の来訪は 10%/分（期待 10 分ほど）。初回は 6% のまま。
+  const catSecond = { ...catGrown, cat: { ...createCatState(), visits: 1, lastRollAt: 0 } };
+  console.assert(maybeCatVisit(catSecond, 200_000, 0.09).cat?.visit !== null, 'second cat visit should happen on a roll under 10%');
+  console.assert(maybeCatVisit(catSecond, 200_000, 0.11).cat?.visit === null, 'second cat visit should not happen on a roll over 10%');
+  // ミケを呼ぶ：能動操作で来訪を起こし、クールダウン（10分）と来訪・バフ中は呼べない。
+  const catCalled = callCat(initialState, 100_000);
+  console.assert(catCalled.cat?.visit !== null && catCalled.cat?.visits === 1 && (catCalled.cat?.lastCallAt || 0) === 100_000, 'calling the cat should start a visit');
+  console.assert(getCatCallRemainingMs(catCalled, 100_000 + 60_000) === 9 * 60_000, 'cat call cooldown should count down from 10 minutes');
+  const catCallBlocked = callCat({ ...catCalled, cat: { ...catCalled.cat!, visit: null } }, 100_000 + 9 * 60_000);
+  console.assert(catCallBlocked.cat?.visit === null, 'calling the cat during the cooldown should do nothing');
+  const catRecall = callCat({ ...catCalled, cat: { ...catCalled.cat!, visit: null } }, 100_000 + 10 * 60_000);
+  console.assert(catRecall.cat?.visit !== null && catRecall.cat?.visits === 2, 'calling the cat after the cooldown should start another visit');
+  const catCallWhileBuff = callCat({ ...catClaimed, cat: { ...catClaimed.cat!, visit: null } }, 100_000 + 10 * 60_000);
+  console.assert(catCallWhileBuff.cat?.visit === null, 'calling the cat while a buff is active should do nothing');
+  // 初回チュートリアル：釣り選択 → 売却 → 拠点整備の3段階。手動送りと破棄もできる。
+  const tutorialPicked = selectJob({ ...initialState, tutorialStep: 'select_fishing' }, 'fishing');
+  console.assert(tutorialPicked.tutorialStep === 'sell_materials', 'picking fishing should advance the tutorial to selling');
+  let sellState: typeof initialState = { ...initialState, tutorialStep: 'sell_materials', activeJob: 'merchant', activeArea: 'fish_stall', resources: { fish: 50, wood: 0, ore: 0 }, jobData: { ...initialState.jobData, woodcutting: { level: 2, xp: 0, seenMusings: [] } } };
+  for (let i = 0; i < 60 && sellState.tutorialStep === 'sell_materials'; i += 1) sellState = runTick(sellState);
+  console.assert(sellState.tutorialStep === 'improve_base', 'first sale should advance the tutorial to base improvement');
+  const tutorialUpgraded = buyUpgrade({ ...initialState, tutorialStep: 'improve_base', gold: 100, resources: { fish: 10, wood: 0, ore: 0 } }, jobs.fishing.upgrades[0]);
+  console.assert(tutorialUpgraded.tutorialStep === 'done' && tutorialUpgraded.items?.fishing_better_rod === 1, 'buying the first upgrade should complete the tutorial');
+  console.assert(advanceTutorial({ ...initialState, tutorialStep: 'select_fishing' }).tutorialStep === 'sell_materials', 'advanceTutorial should move to the next step');
+  console.assert(advanceTutorial({ ...initialState, tutorialStep: 'improve_base' }).tutorialStep === 'done', 'advanceTutorial on the last step should finish the tutorial');
+  console.assert(advanceTutorial(initialState).tutorialStep === 'intro', 'advanceTutorial should ignore the intro state');
+  console.assert(dismissTutorial({ ...initialState, tutorialStep: 'sell_materials' }).tutorialStep === 'done', 'dismissTutorial should finish the tutorial');
+  const planSell = getLifePlan({ ...initialState, currentMusing: { ...initialState.currentMusing, readAt: 1 }, tutorialStep: 'sell_materials' });
+  console.assert(planSell.key === 'sell-materials', 'life plan should guide selling during the tutorial');
+  const planBase = getLifePlan({ ...initialState, currentMusing: { ...initialState.currentMusing, readAt: 1 }, tutorialStep: 'improve_base' });
+  console.assert(planBase.key === 'improve-base', 'life plan should guide base improvement during the tutorial');
   console.assert(normalizeCatState({ visits: -3, lastRollAt: 'soon', visit: { buffId: 'nope', appearedAt: 0, expiresAt: 0 }, buff: { id: 'gold_rush', expiresAt: -5 } } as unknown as Parameters<typeof normalizeCatState>[0]).visits === 0, 'invalid cat state should normalize to no visits');
   // 旧セーブ：猫なしは来訪なし扱い、ティッカーは読み込み時に消える。
   const migratedNoCat = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);

@@ -39,7 +39,7 @@ export const PRESTIGE_UPGRADES: PrestigeUpgradeDef[] = [
   { id: 'memory_gold', name: '小銭の勘', description: '稼ぎ方の勘が残っている。同じ作業でも取りこぼしが減る。', maxStage: 5, costs: prestigeCostCurve(4, 5), effectLabel: '収入（G）', perStage: 10 },
   { id: 'memory_xp', name: '身体の記憶', description: '一度覚えた動きは忘れない。仕事の飲み込みが早い。', maxStage: 5, costs: prestigeCostCurve(3, 5), effectLabel: '仕事XP', perStage: 10 },
   { id: 'memory_vitality', name: '基礎体力の記憶', description: '前の人生で鍛えた分、最初から少し頑丈。', maxStage: 5, costs: prestigeCostCurve(3, 5), effectLabel: '最大HP・最大MP', perStage: 10 },
-  { id: 'memory_offline', name: '寝ている間の勘', description: '離れている間も、生活の回し方だけは身体が覚えている。', maxStage: 6, costs: prestigeCostCurve(5, 6), effectLabel: 'オフライン効率', perStage: 15 },
+  { id: 'memory_offline', name: '寝ている間の勘', description: '離れている間も、生活の回し方だけは身体が覚えている。', maxStage: 6, costs: prestigeCostCurve(5, 6), effectLabel: 'オフライン効率', perStage: 5 },
   { id: 'memory_musing', name: 'ぼやきの余韻', description: '前の人生のぼやきが、今の勇者を少しだけ助ける。', maxStage: 4, costs: prestigeCostCurve(3, 4), effectLabel: 'ぼやき報酬', perStage: 25 },
   { id: 'memory_chest', name: '宝箱の嗅覚', description: '宝箱がありそうな場所に、なんとなく足が向く。', maxStage: 5, costs: prestigeCostCurve(4, 5), effectLabel: '宝箱ドロップ率', perStage: 10 },
   { id: 'memory_start_gold', name: 'へそくりの記憶', description: '隠し場所だけは忘れない。次の人生の元手になる。', maxStage: 5, costs: prestigeCostCurve(2, 5), effectLabel: '引退後の初期所持金', perStage: 100 },
@@ -199,8 +199,13 @@ export function getPrestigeXpMultiplier(state: GameState): number {
   return 1 + (getPrestigeStage(state, 'memory_xp') * 10) / 100;
 }
 
-export function getPrestigeOfflineMultiplier(state: GameState): number {
-  return 1 + (getPrestigeStage(state, 'memory_offline') * 15) / 100;
+// 寝ている間の勘：オフライン効率への加算（+5%/段階、最大+30%）。
+// オフライン効率は基本 50% から始まり、この加算とのんびり屋気質で
+// 最大 90% まで緩和される（state.ts の getOfflineEfficiency 参照）。
+// 旧：倍率 1 + 15%/段階（最大 1.9 倍）で「閉じている方が速い」逆転が
+// 起きていたため、2026-11-07 に割引の緩和へ付け替えた。
+export function getPrestigeOfflineBonus(state: GameState): number {
+  return (getPrestigeStage(state, 'memory_offline') * 5) / 100;
 }
 
 export function getPrestigeChestMultiplier(state: GameState): number {

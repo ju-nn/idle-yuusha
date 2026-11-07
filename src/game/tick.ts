@@ -763,6 +763,8 @@ export function runTick(prev: GameState, options: { offline?: boolean } = {}): G
     combatLog: combatEvents.length ? [...combatEvents, ...(prev.combatLog || [])].slice(0, 12) : (prev.combatLog || []),
     achievements,
     lifetime: nextLifetime,
+    // 初回チュートリアル：初めて素材を売ったら次は「拠点を整える」へ進む。
+    tutorialStep: prev.tutorialStep === 'sell_materials' && nextLifetime.salesGold > prevLifetime.salesGold ? 'improve_base' : prev.tutorialStep,
     equipmentInventory: prev.equipmentInventory || [],
     equipped: prev.equipped || {},
     seenEquipmentBaseIds: prev.seenEquipmentBaseIds || [],

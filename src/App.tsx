@@ -12,7 +12,7 @@ import { TitleScreen } from './components/TitleScreen';
 import { Card, Modal } from './components/shared';
 import { ACHIEVEMENTS, itemName } from './data/catalog';
 import { jobs } from './data/gameData';
-import { advanceMusing, buyUpgrade, canClaimDailyBonus, claimDailyBonus, harvestCrop, plantCrop, selectArea, selectJob } from './game/actions';
+import { advanceMusing, advanceTutorial, buyUpgrade, canClaimDailyBonus, claimDailyBonus, dismissTutorial, harvestCrop, plantCrop, selectArea, selectJob, TUTORIAL_STEPS } from './game/actions';
 import { playFeedbackSound, playUiSound } from './game/audio';
 import { initBgm, setBgmAdventure } from './game/bgm';
 import { getJobDropItems } from './game/collection';
@@ -21,7 +21,7 @@ import type { CropId } from './game/farming';
 import { formatResourceName } from './game/formatters';
 import { loadUserSettings } from './game/settings';
 import { clearSave, createInitialState, loadState, SAVE_KEY, saveState } from './game/state';
-import { claimCatVisit, getCatBuffDef } from './game/companion';
+import { callCat, claimCatVisit, getCatBuffDef, getCatCallRemainingMs } from './game/companion';
 import { getLifePlan, applyMilestoneAchievements } from './game/progression';
 import { buyPrestigeUpgrade, buyRebirthUpgrade, getRebirthOfflineCapHours, rebirth, retire } from './game/prestige';
 import { getActiveArea, isJobUnlocked } from './game/requirements';
@@ -196,7 +196,7 @@ function ChestOpeningOverlay({ reveal, onClose, equipItem }: { reveal: ChestReve
   </div>;
 }
 
-function CatVisitBanner({ state, onPet }: { state: GameState; onPet: () => void }) {
+function CatVisitBanner({ state, onPet, onCall }: { state: GameState; onPet: () => void; onCall: () => void }) {
   const now = Date.now();
   const cat = state.cat;
   const visit = cat?.visit && now < cat.visit.expiresAt ? cat.visit : null;
@@ -211,7 +211,28 @@ function CatVisitBanner({ state, onPet }: { state: GameState; onPet: () => void 
     const remainSec = Math.max(0, Math.ceil((buff.expiresAt - now) / 1000));
     return <div className="catBuffChip" role="status"><Icon name="cat" /><span>{def.name}：{def.description}</span><b>残り{remainSec}秒</b></div>;
   }
-  return null;
+  // 来訪もバフもないときは「呼ぶ」の入口だけを細く出す（能動操作の置き場）。
+  const remainMs = getCatCallRemainingMs(state, now);
+  const remainMin = Math.max(1, Math.ceil(remainMs / 60000));
+  return <div className="catCallRow" role="status"><span className="catIcon" aria-hidden="true"><Icon name="cat" /></span><div><small>相棒の猫</small><b>ミケは拠点のどこかで丸くなっている</b><p>{remainMs > 0 ? `おやつをあげたばかり。あと${remainMin}分でまた呼べる。` : 'おやつで呼ぶと、なでて短いご褒美がもらえる。呼ばなくても、たまに自分から来る。'}</p></div><button className="primary" onClick={onCall} disabled={remainMs > 0}>{remainMs > 0 ? `あと${remainMin}分` : 'ミケを呼ぶ'}</button></div>;
+}
+
+// 初回チュートリアル（3段階）。導入ぼやきを読んだ新規プレイヤーだけに出る。
+// 行動でも自動で進むが、「次へ」で送ることも「とじる」で終わらせることもできる。
+// ゲームを止めない・偽の待ち時間を作らない。
+const TUTORIAL_TEXT: Record<string, { title: string; detail: string }> = {
+  select_fishing: { title: 'まずは仕事を選ぼう', detail: '左の仕事メニューから「釣り」を選ぶと、勇者が自動で働き始めます。選ぶだけでOK。' },
+  sell_materials: { title: '素材がたまったら売ろう', detail: '魚や木材などの素材は、商人の仕事で売るとGになります。商人は木こりLv2で解禁。' },
+  improve_base: { title: '拠点を整えると暮らしが楽になる', detail: 'Gと素材がたまったら、仕事カードの「拠点整備」から道具を導入。失敗が減ります。' },
+};
+
+function TutorialCard({ state, onNext, onClose }: { state: GameState; onNext: () => void; onClose: () => void }) {
+  const step = state.tutorialStep;
+  if (step !== 'select_fishing' && step !== 'sell_materials' && step !== 'improve_base') return null;
+  const index = TUTORIAL_STEPS.indexOf(step);
+  const text = TUTORIAL_TEXT[step];
+  const isLast = index === TUTORIAL_STEPS.length - 1;
+  return <div className="tutorialCard" role="status"><div><small>はじめての3ステップ {index + 1}/3</small><b>{text.title}</b><p>{text.detail}</p></div><div className="tutorialActions"><button className="primary" onClick={onNext}>{isLast ? 'わかった' : '次へ'}</button><button onClick={onClose}>とじる</button></div></div>;
 }
 
 function OfflineReturnCard({ state, onClose }: { state: GameState; onClose: () => void }) {
@@ -345,6 +366,9 @@ export default function App() {
   const handleHarvestCrop = () => setState(harvestCrop);
   const handleBuyUpgrade = (u: typeof activeJob.upgrades[number]) => { playUiSound('buy'); setState((prev) => buyUpgrade(prev, u)); };
   const handleClaimCat = () => { playUiSound('click'); setState((prev) => claimCatVisit(prev, Date.now())); };
+  const handleCallCat = () => { playUiSound('click'); setState((prev) => callCat(prev, Date.now())); };
+  const handleAdvanceTutorial = () => { playUiSound('click'); setState(advanceTutorial); };
+  const handleDismissTutorial = () => { playUiSound('click'); setState(dismissTutorial); };
   const handleClaimDaily = () => setState(claimDailyBonus);
   const handleClaimWeeklyGoal = (goalId: string) => { playUiSound('click'); setState((prev) => claimWeeklyGoal(prev, goalId)); };
   const handleBuyPrestigeUpgrade = (id: string) => setState((prev) => buyPrestigeUpgrade(prev, id));
@@ -401,7 +425,8 @@ export default function App() {
           <LifePlanCard state={state} musingCount={readMusings.length} openStats={() => { playUiSound('open'); setStatsOpen(true); }} />
         </div>
         <main className="main">
-          <CatVisitBanner state={state} onPet={handleClaimCat} />
+          <TutorialCard state={state} onNext={handleAdvanceTutorial} onClose={handleDismissTutorial} />
+          <CatVisitBanner state={state} onPet={handleClaimCat} onCall={handleCallCat} />
           <div className="activityGrid">
             <MusingPanel state={state} totalMusings={totalMusings} musingCount={readMusings.length} canAdvance={canAdvance} advanceMusing={handleAdvanceMusing} />
             <CurrentJobCard job={activeJob} area={activeArea} data={activeData} progress={progress} speedMultiplier={workSpeedMultiplier} effectiveDurationTicks={progressDuration} latestLog={state.eventLog?.[0] || 'まだ作業ログはない。'} openLog={() => { playUiSound('open'); setLogOpen(true); }} openAreas={() => { playUiSound('open'); setAreaOpen(true); }} openUpgrades={() => { playUiSound('open'); setUpgradesOpen(true); }} farmingReady={farmingReady} state={state} plantCrop={handlePlantCrop} harvestCrop={handleHarvestCrop} selectArea={handleSelectArea} buyUpgrade={handleBuyUpgrade} />

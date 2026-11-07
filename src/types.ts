@@ -209,6 +209,8 @@ export type CatState = {
   visits: number;
   lastRollAt: number;
   lastVisitAt: number;
+  // ミケを呼んだ最終時刻（能動操作「呼ぶ」のクールダウン管理用）。
+  lastCallAt: number;
   visit: CatVisit | null;
   buff: { id: CatBuffId; expiresAt: number } | null;
 };

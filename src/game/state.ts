@@ -2,9 +2,9 @@ import type { GameState, Job, Musing, OfflineTier } from '../types';
 import { itemKind } from '../data/catalog';
 import { jobs as gameJobs } from '../data/gameData';
 import { createCatState, normalizeCatState } from './companion';
-import { createPrestigeState, getPrestigeOfflineMultiplier, getRebirthOfflineCapHours, normalizePrestigeState } from './prestige';
+import { createPrestigeState, getPrestigeOfflineBonus, getRebirthOfflineCapHours, normalizePrestigeState } from './prestige';
 import { xpToNext } from './progression';
-import { getTraitOfflineMultiplier } from './traits';
+import { getTraitOfflineBonus } from './traits';
 import { checkRequirement } from './requirements';
 import { TICK_INTERVAL_MS } from './timing';
 import { isValidTraitId } from './traits';
@@ -291,6 +291,17 @@ function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameSt
 // 数日ぶんまではそのまま進める。それを超えた分は計算対象外（capped で帰還表示に明示する）。
 // 転生の余裕があると上限が延びる（基本72時間＋12時間/段階）。
 export const OFFLINE_BASE_HOURS = 72;
+// オフライン効率：不在中の進行は実時間の半分ぶんから始まる（クッキークリッカー式）。
+// 寝ている間の勘（+5%/段階・最大+30%）とのんびり屋気質（+10%）は
+// 割引の緩和として上乗せされ、最大でも 90% に収まる。
+// 旧：基本 100% に倍率（最大 1.9 × 1.2 = 約 2.3 倍）が掛かり、
+// 「開いているより閉じている方が速い」逆転が起きていた。
+export const OFFLINE_BASE_RATE = 0.5;
+export const OFFLINE_MAX_RATE = 0.9;
+export function getOfflineEfficiency(state: GameState): number {
+  return Math.min(OFFLINE_MAX_RATE, OFFLINE_BASE_RATE + getPrestigeOfflineBonus(state) + getTraitOfflineBonus(state));
+}
+
 export function getOfflineMaxTicks(state: GameState): number {
   return getRebirthOfflineCapHours(state) * 60 * 60;
 }
@@ -347,15 +358,15 @@ function applyOfflineProgress(state: GameState): GameState {
   const savedAt = state.lastSavedAt || now;
   const elapsedMs = Math.max(0, now - savedAt);
   const rawTicks = Math.floor(elapsedMs / TICK_INTERVAL_MS);
-  // オフライン効率の永続強化とのんびり屋気質があると、不在中の進行が実時間より少し多めに積もる
-  // （上限は転生の余裕で延びる。基本3日ぶん）。
-  const boostedTicks = Math.floor(rawTicks * getPrestigeOfflineMultiplier(state) * getTraitOfflineMultiplier(state));
+  // オフライン効率は実時間の半分から始まり、永続強化とのんびり屋気質で
+  // 最大 90% まで緩和される（上限は転生の余裕で延びる。基本3日ぶん）。
+  const effectiveTicks = Math.floor(rawTicks * getOfflineEfficiency(state));
   const offlineMaxTicks = getOfflineMaxTicks(state);
-  const offlineTicks = Math.min(offlineMaxTicks, boostedTicks);
+  const offlineTicks = Math.min(offlineMaxTicks, effectiveTicks);
   if (offlineTicks < 3) return { ...state, lastSavedAt: now };
 
   const next = runOfflineTicks(state, offlineTicks);
-  const capped = boostedTicks > offlineMaxTicks;
+  const capped = effectiveTicks > offlineMaxTicks;
   const gains = computeOfflineGains(state, next);
 
   // 表示する経過時間は、実際に進行へ反映した（計算対象の）時間に合わせる

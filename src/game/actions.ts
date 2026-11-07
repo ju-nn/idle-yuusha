@@ -100,7 +100,8 @@ export function selectJob(prev: GameState, key: string): GameState {
     tick: 0,
     // 手動で仕事を選んだら、自動休憩の復帰先は消す（プレイヤーの意思を優先する）。
     autoRestReturn: null,
-    tutorialStep: key === 'fishing' && prev.tutorialStep === 'select_fishing' ? 'done' : prev.tutorialStep,
+    // 初回チュートリアル：仕事を選んだら次は「素材を売る」へ進む。
+    tutorialStep: key === 'fishing' && prev.tutorialStep === 'select_fishing' ? 'sell_materials' : prev.tutorialStep,
     eventLog: [
       `${job.name}を開いた。${job.description}`,
       ...prev.eventLog,
@@ -118,6 +119,22 @@ export function selectJob(prev: GameState, key: string): GameState {
     once: true,
     text: `勇者「よし、釣り開始。労働というより、食費への抵抗運動だな」\n\n放置すると作業が進み、仕事Lvや新しい発見などの出来事に紐づいてぼやきが未読に溜まります。報酬は出来事が起きた時点で入ります。`,
   }, { prepend: true }).state;
+}
+
+// 初回チュートリアルの進行（3段階：仕事を選ぶ → 素材を売る → 拠点を整える）。
+// 各段階は対応する行動でも自動で進むが、ここでの手動送りでも進められる
+// （待たせない・止めないための逃げ道）。'intro' は導入ぼやき未読の状態で、
+// カード自体を出さないためここでは進めない。'done' は完了・非表示。
+export const TUTORIAL_STEPS = ['select_fishing', 'sell_materials', 'improve_base'] as const;
+export function advanceTutorial(prev: GameState): GameState {
+  const index = TUTORIAL_STEPS.indexOf(prev.tutorialStep as (typeof TUTORIAL_STEPS)[number]);
+  if (index < 0) return prev;
+  const nextStep = index + 1 < TUTORIAL_STEPS.length ? TUTORIAL_STEPS[index + 1] : 'done';
+  return { ...prev, tutorialStep: nextStep };
+}
+export function dismissTutorial(prev: GameState): GameState {
+  if (prev.tutorialStep === 'done') return prev;
+  return { ...prev, tutorialStep: 'done' };
 }
 
 export function selectArea(prev: GameState, id: string): GameState {
@@ -252,6 +269,8 @@ export function buyUpgrade(prev: GameState, u: Upgrade): GameState {
     maxMp: prev.maxMp + (u.effects.maxMp || 0),
     achievements,
     eventLog,
+    // 初回チュートリアル：初めて拠点整備を買ったら完了。
+    tutorialStep: prev.tutorialStep === 'improve_base' ? 'done' : prev.tutorialStep,
   };
   return announceJobUnlocks(prev, enqueueMusing(next, upgradeMusing, { prepend: true }).state);
 }

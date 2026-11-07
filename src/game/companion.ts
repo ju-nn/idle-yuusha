@@ -24,15 +24,19 @@ export const CAT_BUFFS: CatBuffDef[] = [
 
 export const CAT_VISIT_WINDOW_MS = 5 * 60_000;
 const CAT_ROLL_INTERVAL_MS = 60_000;
+// 「ミケを呼ぶ」の再使用までの間隔。呼ぶのは能動操作なので、
+// ランダム来訪（期待 10 分）と並んでもバフの被りすぎにならない間隔にする。
+export const CAT_CALL_COOLDOWN_MS = 10 * 60_000;
 // 初回来訪は少し早めに（1分ごとの抽選で 6% → 期待 17 分ほど）。
-// 2回目以降は 2%（期待 50 分ほど）で、たまに来る気まぐれさを保つ。
+// 2回目以降は 10%（期待 10 分ほど）で、開いている間の楽しみを増やす。
+// 旧 2%（期待 50 分）では「開いていてもやることがない」との実機感想があった。
 const CAT_FIRST_VISIT_CHANCE = 0.06;
-const CAT_VISIT_CHANCE = 0.02;
+const CAT_VISIT_CHANCE = 0.10;
 // 初回来訪には少しだけ生活の積み重ねを条件にする（導入直後の混乱を避ける）。
 const CAT_FIRST_VISIT_MIN_CYCLES = 30;
 
 export function createCatState(): CatState {
-  return { visits: 0, lastRollAt: 0, lastVisitAt: 0, visit: null, buff: null };
+  return { visits: 0, lastRollAt: 0, lastVisitAt: 0, lastCallAt: 0, visit: null, buff: null };
 }
 
 export function normalizeCatState(raw: Partial<CatState> | undefined): CatState {
@@ -50,6 +54,7 @@ export function normalizeCatState(raw: Partial<CatState> | undefined): CatState 
     visits: num(raw.visits),
     lastRollAt: num(raw.lastRollAt),
     lastVisitAt: num(raw.lastVisitAt),
+    lastCallAt: num(raw.lastCallAt),
     visit,
     buff,
   };
@@ -96,6 +101,41 @@ export function maybeCatVisit(prev: GameState, now: number, roll: number = Math.
 
 export function getCatBuffDef(buffId: CatBuffId): CatBuffDef {
   return CAT_BUFFS.find((buff) => buff.id === buffId) || CAT_BUFFS[0];
+}
+
+// 「ミケを呼ぶ」まで残り何ミリ秒か。0 なら今すぐ呼べる。
+// lastCallAt が 0（まだ一度も呼んでいない）は残り 0 扱いにする。
+export function getCatCallRemainingMs(state: GameState, now: number = Date.now()): number {
+  const cat = normalizeCatState(state.cat);
+  if (!cat.lastCallAt) return 0;
+  return Math.max(0, CAT_CALL_COOLDOWN_MS - (now - cat.lastCallAt));
+}
+
+const CAT_FIRST_CALL_TEXT = `勇者「ミケー。おやつあるぞ」\n\nミケがやってきた。おやつの匂いには、猫も正直だ。呼べば来る相棒がいる。それだけで、拠点は少しだけ家に近い。`;
+
+// ミケを呼ぶ（能動操作）。来訪中・バフ中・クールダウン中は呼べない。
+// 呼ぶとランダム来訪と同じ 5 分の来訪が始まり、「なでる」で短いご褒美がもらえる。
+// 呼ばなくてもランダム来訪は起きるし、呼べない時間に損はない（見逃し損なし）。
+export function callCat(prev: GameState, now: number = Date.now()): GameState {
+  const cat = normalizeCatState(prev.cat);
+  if (cat.visit || cat.buff) return prev;
+  if (getCatCallRemainingMs(prev, now) > 0) return prev;
+  const visit: CatVisit = { buffId: pickBuffId(), appearedAt: now, expiresAt: now + CAT_VISIT_WINDOW_MS };
+  const next: GameState = {
+    ...prev,
+    cat: { ...cat, lastCallAt: now, visits: cat.visits + 1, lastVisitAt: now, visit },
+  };
+  if ((prev.seenMusingIds || []).includes('cat-first-call')) return next;
+  return enqueueMusing(next, {
+    id: 'cat-first-call',
+    job: '相棒の猫',
+    area: '拠点',
+    text: CAT_FIRST_CALL_TEXT,
+    category: 'event',
+    eventType: 'event',
+    eventSubType: 'cat_call',
+    once: true,
+  }, { now }).state;
 }
 
 function maxJobLevel(state: GameState): number {

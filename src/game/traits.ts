@@ -44,7 +44,7 @@ export const TRAITS: TraitDef[] = [
     id: 'easygoing',
     name: 'のんびり屋気質',
     flavor: 'のんびりするのが、もう立派な方針になった。',
-    effects: ['オフライン効率 +20%', '休憩の仕事経験値 +25%'],
+    effects: ['オフライン効率 +10%', '休憩の仕事経験値 +25%'],
     musing: '急がない勇者は、休むのも上手くなった。',
   },
 ];
@@ -97,9 +97,10 @@ export function getTraitJobGoldBonusPct(state: GameState): number {
   return getTrait(state) === 'merchant' ? 10 : 0;
 }
 
-// のんびり屋気質：オフライン効率 +20%（倍率 1.20。永続強化の倍率と掛け合わせ）。
-export function getTraitOfflineMultiplier(state: GameState): number {
-  return getTrait(state) === 'easygoing' ? 1.2 : 1;
+// のんびり屋気質：オフライン効率への加算 +10%（基本 50% への上乗せ。
+// 寝ている間の勘と合わせて最大 90% まで。旧：倍率 1.20）。
+export function getTraitOfflineBonus(state: GameState): number {
+  return getTrait(state) === 'easygoing' ? 0.1 : 0;
 }
 
 // のんびり屋気質：休憩の仕事経験値 +25%（倍率 1.25。永続強化の倍率と掛け合わせ）。

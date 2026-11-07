@@ -238,6 +238,28 @@ export function getLifePlan(state: GameState) {
     };
   }
 
+  if (state.tutorialStep === 'sell_materials') {
+    return {
+      kicker: '最初の一手',
+      title: '素材を商人で売る',
+      detail: '釣りや木こりで手に入る素材は、商人の仕事で売るとGになります。木こりLv2で商人が解禁されます。',
+      progress: 33,
+      meta: 'ステップ 2/3',
+      key: 'sell-materials',
+    };
+  }
+
+  if (state.tutorialStep === 'improve_base') {
+    return {
+      kicker: '最初の一手',
+      title: '拠点整備で最初の道具を買う',
+      detail: 'Gと素材がたまったら、仕事カードの「拠点整備」から中古の釣り竿などを導入。失敗が減って暮らしが楽になります。',
+      progress: 66,
+      meta: 'ステップ 3/3',
+      key: 'improve-base',
+    };
+  }
+
   if (state.dailyBonus?.lastClaimDate !== todayKey()) {
     return {
       kicker: '本日の一手',

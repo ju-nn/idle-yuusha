@@ -95,6 +95,8 @@ export function selectJob(prev: GameState, key: string): GameState {
     activeJob: key,
     activeArea: area.id,
     tick: 0,
+    // 手動で仕事を選んだら、自動休憩の復帰先は消す（プレイヤーの意思を優先する）。
+    autoRestReturn: null,
     tutorialStep: key === 'fishing' && prev.tutorialStep === 'select_fishing' ? 'done' : prev.tutorialStep,
     eventLog: [
       `${job.name}を開いた。${job.description}`,

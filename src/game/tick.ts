@@ -2,7 +2,7 @@ import { itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import type { GameState, ResourceKey } from '../types';
 import { bossStreakBonusPct, nextBossStreak, simulateMonsterBattle } from './combat';
-import { getAdventureEntryCost, getChestLimit, getEquipmentBonus, getResourceGainMultiplier, getSellPriceMultiplier, maybeDropChest } from './equipment';
+import { getAdventureEntryCost, getChestLimit, getEquipmentBonus, getResourceGainMultiplier, getSellPriceMultiplier, maybeDropChest, openTreasureChest } from './equipment';
 import { formatResourceName, rewardText } from './formatters';
 import { enqueueMusing } from './musings';
 import { getPrestigeGoldMultiplier, getPrestigeMusingRewardMultiplier, getPrestigeXpMultiplier } from './prestige';
@@ -128,6 +128,27 @@ function pickStateMusing(prev: GameState) {
   return null;
 }
 
+// 自動休憩: 戦闘・冒険でHP/MPが足りなくなったら、設定ONかつ休憩が解禁済みなら
+// 自動で休憩へ切り替わる。復帰先は state.autoRestReturn に残し、回復後に元の仕事へ戻る。
+// 失敗ぼやきは出さない（自動で対処するため、つまずきとして残さない）。
+function maybeAutoRest(prev: GameState, recoveredHp: number, recoveredMp: number): GameState | null {
+  if (!loadUserSettings().autoRest) return null;
+  if (prev.autoRestReturn || prev.activeJob === 'rest') return null;
+  if (!isJobUnlocked('rest', prev)) return null;
+  const restArea = getActiveArea('rest', jobs.rest.areas[0].id) || jobs.rest.areas[0];
+  return {
+    ...prev,
+    activeJob: 'rest',
+    activeArea: restArea.id,
+    tick: 0,
+    hp: recoveredHp,
+    mp: recoveredMp,
+    progressBreaking: false,
+    autoRestReturn: { job: prev.activeJob, area: prev.activeArea },
+    eventLog: [`自動休憩：HP/MPが足りないので休憩に切り替えた。回復したら${jobs[prev.activeJob]?.name || '元の仕事'}に戻る。`, ...prev.eventLog].slice(0, 24),
+  };
+}
+
 export function runTick(prev: GameState): GameState {
   if (!isJobUnlocked(prev.activeJob, prev)) return prev;
   const now = Date.now();
@@ -142,12 +163,39 @@ export function runTick(prev: GameState): GameState {
   const mpRegen = 1 + Math.floor(getEquipmentBonus(prev, 'mpRegen') / 25);
   const recoveredHp = clamp(prev.hp + hpRegen, 0, prev.maxHp);
   const recoveredMp = clamp(prev.mp + mpRegen, 0, prev.maxMp);
+  // 自動休憩からの復帰: 休憩でHP/MPが8割まで戻ったら、元の仕事へ自動で戻る。
+  // 戻り先が使えなくなっていたら復帰先だけ消して休憩を続ける（手動で選ぶまで休憩のまま）。
+  if (prev.activeJob === 'rest' && prev.autoRestReturn) {
+    const returnTarget = prev.autoRestReturn;
+    if (recoveredHp >= Math.floor(prev.maxHp * 0.8) && recoveredMp >= Math.floor(prev.maxMp * 0.8)) {
+      const returnJob = jobs[returnTarget.job];
+      if (returnJob && isJobUnlocked(returnTarget.job, prev)) {
+        const returnArea = getActiveArea(returnTarget.job, returnTarget.area) || returnJob.areas[0];
+        return {
+          ...prev,
+          activeJob: returnTarget.job,
+          activeArea: returnArea.id,
+          tick: 0,
+          hp: recoveredHp,
+          mp: recoveredMp,
+          autoRestReturn: null,
+          progressBreaking: false,
+          eventLog: [`自動復帰：HP/MPが回復したので${returnJob.name}に戻った。休憩、ちゃんと仕事になった。`, ...prev.eventLog].slice(0, 24),
+        };
+      }
+      return { ...prev, tick: nextTick, hp: recoveredHp, mp: recoveredMp, autoRestReturn: null, progressBreaking: false };
+    }
+  }
   if (nextTick % durationTicks !== 0) return maybeAmbientMusing({ ...prev, tick: nextTick, hp: recoveredHp, mp: recoveredMp, progressBreaking: false }, now);
   if (job.type === 'combat' && (recoveredHp < 3 || recoveredMp < 2)) {
+    const autoRest = maybeAutoRest(prev, recoveredHp, recoveredMp);
+    if (autoRest) return autoRest;
     const next = { ...prev, tick: nextTick, hp: recoveredHp, mp: recoveredMp, progressBreaking: false, feedbackEvents: [...(prev.feedbackEvents || []), { id: `failure-${now}`, type: 'failure' as const }].slice(-24), eventLog: ['HP/MPが足りないので一旦ふんわり休んだ。勇者、急に現実的。', ...prev.eventLog].slice(0, 24) };
     return enqueueMusing(next, { id: 'failure-combat-stamina', job: job.name, area: area.name, text: 'HP/MPが足りない。勇者は戦う前に、まず自分の残量と戦っている。', category: 'failure', eventType: 'failure', eventSubType: 'not_enough_stamina', conditionKey: 'failure-stamina', cooldownSec: 5 }, { now }).state;
   }
   if (job.type === 'adventure' && (recoveredHp < 5 || recoveredMp < 3)) {
+    const autoRest = maybeAutoRest(prev, recoveredHp, recoveredMp);
+    if (autoRest) return autoRest;
     const next = { ...prev, tick: nextTick, hp: recoveredHp, mp: recoveredMp, progressBreaking: false, feedbackEvents: [...(prev.feedbackEvents || []), { id: `failure-${now}`, type: 'failure' as const }].slice(-24), eventLog: ['HP/MPが足りないので一旦ふんわり休んだ。冒険も体力が必要だ。', ...prev.eventLog].slice(0, 24) };
     return enqueueMusing(next, { id: 'failure-adventure-stamina', job: job.name, area: area.name, text: 'HP/MPが足りない。冒険の前に、生活の基礎体力が足りていない。', category: 'failure', eventType: 'failure', eventSubType: 'not_enough_stamina', conditionKey: 'failure-stamina', cooldownSec: 5 }, { now }).state;
   }
@@ -682,7 +730,15 @@ export function runTick(prev: GameState): GameState {
     lastAmbientMusingAt: musingState.lastAmbientMusingAt,
     lastCertainMusingAt: musingState.lastCertainMusingAt,
   };
-  return announceJobUnlocks(prev, nextState, now);
+  // 宝箱の自動開封（設定ONのとき）: 宝箱が上限に達していたら、いちばん古い宝箱を自動で開ける。
+  // 新しい宝箱は先頭に追加されるため、末尾が最古。装備枠がいっぱいのときは開けない
+  // （openTreasureChest のガードがそのまま働く）。開封で出た装備は自動装備の設定にも従う。
+  let finalState = nextState;
+  if (loadUserSettings().autoOpenChest && (finalState.treasureChests?.length || 0) >= getChestLimit(finalState)) {
+    const oldest = finalState.treasureChests[finalState.treasureChests.length - 1];
+    if (oldest) finalState = openTreasureChest(finalState, oldest.uid);
+  }
+  return announceJobUnlocks(prev, finalState, now);
 }
 
 // オフライン進行専用のバッチ実行。

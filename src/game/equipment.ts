@@ -2,7 +2,7 @@ import type { EquipmentItem, EquipmentOption, EquipmentOptionTarget, EquipmentRa
 import { enqueueMusing } from './musings';
 import { getSynergyEntryCostReductionPct, getSynergySellBonusPct } from './synergy';
 import { getTraitSellBonusPct } from './traits';
-import { getPrestigeChestMultiplier } from './prestige';
+import { getPrestigeChestMultiplier, getRebirthChestLimitBonus } from './prestige';
 import { loadUserSettings } from './settings';
 
 export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
@@ -267,7 +267,8 @@ export function getEquipmentLimit(state: GameState) {
 }
 
 export function getChestLimit(state: GameState) {
-  return 40 + ((state.items?.upgrade_small_shelf || 0) ? 15 : 0);
+  // 転生の宝箱運があると、上限が +2/段階で広がる（収納棚とは別枠）。
+  return 40 + ((state.items?.upgrade_small_shelf || 0) ? 15 : 0) + getRebirthChestLimitBonus(state);
 }
 
 export function getEquippedItems(state: GameState) {

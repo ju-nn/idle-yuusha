@@ -7,6 +7,10 @@ export type UserSettings = {
   textSpeed: 'normal' | 'fast';
   autoSell: boolean;
   autoEquip: boolean;
+  // 宝箱の自動開封: 宝箱が上限に達したら、いちばん古い宝箱を自動で開ける（装備枠が空いているときだけ）。
+  autoOpenChest: boolean;
+  // 自動休憩: 戦闘・冒険でHP/MPが足りなくなったら自動で休憩へ切り替わり、回復したら元の仕事に戻る。
+  autoRest: boolean;
   showTitleScreen: boolean;
 };
 
@@ -17,6 +21,8 @@ export const defaultSettings: UserSettings = {
   textSpeed: 'normal',
   autoSell: false,
   autoEquip: false,
+  autoOpenChest: false,
+  autoRest: false,
   showTitleScreen: true,
 };
 

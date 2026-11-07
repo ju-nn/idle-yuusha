@@ -138,6 +138,9 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   first_retire: { name: '早期退職、達成', description: '初めて引退した。終わりではなく、思い出を持っての周回が始まった。' },
   retire_3: { name: '転職のプロ', description: '3回引退した。履歴書の職歴欄が、勇者より冒険している。' },
   first_prestige_upgrade: { name: '思い出は複利', description: '思い出ポイントで永続強化を買った。過去の自分が今の自分を助けている。' },
+  first_rebirth: { name: '転生、達成', description: '初めて転生した。思い出ポイントまで置いていったが、転生の証だけはポケットに残った。' },
+  rebirth_3: { name: '三度目の人生', description: '3回転生した。人生の回数が、もう履歴書の欄に収まらない。' },
+  first_rebirth_upgrade: { name: '転生の証は複利', description: '転生の証で永続強化を買った。前の前の自分まで、今の自分を助けている。' },
   all_jobs_unlocked: { name: '職業欄が騒がしい', description: 'すべての仕事を解禁した。自由に近づくほど、選択肢も増えてしまう。' },
   release_goal: { name: 'そこそこ安心生活', description: 'リリース版の生活目標に到達した。世界最強ではないが、今日の勇者はかなり勝っている。' },
 };

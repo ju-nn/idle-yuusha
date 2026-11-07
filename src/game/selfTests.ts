@@ -10,9 +10,11 @@ import { addItems, getLifePlan, getNextTarget, rollDrops } from './progression';
 import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } from './requirements';
 import { xpToNext } from './progression';
 import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
-import { buyPrestigeUpgrade, canRetire, getPrestigeScore, getRetirementPoints, retire } from './prestige';
+import { buyPrestigeUpgrade, buyRebirthUpgrade, canRebirth, canRetire, createPrestigeState, getPrestigeScore, getRebirthChestLimitBonus, getRebirthOfflineCapHours, getRebirthPoints, getRebirthSpeedMultiplier, getRetirementPoints, rebirth, retire } from './prestige';
+import { defaultSettings } from './settings';
+import { runTick } from './tick';
 import { autoSellGainedItems, isAutoSellTarget } from './automation';
-import { getEquipmentPower } from './equipment';
+import { getEquipmentPower, getChestLimit } from './equipment';
 import { getSynergyAdventureFailReduction, getSynergyAttackBonus, getSynergyChains, getSynergyDropChanceMultiplier, getSynergyEntryCostReductionPct, getSynergyHarvestBonus, getSynergySellBonusPct, getSynergyUpgradeDiscountPct, getChainHintForJob, getUpgradeGoldCost } from './synergy';
 import { getTraitAttackBonus, getTraitChangeCost, getTraitFailReduction, getTraitHarvestBonus, getTraitJobGoldBonusPct, getTraitOfflineMultiplier, getTraitRestXpMultiplier, getTraitSellBonusPct, selectTrait } from './traits';
 import { getCropRewards } from './farming';
@@ -20,7 +22,7 @@ import { getHeroAttack } from './combat';
 import { bossStreakBonusPct, nextBossStreak } from './combat';
 import { getFailChance } from './progression';
 import { getSellPriceMultiplier } from './equipment';
-import { createInitialState, migrateState, SAVE_VERSION } from './state';
+import { createInitialState, getOfflineMaxTicks, migrateState, SAVE_VERSION } from './state';
 
 const initialState = createInitialState(jobs);
 
@@ -130,7 +132,7 @@ export function runSelfTests() {
   const bought = buyPrestigeUpgrade(retired, 'memory_start_gold');
   console.assert(bought.prestige?.upgrades.memory_start_gold === 1, 'prestige upgrade should apply one stage');
   console.assert((bought.prestige?.memoryPoints || 0) === (retired.prestige?.memoryPoints || 0) - 2, 'prestige upgrade should cost points');
-  const broke = buyPrestigeUpgrade({ ...initialState, prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {} } }, 'memory_start_gold');
+  const broke = buyPrestigeUpgrade({ ...initialState, prestige: createPrestigeState() }, 'memory_start_gold');
   console.assert(broke.prestige?.upgrades.memory_start_gold === undefined, 'prestige upgrade should not apply without points');
   // 段階的解禁（2026-10-28）: 新規開始では釣り以外は閉じていて、ヒントが次の目標を示すこと。
   console.assert(isJobUnlocked('rest', initialState) === false && isJobUnlocked('woodcutting', initialState) === false, 'fresh state should only have fishing unlocked');
@@ -256,5 +258,89 @@ export function runSelfTests() {
   console.assert(migratedBadStreak.bossStreak === 0, 'invalid boss streak should normalize to zero');
   const migratedWithStreak = migrateState({ gold: 55, bossStreak: 3, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
   console.assert(migratedWithStreak.bossStreak === 3, 'boss streak should survive migration');
+  // 転生（2026-11-07 / ロードマップ5）: 引退3回が条件で、獲得は思い出の累計から平方根型。
+  console.assert(!canRebirth(initialState) && getRebirthPoints(initialState) === 0, 'fresh state should not be rebirthable');
+  const rebirthReady = {
+    ...grownState,
+    prestige: { memoryPoints: 20, totalEarned: 100, retireCount: 3, upgrades: { memory_xp: 2 }, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {} },
+  };
+  console.assert(canRebirth(rebirthReady) && getRebirthPoints(rebirthReady) === 20, 'three retires with 100 total memory should grant 20 rebirth points');
+  const notYetRebirth = { ...rebirthReady, prestige: { ...rebirthReady.prestige, retireCount: 2 } };
+  console.assert(!canRebirth(notYetRebirth) && rebirth(notYetRebirth, initialState) === notYetRebirth, 'two retires should not unlock rebirth');
+  // 転生: 第1層まで置いていき、転生の証と転生回数だけが残ること。
+  const rebirthed = rebirth(rebirthReady, initialState);
+  console.assert(rebirthed !== rebirthReady && rebirthed.jobData.fishing.level === 1 && rebirthed.gold === initialState.gold, 'rebirth should reset run progress');
+  console.assert(rebirthed.prestige?.rebirthCount === 1 && rebirthed.prestige?.rebirthPoints === 20 && rebirthed.prestige?.totalRebirthEarned === 20, 'rebirth should bank rebirth points');
+  console.assert(rebirthed.prestige?.memoryPoints === 0 && rebirthed.prestige?.totalEarned === 0 && rebirthed.prestige?.retireCount === 0 && Object.keys(rebirthed.prestige?.upgrades || {}).length === 0, 'rebirth should reset layer-1 memory and upgrades');
+  console.assert(rebirthed.achievements.includes('first_fish') && rebirthed.achievements.includes('first_rebirth'), 'rebirth should keep achievements and add first_rebirth');
+  const rebirthedAgain = rebirth({ ...rebirthReady, prestige: { ...rebirthReady.prestige, rebirthCount: 2, rebirthPoints: 5, totalRebirthEarned: 15 } }, initialState);
+  console.assert(rebirthedAgain.prestige?.rebirthCount === 3 && rebirthedAgain.achievements.includes('rebirth_3'), 'third rebirth should add the rebirth_3 achievement');
+  // 転生の強化: 所持する証の範囲でだけ買えて、倍率と上限に効くこと。
+  const boughtRebirth = buyRebirthUpgrade(rebirthed, 'rebirth_efficiency');
+  console.assert(boughtRebirth.prestige?.rebirthUpgrades.rebirth_efficiency === 1, 'rebirth upgrade should apply one stage');
+  console.assert((boughtRebirth.prestige?.rebirthPoints || 0) === 17, 'rebirth upgrade should cost points');
+  const brokeRebirth = buyRebirthUpgrade({ ...initialState, prestige: { ...createInitialState(jobs).prestige!, rebirthPoints: 0 } }, 'rebirth_efficiency');
+  console.assert(brokeRebirth.prestige?.rebirthUpgrades.rebirth_efficiency === undefined, 'rebirth upgrade should not apply without points');
+  const rebirthBoosted = { ...initialState, prestige: { ...createInitialState(jobs).prestige!, rebirthUpgrades: { rebirth_efficiency: 2, rebirth_chest: 2, rebirth_offline: 1, rebirth_memory: 1 } } };
+  console.assert(getRebirthSpeedMultiplier(rebirthBoosted) === 1.2, 'rebirth efficiency 2 should give x1.20 speed');
+  console.assert(getRebirthChestLimitBonus(rebirthBoosted) === 4 && getChestLimit(rebirthBoosted) === 44, 'rebirth chest 2 should add +4 chest limit');
+  console.assert(getRebirthOfflineCapHours(rebirthBoosted) === 84 && getOfflineMaxTicks(rebirthBoosted) === 84 * 60 * 60, 'rebirth offline 1 should extend the offline cap to 84 hours');
+  console.assert(getRetirementPoints({ ...grownState, prestige: { ...createInitialState(jobs).prestige!, rebirthUpgrades: { rebirth_memory: 1 } } }) === 15, 'rebirth memory 1 should raise retirement points from 12 to 15');
+  // 転生の移行: v4セーブ（転生フィールド無し）は空の転生状態で v5 になり、証は引き継がれること。
+  // v4相当のセーブは転生フィールドを持たない形で渡す（旧セーブの再現のため unknown 経由）。
+  const migratedV4 = migrateState({ saveVersion: 4, gold: 50, jobData: { fishing: { level: 4, xp: 0, seenMusings: [] } }, items: { small_fish: 3 }, prestige: { memoryPoints: 5, totalEarned: 5, retireCount: 1, upgrades: {} } } as unknown as Partial<typeof initialState>, initialState);
+  console.assert(migratedV4.saveVersion === SAVE_VERSION && migratedV4.prestige?.rebirthPoints === 0 && migratedV4.prestige?.rebirthCount === 0 && migratedV4.autoRestReturn === null, 'v4 save should gain an empty rebirth state');
+  const migratedWithRebirth = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {}, prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 7, totalRebirthEarned: 7, rebirthCount: 1, rebirthUpgrades: { rebirth_gold: 1 } } } as Partial<typeof initialState>, initialState);
+  console.assert(migratedWithRebirth.prestige?.rebirthPoints === 7 && migratedWithRebirth.prestige?.rebirthUpgrades.rebirth_gold === 1, 'rebirth data should survive migration');
+  // 自動化の既定: 宝箱の自動開封と自動休憩はどちらも OFF から始まること。
+  console.assert(defaultSettings.autoOpenChest === false && defaultSettings.autoRest === false, 'auto chest and auto rest should default to off');
+  // 自動休憩・宝箱の自動開封: node でのみ localStorage を差し替えて tick 挙動を検証する
+  // （ブラウザでは起動時の selfTests がユーザーの設定を触らないよう、ここは実行しない）。
+  if (typeof localStorage === 'undefined') {
+    const store = new Map<string, string>();
+    const stub = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => { store.set(key, value); },
+      removeItem: (key: string) => { store.delete(key); },
+    };
+    (globalThis as unknown as Record<string, unknown>).localStorage = stub;
+    try {
+      stub.setItem('yuusha-settings-v1', JSON.stringify({ autoRest: true, autoOpenChest: true }));
+      // HP/MP不足の冒険サイクル完了で、自動で休憩へ切り替わること。
+      const exhausted = {
+        ...initialState,
+        activeJob: 'adventure',
+        activeArea: 'forest',
+        tick: 29,
+        hp: 1,
+        mp: 1,
+        gold: 100,
+        jobData: { ...initialState.jobData, mining: { level: 2, xp: 0, seenMusings: [] } },
+        items: { ...initialState.items, permission_to_rest: 1 },
+      };
+      const rested = runTick(exhausted);
+      console.assert(rested.activeJob === 'rest' && rested.autoRestReturn?.job === 'adventure' && rested.autoRestReturn?.area === 'forest', 'auto rest should switch to rest and remember the return target');
+      console.assert((rested.eventLog[0] || '').includes('自動休憩'), 'auto rest should log the switch');
+      // 休憩で8割まで回復したら、元の仕事へ自動で戻ること。
+      const returned = runTick({ ...rested, hp: 79, mp: 79 });
+      console.assert(returned.activeJob === 'adventure' && returned.activeArea === 'forest' && returned.autoRestReturn === null, 'auto rest should return to the previous job after recovery');
+      // 宝箱が上限のとき、サイクル完了でいちばん古い宝箱が自動で開くこと。
+      const fullChests = Array.from({ length: 40 }, (_, i) => ({ uid: `test-chest-${i}`, type: 'worn' as const, name: 'テスト宝箱', description: '', obtainedAt: 0 }));
+      const chestFull = {
+        ...initialState,
+        activeJob: 'rest',
+        activeArea: 'nap',
+        tick: 24,
+        treasureChests: fullChests,
+        equipmentInventory: [],
+        items: { ...initialState.items, permission_to_rest: 1 },
+      };
+      const opened = runTick(chestFull);
+      console.assert(opened.treasureChests.length === 39 && opened.equipmentInventory.length === 1, 'auto chest open should open the oldest chest when full');
+      console.assert(!opened.treasureChests.some((chest) => chest.uid === 'test-chest-39'), 'auto chest open should remove the oldest chest first');
+    } finally {
+      delete (globalThis as unknown as Record<string, unknown>).localStorage;
+    }
+  }
 }
 

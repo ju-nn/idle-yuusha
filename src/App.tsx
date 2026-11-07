@@ -21,7 +21,7 @@ import { formatResourceName } from './game/formatters';
 import { loadUserSettings } from './game/settings';
 import { clearSave, createInitialState, loadState, SAVE_KEY, saveState } from './game/state';
 import { getLifePlan } from './game/progression';
-import { buyPrestigeUpgrade, retire } from './game/prestige';
+import { buyPrestigeUpgrade, buyRebirthUpgrade, getRebirthOfflineCapHours, rebirth, retire } from './game/prestige';
 import { getActiveArea, isJobUnlocked } from './game/requirements';
 import { runTick } from './game/tick';
 import { countOwnedUpgrades, getEffectiveDurationTicksForState, getWorkSpeedMultiplier, TICK_INTERVAL_MS } from './game/timing';
@@ -197,6 +197,8 @@ function OfflineReturnCard({ state, onClose }: { state: GameState; onClose: () =
   const chestGain = summary.chestGain || 0;
   const hasGain = summary.goldGain > 0 || resources.length > 0 || items.length > 0 || chestGain > 0;
   const tier = summary.tier || 'short';
+  const capHours = getRebirthOfflineCapHours(state);
+  const capText = capHours % 24 === 0 ? `${capHours / 24}日ぶん` : `${capHours}時間ぶん`;
   const tierLabel = {
     short: '帰還ボーナス',
     hours: '帰還ボーナス',
@@ -209,7 +211,7 @@ function OfflineReturnCard({ state, onClose }: { state: GameState; onClose: () =
     overnight: hasGain ? '一晩ぶん、勇者の生活は静かに進んでいました。起きたら成果が待っている、悪くない朝です。' : '一晩ぶん、大きな収穫はないけれど、時間は静かに味方に回っていました。',
     days: hasGain ? '数日ぶんの時間が、ちゃんと成果になって残っています。焦らなくても進む。それが形になった帰還です。' : '数日ぶん、大きな収穫はないけれど、時間はちゃんと味方に回っていました。',
   }[tier];
-  return <div className={`returnBanner tier-${tier}`}><div><small>{tierLabel}</small><b>{summary.elapsedText}ぶん生活が進みました</b><p>{tierMessage}</p><div className="returnGains">{summary.goldGain > 0 && <span>+{summary.goldGain}G</span>}{resources.map(([key, value]) => <span key={key}>+{value}{formatResourceName(key)}</span>)}{items.map(([key, value]) => <span key={key}>+{value}{itemName(key)}</span>)}{chestGain > 0 && <span>宝箱+{chestGain}</span>}</div>{summary.capped && <p className="returnCapped">進行の計算は3日ぶんまでです。それより前の時間は、勇者の記憶の中にだけ残っています。</p>}</div><button onClick={onClose}>確認</button></div>;
+  return <div className={`returnBanner tier-${tier}`}><div><small>{tierLabel}</small><b>{summary.elapsedText}ぶん生活が進みました</b><p>{tierMessage}</p><div className="returnGains">{summary.goldGain > 0 && <span>+{summary.goldGain}G</span>}{resources.map(([key, value]) => <span key={key}>+{value}{formatResourceName(key)}</span>)}{items.map(([key, value]) => <span key={key}>+{value}{itemName(key)}</span>)}{chestGain > 0 && <span>宝箱+{chestGain}</span>}</div>{summary.capped && <p className="returnCapped">進行の計算は{capText}までです。それより前の時間は、勇者の記憶の中にだけ残っています。</p>}</div><button onClick={onClose}>確認</button></div>;
 }
 
 export default function App() {
@@ -316,6 +318,8 @@ export default function App() {
   const handleClaimDaily = () => setState(claimDailyBonus);
   const handleBuyPrestigeUpgrade = (id: string) => setState((prev) => buyPrestigeUpgrade(prev, id));
   const handleRetire = () => setState((prev) => retire(prev, initialState));
+  const handleBuyRebirthUpgrade = (id: string) => setState((prev) => buyRebirthUpgrade(prev, id));
+  const handleRebirth = () => setState((prev) => rebirth(prev, initialState));
   const handleEquipItem = (uid: string) => setState((prev) => equipItem(prev, uid));
   const handleSellEquipment = (uid: string) => setState((prev) => sellEquipment(prev, uid));
   const handleSelectTrait = (id: TraitId) => { playUiSound('click'); setState((prev) => selectTrait(prev, id)); };
@@ -378,7 +382,7 @@ export default function App() {
       {chestOpen && <ChestModal state={state} openChest={handleOpenChest} openAllChests={handleOpenAllChests} openEquipmentScreen={() => { setChestOpen(false); playUiSound('open'); setEquipmentOpen(true); }} onClose={() => setChestOpen(false)} />}
       {equipmentOpen && <EquipmentModal state={state} equipItem={handleEquipItem} sellEquipment={handleSellEquipment} toggleLock={handleToggleEquipmentLock} onClose={() => setEquipmentOpen(false)} />}
       {collectionOpen && <CollectionModal state={state} musings={readMusings} achievements={state.achievements} onClose={() => setCollectionOpen(false)} />}
-      {prestigeOpen && <PrestigeModal state={state} buyPrestigeUpgrade={handleBuyPrestigeUpgrade} retire={() => { handleRetire(); setPrestigeOpen(false); }} onClose={() => setPrestigeOpen(false)} />}
+      {prestigeOpen && <PrestigeModal state={state} buyPrestigeUpgrade={handleBuyPrestigeUpgrade} retire={() => { handleRetire(); setPrestigeOpen(false); }} buyRebirthUpgrade={handleBuyRebirthUpgrade} rebirth={() => { handleRebirth(); setPrestigeOpen(false); }} onClose={() => setPrestigeOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} reset={() => { reset(); setSettingsOpen(false); }} />}
       {statsOpen && <StatsModal state={state} onClose={() => setStatsOpen(false)} onSelectTrait={handleSelectTrait} />}
       {!titleDone && bootInfo.showTitle && <TitleScreen hasSave={bootInfo.hasSave} onFinish={() => setTitleDone(true)} onOpenSettings={() => { setTitleDone(true); playUiSound('open'); setSettingsOpen(true); }} />}

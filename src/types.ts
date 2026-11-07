@@ -157,6 +157,12 @@ export type PrestigeState = {
   totalEarned: number;
   retireCount: number;
   upgrades: Record<string, number>;
+  // 転生（第2層）: 引退を3回重ねた先の区切り。思い出ポイントと第1層の強化を
+  // 置いていく代わりに「転生の証」を得て、より強い永続強化を買う。
+  rebirthPoints: number;
+  totalRebirthEarned: number;
+  rebirthCount: number;
+  rebirthUpgrades: Record<string, number>;
 };
 
 export type OfflineTier = 'short' | 'hours' | 'overnight' | 'days';
@@ -227,6 +233,9 @@ export type GameState = {
   lastAmbientMusingAt?: number;
   lastCertainMusingAt?: number;
   lastSavedAt?: number;
+  // 自動休憩の復帰先: HP/MP不足で休憩へ自動切替したとき、回復後に戻る仕事とエリア。
+  // 手動で仕事を選ぶと消える（プレイヤーの意思を優先する）。旧セーブは未設定扱い。
+  autoRestReturn?: { job: string; area: string } | null;
   prestige?: PrestigeState;
   // 特性: 選択中のビルド方向（未選択は null）と変更回数。旧セーブは未選択扱い。
   trait?: TraitId | null;

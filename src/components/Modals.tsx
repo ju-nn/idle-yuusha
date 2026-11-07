@@ -6,7 +6,7 @@ import { getJobDropItems } from '../game/collection';
 import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipmentOptionText, getChestLimit, getEquipmentBonus, getEquipmentLimit, getEquipmentSellValue } from '../game/equipment';
 import { formatResourceName } from '../game/formatters';
 import { MUSING_LABELS } from '../game/musings';
-import { canRetire, getNextPrestigeCost, getPrestigeScore, getPrestigeSpeedMultiplier, getPrestigeStage, getRetirementPoints, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, RETIRE_REQUIRED_SCORE } from '../game/prestige';
+import { canRebirth, canRetire, getNextPrestigeCost, getNextRebirthCost, getPrestigeScore, getPrestigeSpeedMultiplier, getPrestigeStage, getRebirthPoints, getRebirthStage, getRetirementPoints, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, REBIRTH_POINT_NAME, REBIRTH_REQUIRED_RETIREMENTS, REBIRTH_UPGRADES, RETIRE_REQUIRED_SCORE } from '../game/prestige';
 import { getFailChance, xpToNext } from '../game/progression';
 import { getSynergyChains } from '../game/synergy';
 import { isJobUnlocked, getActiveArea } from '../game/requirements';
@@ -58,7 +58,7 @@ export function StatsModal({ state, onClose, onSelectTrait }: { state: GameState
   const monsters = getAllMonsters();
   const defeated = monsters.filter((monster) => (state.defeatedMonsters || []).includes(monster.id)).length;
   const totalAreas = Object.values(jobs).reduce((sum, job) => sum + job.areas.length, 0);
-  const prestige = state.prestige || { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {} };
+  const prestige = state.prestige || { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {} };
 
   return <Modal title="統計" description="現在の仕事の効率と、全体の進み具合。数字は今の状態からの期待値で、セーブには何も書きません。" onClose={onClose} wide><div className="settingsPanel statsPanel">
     <div>
@@ -141,6 +141,8 @@ export function StatsModal({ state, onClose, onSelectTrait }: { state: GameState
         <SummaryPill label="装備" value={`${state.equipmentInventory?.length || 0}/${getEquipmentLimit(state)}`} ratio={getEquipmentLimit(state) ? (state.equipmentInventory?.length || 0) / getEquipmentLimit(state) : 0} />
         <SummaryPill label="引退" value={`${prestige.retireCount}回`} />
         <SummaryPill label="思い出ポイント" value={`${prestige.memoryPoints}`} />
+        <SummaryPill label="転生" value={`${prestige.rebirthCount || 0}回`} />
+        <SummaryPill label={REBIRTH_POINT_NAME} value={`${prestige.rebirthPoints || 0}`} />
       </div>
       <p className="sub">宝箱と装備の上限はここで見えます。上限に近づいたら、宝箱を開けるか装備を売る・保護する判断の目安にしてください。</p>
     </div>
@@ -193,17 +195,30 @@ export function CollectionModal({ state, musings, achievements, onClose }: { sta
 }
 
 function HowToGuide() {
-  return <Card title="遊び方"><p className="sub">魔王討伐より、まず今日を回す。生活を整えて、少しずつ自由に近づく放置RPGです。</p><ol className="howToSteps"><li><b>仕事を選ぶ</b><p>仕事メニューから仕事とエリアを選びます。選んだ仕事が自動で進みます。</p></li><li><b>ぼやきは「次へ」で読む</b><p>何か出来事が起きるとぼやきが出ます。報酬は出来事のときに自動でもらえます。「次へ」は読むための操作です。</p></li><li><b>素材を売って、装備を整える</b><p>素材は商人で売ってGに変えます。装備は宝箱から手に入り、強いものに付け替えます。</p></li><li><b>拠点整備で暮らしを楽にする</b><p>素材を使って拠点を整えると、HP・MPの上限などが増えます。</p></li><li><b>離れても進む</b><p>閉じている間も最大3日分まで進みます。戻ったら帰還バナーで成果を確認します。</p></li></ol><div className="howToNotes"><b>図鑑の見方</b><p>未発見は「？？？」で表示されます。★は重要アイテムです。討伐は、初めて倒した相手だけ名前が出ます。</p><b>次に目指すもの</b><p>まだ解禁されていない仕事やエリアは「？？？＋解禁条件のヒント」で表示されます。条件を満たすと自動で解禁されます。すでに使えているものが、後からロックされることはありません。</p><b>困ったら</b><p>設定から、アイテム自動売却・自動装備・タイトル画面の表示を切り替えられます。セーブのバックアップも設定から書き出せます。</p></div></Card>;
+  return <Card title="遊び方"><p className="sub">魔王討伐より、まず今日を回す。生活を整えて、少しずつ自由に近づく放置RPGです。</p><ol className="howToSteps"><li><b>仕事を選ぶ</b><p>仕事メニューから仕事とエリアを選びます。選んだ仕事が自動で進みます。</p></li><li><b>ぼやきは「次へ」で読む</b><p>何か出来事が起きるとぼやきが出ます。報酬は出来事のときに自動でもらえます。「次へ」は読むための操作です。</p></li><li><b>素材を売って、装備を整える</b><p>素材は商人で売ってGに変えます。装備は宝箱から手に入り、強いものに付け替えます。</p></li><li><b>拠点整備で暮らしを楽にする</b><p>素材を使って拠点を整えると、HP・MPの上限などが増えます。</p></li><li><b>離れても進む</b><p>閉じている間も最大3日分まで進みます。戻ったら帰還バナーで成果を確認します。</p></li></ol><div className="howToNotes"><b>図鑑の見方</b><p>未発見は「？？？」で表示されます。★は重要アイテムです。討伐は、初めて倒した相手だけ名前が出ます。</p><b>次に目指すもの</b><p>まだ解禁されていない仕事やエリアは「？？？＋解禁条件のヒント」で表示されます。条件を満たすと自動で解禁されます。すでに使えているものが、後からロックされることはありません。</p><b>困ったら</b><p>設定から、アイテム自動売却・自動装備・宝箱の自動開封・自動休憩・タイトル画面の表示を切り替えられます。セーブのバックアップも設定から書き出せます。</p></div></Card>;
 }
 
-export function PrestigeModal({ state, buyPrestigeUpgrade, retire, onClose }: { state: GameState; buyPrestigeUpgrade: (id: string) => void; retire: () => void; onClose: () => void }) {
+function rebirthEffectText(upgradeId: string, stage: number): string {
+  if (upgradeId === 'rebirth_chest') return `宝箱上限：+${stage * 2} / ドロップ率：+${stage * 10}%`;
+  if (upgradeId === 'rebirth_offline') return `オフライン上限：+${stage * 12}時間（基本72時間）`;
+  if (upgradeId === 'rebirth_memory') return `思い出ポイント獲得：+${stage * 25}%`;
+  if (upgradeId === 'rebirth_gold') return `収入（G）：+${stage * 12}%`;
+  return `全仕事速度：+${stage * 10}%`;
+}
+
+export function PrestigeModal({ state, buyPrestigeUpgrade, retire, buyRebirthUpgrade, rebirth, onClose }: { state: GameState; buyPrestigeUpgrade: (id: string) => void; retire: () => void; buyRebirthUpgrade: (id: string) => void; rebirth: () => void; onClose: () => void }) {
   const [confirming, setConfirming] = useState(false);
-  const prestige = state.prestige || { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {} };
+  const [confirmingRebirth, setConfirmingRebirth] = useState(false);
+  const prestige = state.prestige || { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {} };
   const score = getPrestigeScore(state);
   const gain = getRetirementPoints(state);
   const eligible = canRetire(state);
   const remaining = Math.max(0, RETIRE_REQUIRED_SCORE - score.score);
   const progressPercent = Math.min(100, Math.floor((score.score / RETIRE_REQUIRED_SCORE) * 100));
+  const rebirthGain = getRebirthPoints(state);
+  const rebirthEligible = canRebirth(state);
+  const rebirthRemaining = Math.max(0, REBIRTH_REQUIRED_RETIREMENTS - prestige.retireCount);
+  const rebirthProgressPercent = Math.min(100, Math.floor((prestige.retireCount / REBIRTH_REQUIRED_RETIREMENTS) * 100));
   return <Modal title="引退と思い出" description="区切りを付けて、歩みを思い出ポイントに変える。思い出は次の人生でも消えない。" onClose={onClose} wide><div className="settingsPanel">
     <div className="collectionSummary">
       <SummaryPill label={MEMORY_POINT_NAME} value={`${prestige.memoryPoints}`} />
@@ -221,6 +236,26 @@ export function PrestigeModal({ state, buyPrestigeUpgrade, retire, onClose }: { 
       const cost = getNextPrestigeCost(state, def.id);
       const currentBonus = stage * def.perStage;
       return <div className="settingRow" key={def.id}><div><b>{def.name} <span className="stagePips" role="img" aria-label={`段階 ${stage}/${def.maxStage}`}>{Array.from({ length: def.maxStage }, (_, i) => <i key={i} className={i < stage ? 'on' : ''} />)}</span></b><p>{def.description}</p><p>{def.effectLabel}：{def.id === 'memory_start_gold' ? `+${currentBonus}G` : def.id === 'memory_vitality' ? `+${currentBonus}` : `+${currentBonus}%`}</p></div>{cost === null ? <span className="sub">最大段階</span> : <button className="primary" onClick={() => buyPrestigeUpgrade(def.id)} disabled={prestige.memoryPoints < cost}>{cost} で強化</button>}</div>;
+    })}
+    <div>
+      <div className="sectionHead"><h3>転生（第2層）</h3></div>
+      <p className="sub">引退を3回重ねた先の区切り。思い出ポイントと永続強化まで置いていく代わりに、転生の証が手に入る。転生の強化は転生しても消えない。</p>
+    </div>
+    <div className="collectionSummary">
+      <SummaryPill label={REBIRTH_POINT_NAME} value={`${prestige.rebirthPoints || 0}`} />
+      <SummaryPill label="累計獲得" value={`${prestige.totalRebirthEarned || 0}`} />
+      <SummaryPill label="転生回数" value={`${prestige.rebirthCount || 0}回`} />
+      <SummaryPill label="いま転生すると" value={rebirthEligible ? `+${rebirthGain}` : 'まだ'} />
+    </div>
+    <div className="settingRow"><div><b>引退回数：{prestige.retireCount} / {REBIRTH_REQUIRED_RETIREMENTS}</b><p>{rebirthEligible ? `転生で転生の証+${rebirthGain}が手に入ります。` : `転生まであと${rebirthRemaining}回の引退。引退を重ねると、転生の証が増えます。`}</p><div className="targetBar"><i style={{ width: `${rebirthProgressPercent}%` }} /></div></div></div>
+    <div className="dangerZone"><div><b>転生する</b><p>レベル・G・素材・所持品・装備・宝箱・拠点整備に加え、思い出ポイントと第1層の永続強化もリセットされます。実績・ぼやき図鑑・討伐と訪問の記録・転生の証と転生の強化は残ります。</p></div>{confirmingRebirth
+      ? <span className="prestigeConfirm"><button className="primary" onClick={rebirth}>本当に転生する</button><button onClick={() => setConfirmingRebirth(false)}>やめておく</button></span>
+      : <button onClick={() => setConfirmingRebirth(true)} disabled={!rebirthEligible}>{rebirthEligible ? `転生して +${rebirthGain} を受け取る` : `あと${rebirthRemaining}回の引退で転生可能`}</button>}</div>
+    <div><b>転生の永続強化（転生の証で買う）</b><p className="sub">転生しても消えません。次の人生の立ち上がりが、引退の強化より大きく楽になります。</p></div>
+    {REBIRTH_UPGRADES.map((def) => {
+      const stage = getRebirthStage(state, def.id);
+      const cost = getNextRebirthCost(state, def.id);
+      return <div className="settingRow" key={def.id}><div><b>{def.name} <span className="stagePips" role="img" aria-label={`段階 ${stage}/${def.maxStage}`}>{Array.from({ length: def.maxStage }, (_, i) => <i key={i} className={i < stage ? 'on' : ''} />)}</span></b><p>{def.description}</p><p>{rebirthEffectText(def.id, stage)}</p></div>{cost === null ? <span className="sub">最大段階</span> : <button className="primary" onClick={() => buyRebirthUpgrade(def.id)} disabled={(prestige.rebirthPoints || 0) < cost}>{cost} で強化</button>}</div>;
     })}
   </div></Modal>;
 }
@@ -274,7 +309,7 @@ export function SettingsModal({ onClose, reset }: { onClose: () => void; reset: 
     }
   };
 
-  return <Modal title="設定" description="音と表示、自動化、セーブ周りの設定。" onClose={onClose}><div className="settingsPanel"><SettingSlider icon="volume" label="BGM" value={settings.bgm} onChange={(bgm) => setSettings((current) => ({ ...current, bgm }))} /><SettingSlider icon="sliders" label="SE" value={settings.se} onChange={(se) => setSettings((current) => ({ ...current, se }))} /><label className="settingToggle"><span><b>連続SEを控えめにする</b><p>チャチャリン系を短いチャリンに寄せる。</p></span><input type="checkbox" checked={settings.simplifiedComboSe} onChange={(event) => setSettings((current) => ({ ...current, simplifiedComboSe: event.currentTarget.checked }))} /></label><label className="settingToggle"><span><b>アイテム自動売却</b><p>素材アイテムを手に入れたら、その場で自動で売ってGに変える。重要アイテム・記録・拠点整備は売らない。初めての品は1個だけ残す。</p></span><input type="checkbox" checked={settings.autoSell} onChange={(event) => setSettings((current) => ({ ...current, autoSell: event.currentTarget.checked }))} /></label><label className="settingToggle"><span><b>自動装備</b><p>宝箱から装備を手に入れたら、今の装備より強いときだけ自動で付け替える。同等以下なら何もしない。</p></span><input type="checkbox" checked={settings.autoEquip} onChange={(event) => setSettings((current) => ({ ...current, autoEquip: event.currentTarget.checked }))} /></label><label className="settingToggle"><span><b>タイトル画面を表示</b><p>起動時にロゴとキーアートを表示する。OFFにすると、すぐ本編から始まる。</p></span><input type="checkbox" checked={settings.showTitleScreen} onChange={(event) => setSettings((current) => ({ ...current, showTitleScreen: event.currentTarget.checked }))} /></label><div className="settingRow"><div><b>テキスト速度</b><p>ぼやきの表示演出の速さ。</p></div><div className="settingChoices"><button className={settings.textSpeed === 'normal' ? 'active' : ''} onClick={() => setSettings((current) => ({ ...current, textSpeed: 'normal' }))}>標準</button><button className={settings.textSpeed === 'fast' ? 'active' : ''} onClick={() => setSettings((current) => ({ ...current, textSpeed: 'fast' }))}>速い</button></div></div><div className="dangerZone"><div><b>最初からやり直す</b><p>セーブデータを消して、勇者の労働生活を巻き戻す。</p></div><button onClick={reset}><Icon name="reset" /> リセット</button></div><div className="backupPanel"><div><b>セーブバックアップ</b><p>端末を変える前や、リセット前の保険に使う。</p></div><div className="backupActions"><button onClick={exportSave}><Icon name="book" /> 書き出す</button><button onClick={downloadSave}>ファイルで書き出す</button><button onClick={() => fileInputRef.current?.click()}>ファイルから読み込む</button><button onClick={importSave} disabled={!importText.trim()}>取り込む</button></div><input ref={fileInputRef} type="file" accept=".json,.txt,application/json" hidden onChange={(event) => { void loadSaveFile(event.currentTarget.files?.[0]); event.currentTarget.value = ''; }} /><textarea value={backupText} onChange={(event) => setBackupText(event.currentTarget.value)} placeholder="書き出したセーブがここに表示されます。" readOnly /><textarea value={importText} onChange={(event) => setImportText(event.currentTarget.value)} placeholder="取り込むバックアップ文字列をここに貼り付けます。" />{backupMessage && <p className="backupMessage">{backupMessage}</p>}</div></div></Modal>;
+  return <Modal title="設定" description="音と表示、自動化、セーブ周りの設定。" onClose={onClose}><div className="settingsPanel"><SettingSlider icon="volume" label="BGM" value={settings.bgm} onChange={(bgm) => setSettings((current) => ({ ...current, bgm }))} /><SettingSlider icon="sliders" label="SE" value={settings.se} onChange={(se) => setSettings((current) => ({ ...current, se }))} /><label className="settingToggle"><span><b>連続SEを控えめにする</b><p>チャチャリン系を短いチャリンに寄せる。</p></span><input type="checkbox" checked={settings.simplifiedComboSe} onChange={(event) => setSettings((current) => ({ ...current, simplifiedComboSe: event.currentTarget.checked }))} /></label><label className="settingToggle"><span><b>アイテム自動売却</b><p>素材アイテムを手に入れたら、その場で自動で売ってGに変える。重要アイテム・記録・拠点整備は売らない。初めての品は1個だけ残す。</p></span><input type="checkbox" checked={settings.autoSell} onChange={(event) => setSettings((current) => ({ ...current, autoSell: event.currentTarget.checked }))} /></label><label className="settingToggle"><span><b>自動装備</b><p>宝箱から装備を手に入れたら、今の装備より強いときだけ自動で付け替える。同等以下なら何もしない。</p></span><input type="checkbox" checked={settings.autoEquip} onChange={(event) => setSettings((current) => ({ ...current, autoEquip: event.currentTarget.checked }))} /></label><label className="settingToggle"><span><b>宝箱の自動開封</b><p>宝箱が上限に達したら、いちばん古い宝箱を自動で開ける。装備枠がいっぱいのときは開けない。開けた装備は自動装備の設定にも従う。</p></span><input type="checkbox" checked={settings.autoOpenChest} onChange={(event) => setSettings((current) => ({ ...current, autoOpenChest: event.currentTarget.checked }))} /></label><label className="settingToggle"><span><b>HP/MPが足りないとき自動で休憩</b><p>戦闘・冒険でHP/MPが足りなくなったら自動で休憩に切り替わり、8割まで回復したら元の仕事に戻る。休憩が解禁されていないときは働かない。手動で仕事を選ぶと自動復帰は止まる。</p></span><input type="checkbox" checked={settings.autoRest} onChange={(event) => setSettings((current) => ({ ...current, autoRest: event.currentTarget.checked }))} /></label><label className="settingToggle"><span><b>タイトル画面を表示</b><p>起動時にロゴとキーアートを表示する。OFFにすると、すぐ本編から始まる。</p></span><input type="checkbox" checked={settings.showTitleScreen} onChange={(event) => setSettings((current) => ({ ...current, showTitleScreen: event.currentTarget.checked }))} /></label><div className="settingRow"><div><b>テキスト速度</b><p>ぼやきの表示演出の速さ。</p></div><div className="settingChoices"><button className={settings.textSpeed === 'normal' ? 'active' : ''} onClick={() => setSettings((current) => ({ ...current, textSpeed: 'normal' }))}>標準</button><button className={settings.textSpeed === 'fast' ? 'active' : ''} onClick={() => setSettings((current) => ({ ...current, textSpeed: 'fast' }))}>速い</button></div></div><div className="dangerZone"><div><b>最初からやり直す</b><p>セーブデータを消して、勇者の労働生活を巻き戻す。</p></div><button onClick={reset}><Icon name="reset" /> リセット</button></div><div className="backupPanel"><div><b>セーブバックアップ</b><p>端末を変える前や、リセット前の保険に使う。</p></div><div className="backupActions"><button onClick={exportSave}><Icon name="book" /> 書き出す</button><button onClick={downloadSave}>ファイルで書き出す</button><button onClick={() => fileInputRef.current?.click()}>ファイルから読み込む</button><button onClick={importSave} disabled={!importText.trim()}>取り込む</button></div><input ref={fileInputRef} type="file" accept=".json,.txt,application/json" hidden onChange={(event) => { void loadSaveFile(event.currentTarget.files?.[0]); event.currentTarget.value = ''; }} /><textarea value={backupText} onChange={(event) => setBackupText(event.currentTarget.value)} placeholder="書き出したセーブがここに表示されます。" readOnly /><textarea value={importText} onChange={(event) => setImportText(event.currentTarget.value)} placeholder="取り込むバックアップ文字列をここに貼り付けます。" />{backupMessage && <p className="backupMessage">{backupMessage}</p>}</div></div></Modal>;
 }
 
 function SettingSlider({ icon, label, value, onChange }: { icon: 'volume' | 'sliders'; label: string; value: number; onChange: (value: number) => void }) {

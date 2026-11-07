@@ -96,6 +96,10 @@ function areaCompareText(candidate: Area, candidateSeconds: number, candidateFai
 }
 
 export function AreaGrid({ job, state, selectArea, compact = false }: { job: Job; state: GameState; selectArea: (id: string) => void; compact?: boolean }) {
+  // タップ端末での比較表示（2026-11-07 / ロードマップ5の残り）。
+  // 比較は従来 title 属性（ホバー専用）にしかなかったため、タップで開閉できる
+  // 行内表示を追加した。トグルはエリアボタンと別ボタンで、押してもエリアは切り替わらない。
+  const [compareId, setCompareId] = useState<string | null>(null);
   const currentArea = job.areas.find((area) => area.id === state.activeArea);
   const data = state.jobData[state.activeJob] || { level: 1, xp: 0, seenMusings: [] };
   const ownedUpgradeCount = countOwnedUpgrades(job.upgrades.map((u) => u.id), state.items || {});
@@ -112,9 +116,10 @@ export function AreaGrid({ job, state, selectArea, compact = false }: { job: Job
     // 以前は未解禁でも実名と概要が見えていて、次に目指す条件がカードからは分からなかった。
     if (!unlocked) {
       const hint = describeRequirement(area.unlock, state);
-      return <button key={area.id} disabled className="area locked" title={`解禁条件：${hint}`}><b><Icon name="lock" /> ？？？</b><span>未解禁</span><p>{hint}</p><small>進めると少しずつ開きます</small></button>;
+      return <div className="areaCell" key={area.id}><button disabled className="area locked" title={`解禁条件：${hint}`}><b><Icon name="lock" /> ？？？</b><span>未解禁</span><p>{hint}</p><small>進めると少しずつ開きます</small></button></div>;
     }
-    return <button key={area.id} onClick={() => selectArea(area.id)} className={`area ${active ? 'active' : ''}`} title={compareTitle}>{SCENE_ART[state.activeJob] && <img className={`areaArt artVar${areaIndex % 5}`} src={SCENE_ART[state.activeJob]} alt="" aria-hidden="true" draggable={false} />}<b><Icon name="mapPin" /> {area.name}</b><span>{`約${effectiveSeconds}s${entryCost ? ` / ${entryCost}G` : ''}`}</span><p>{area.summary}</p>{(area.monsters || []).length > 0 && <span className="areaMonsters">{(area.monsters || []).map((monster) => { const defeated = (state.defeatedMonsters || []).includes(monster.id); return <span key={monster.id} className="areaMonster" title={defeated ? monster.name : '？？？'}><MonsterThumb id={monster.id} size={48} silhouette={!defeated} /><small>{defeated ? monster.name : '？？？'}{monster.boss ? '（ボス）' : ''}</small></span>; })}</span>}{effectiveFail > 0 ? <small className="failRate">失敗率 {Math.round(effectiveFail * 100)}%</small> : <small>{!area.unlock || area.unlock.type === 'start' ? '最初から解禁' : '条件あり'}</small>}</button>;
+    const canCompare = Boolean(compareTitle && currentArea && currentArea.id !== area.id);
+    return <div className="areaCell" key={area.id}><button onClick={() => selectArea(area.id)} className={`area ${active ? 'active' : ''}`} title={compareTitle}>{SCENE_ART[state.activeJob] && <img className={`areaArt artVar${areaIndex % 5}`} src={SCENE_ART[state.activeJob]} alt="" aria-hidden="true" draggable={false} />}<b><Icon name="mapPin" /> {area.name}</b><span>{`約${effectiveSeconds}s${entryCost ? ` / ${entryCost}G` : ''}`}</span><p>{area.summary}</p>{(area.monsters || []).length > 0 && <span className="areaMonsters">{(area.monsters || []).map((monster) => { const defeated = (state.defeatedMonsters || []).includes(monster.id); return <span key={monster.id} className="areaMonster" title={defeated ? monster.name : '？？？'}><MonsterThumb id={monster.id} size={48} silhouette={!defeated} /><small>{defeated ? monster.name : '？？？'}{monster.boss ? '（ボス）' : ''}</small></span>; })}</span>}{effectiveFail > 0 ? <small className="failRate">失敗率 {Math.round(effectiveFail * 100)}%</small> : <small>{!area.unlock || area.unlock.type === 'start' ? '最初から解禁' : '条件あり'}</small>}</button>{canCompare && <button type="button" className="compareToggle" aria-expanded={compareId === area.id} onClick={() => setCompareId(compareId === area.id ? null : area.id)}>{compareId === area.id ? '比較を閉じる' : '比較'}</button>}{canCompare && compareId === area.id && <div className="compareLine">{compareTitle}</div>}</div>;
   })}</div>;
 }
 

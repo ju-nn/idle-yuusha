@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { jobs } from '../data/gameData';
 import { describeRequirement, isJobUnlocked } from '../game/requirements';
 import { getChainForJob, getChainHintForJob } from '../game/synergy';
@@ -11,6 +12,10 @@ export function JobMenu({ state, selectJob }: { state: GameState; selectJob: (ke
 }
 
 function JobButton({ id, job, state, selectJob }: { id: string; job: Job; state: GameState; selectJob: (key: string) => void }) {
+  // タップ端末での比較表示（2026-11-07 / ロードマップ5の残り）。
+  // 比較は従来 title 属性（ホバー専用）にしかなかったため、タップで開閉できる
+  // 行内表示を追加した。トグルは仕事ボタンと別ボタンで、押しても仕事は切り替わらない。
+  const [showCompare, setShowCompare] = useState(false);
   const unlocked = isJobUnlocked(id, state);
   const active = id === state.activeJob;
   const data = state.jobData[id] || { level: 1 };
@@ -31,7 +36,11 @@ function JobButton({ id, job, state, selectJob }: { id: string; job: Job; state:
   const chainHint = unlocked ? getChainHintForJob(state, id) : null;
   const chainTitle = chain ? ` / 連鎖：${chain.label}（${chain.active || chain.inactive}）` : '';
   const title = unlocked ? `${job.name} Lv.${data.level}：${job.description}${compare}${chainTitle}` : `${job.name}の解禁条件：${unlockHint}`;
-  return <button onClick={() => selectJob(id)} disabled={!unlocked} className={`jobButton ${active ? 'active' : ''}`} aria-pressed={active} title={title}>{unlocked && SCENE_ART[id] ? <img className="jobArt" src={SCENE_ART[id]} alt="" aria-hidden="true" draggable={false} /> : <span className="jobIcon"><Icon name="lock" /></span>}<span className="jobButtonText"><b>{unlocked ? job.name : '？？？'}</b><small>{unlocked ? `Lv.${data.level}${chainHint ? ` · ${chainHint}` : ''}` : unlockHint}</small></span>{active && unlocked && <span className="badge">中</span>}</button>;
+  // 行内比較文：title 属性と同じ内容（先頭の区切りを除く）。未解禁・選択中は比較対象がないため出さない。
+  const compareText = unlocked && !active && activeJob
+    ? `基礎速度：現在 ${activeJob.name} x${activeSpeed.toFixed(2)} → この仕事 x${baseSpeed.toFixed(2)}${chainTitle}`
+    : '';
+  return <div className="jobCell"><button onClick={() => selectJob(id)} disabled={!unlocked} className={`jobButton ${active ? 'active' : ''}`} aria-pressed={active} title={title}>{unlocked && SCENE_ART[id] ? <img className="jobArt" src={SCENE_ART[id]} alt="" aria-hidden="true" draggable={false} /> : <span className="jobIcon"><Icon name="lock" /></span>}<span className="jobButtonText"><b>{unlocked ? job.name : '？？？'}</b><small>{unlocked ? `Lv.${data.level}${chainHint ? ` · ${chainHint}` : ''}` : unlockHint}</small></span>{active && unlocked && <span className="badge">中</span>}</button>{compareText && <button type="button" className="compareToggle" aria-expanded={showCompare} onClick={() => setShowCompare((v) => !v)}>{showCompare ? '比較を閉じる' : '比較'}</button>}{compareText && showCompare && <div className="compareLine">{compareText}</div>}</div>;
 }
 
 function getUnlockHint(job: Job, state: GameState) {

@@ -1199,6 +1199,38 @@ function monsterThroneCat(f) {
   return c;
 }
 const THRONE_D = [184, 128, 30], DEMON_R = [168, 52, 48], DEMON_D = [120, 36, 34];
+const ECHO_PALE = [190, 205, 238], ECHO_SOFT = [150, 168, 212], WISP_GOLD = [244, 196, 96];
+function monsterPastLifeEcho(f) {
+  const c = canvas(48, 48);
+  const bob = f === 1 ? -2 : 0;
+  // 前世の残響（薄く光る、自分の影のような幽霊）
+  rect(c, 16, 10 + bob, 16, 22, ECHO_PALE);
+  rect(c, 18, 8 + bob, 12, 4, ECHO_PALE);
+  rect(c, 14, 26 + bob, 4, 8, ECHO_SOFT); rect(c, 30, 26 + bob, 4, 8, ECHO_SOFT);
+  // 目（少しだけ寂しげ）
+  rect(c, 20, 16 + bob, 3, 4, K); rect(c, 25, 16 + bob, 3, 4, K);
+  px(c, 21, 17 + bob, WHITE); px(c, 26, 17 + bob, WHITE);
+  // 残響のきらめき（フレームで揺れる）
+  px(c, 12, 14 + bob, ECHO_PALE); px(c, 36, 20 + bob, ECHO_PALE);
+  if (f === 1) { px(c, 24, 12 + bob, WHITE); px(c, 14, 22 + bob, ECHO_PALE); }
+  return c;
+}
+function monsterNewLifeWisp(f) {
+  const c = canvas(48, 48);
+  const bob = f === 1 ? -2 : 0;
+  // 新しい命の灯（小さな提灯のような灯）
+  rect(c, 20, 20 + bob, 8, 12, WISP_GOLD);
+  rect(c, 18, 18 + bob, 12, 3, [184, 128, 30]);
+  rect(c, 18, 32 + bob, 12, 2, [184, 128, 30]);
+  rect(c, 22, 10 + bob, 4, 8, WISP_GOLD);
+  px(c, 23, 8 + bob, WISP_GOLD); px(c, 24, 7 + bob, [250, 230, 160]);
+  // 灯の芯
+  rect(c, 22, 24 + bob, 4, 4, WHITE);
+  // きらめき（フレームで揺れる）
+  px(c, 14, 18 + bob, WISP_GOLD); px(c, 34, 24 + bob, WISP_GOLD);
+  if (f === 1) { px(c, 12, 26 + bob, [250, 230, 160]); px(c, 36, 16 + bob, [250, 230, 160]); }
+  return c;
+}
 function monsterThroneMimic(f) {
   const c = canvas(48, 48);
   const jaw = f === 1 ? 2 : 0;
@@ -1301,6 +1333,7 @@ const MONSTER_BUILDERS = {
   rusted_bell: monsterRustedBell, fountain_koi: monsterFountainKoi, throne_cat: monsterThroneCat,
   throne_mimic: monsterThroneMimic, retired_hero: monsterRetiredHero,
   silent_demon_king: monsterSilentDemonKing, household_demon_king: monsterHouseholdDemonKing,
+  past_life_echo: monsterPastLifeEcho, new_life_wisp: monsterNewLifeWisp,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);
@@ -1373,6 +1406,9 @@ const ITEM_ICON_BUILDERS = {
   castle_key_fragment: (c) => { rect(c, 7, 12, 8, 8, GOLD); rect(c, 9, 14, 4, 4, [250, 246, 232]); rect(c, 15, 15, 6, 3, GOLD); rect(c, 19, 18, 3, 4, GOLD); px(c, 22, 14, GOLD); px(c, 23, 13, [250, 246, 232]); px(c, 24, 15, GOLD); px(c, 16, 13, [184, 128, 30]); },
   quiet_crown: (c) => { rect(c, 7, 17, 18, 6, GOLD); for (const x of [7, 12, 17, 22]) rect(c, x, 12, 3, 5, GOLD); px(c, 13, 19, BLUE); px(c, 19, 19, RED2); rect(c, 7, 23, 18, 2, [184, 128, 30]); },
   throne_key: (c) => { rect(c, 7, 12, 8, 8, GOLD); rect(c, 9, 14, 4, 4, [250, 246, 232]); rect(c, 15, 15, 7, 3, GOLD); rect(c, 20, 18, 3, 4, GOLD); px(c, 22, 14, GOLD); px(c, 23, 13, [250, 246, 232]); px(c, 24, 15, GOLD); px(c, 16, 13, [184, 128, 30]); px(c, 10, 18, BLUE); },
+  rebirth_guidebook: (c) => { rect(c, 8, 8, 16, 18, [120, 90, 180]); rect(c, 8, 8, 16, 3, [150, 120, 210]); rect(c, 10, 13, 12, 2, GOLD); rect(c, 10, 17, 12, 1, [250, 246, 232]); rect(c, 10, 20, 8, 1, [250, 246, 232]); px(c, 16, 22, GOLD); },
+  second_life_note: (c) => { rect(c, 9, 7, 14, 19, [250, 246, 232]); rect(c, 9, 7, 14, 2, [200, 190, 170]); rect(c, 12, 12, 8, 1, [120, 120, 130]); rect(c, 12, 16, 10, 1, [120, 120, 130]); rect(c, 12, 20, 6, 1, [120, 120, 130]); px(c, 20, 22, BLUE); },
+  retiree_tea: (c) => { rect(c, 9, 14, 13, 9, [210, 160, 110]); rect(c, 9, 14, 13, 2, [150, 110, 70]); rect(c, 22, 16, 3, 5, [210, 160, 110]); px(c, 13, 10, [200, 200, 200]); px(c, 16, 8, [200, 200, 200]); px(c, 19, 10, [200, 200, 200]); },
   life_stamp: (c) => { rect(c, 13, 5, 6, 8, WOOD_D); rect(c, 10, 13, 12, 4, WOOD); rect(c, 8, 17, 16, 9, RED2); rect(c, 10, 19, 12, 5, [226, 96, 84]); px(c, 14, 20, WHITE); px(c, 17, 20, WHITE); px(c, 15, 22, WHITE); },
   employee_badge: (c) => { rect(c, 10, 8, 12, 17, WHITE); rect(c, 10, 8, 12, 3, BLUE); rect(c, 14, 4, 4, 4, METAL_D); px(c, 13, 14, GRAY); px(c, 18, 14, GRAY); px(c, 13, 13, GRAY); px(c, 18, 13, GRAY); rect(c, 12, 19, 8, 1, GRAY_D); rect(c, 12, 22, 8, 1, GRAY_D); },
   mute_button: (c) => { rect(c, 8, 8, 16, 16, [84, 92, 104]); rect(c, 10, 10, 12, 12, [120, 130, 144]); px(c, 13, 14, WHITE); px(c, 19, 14, WHITE); px(c, 14, 15, WHITE); px(c, 18, 15, WHITE); line(c, 12, 20, 20, 12, RED2); },

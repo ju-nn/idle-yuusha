@@ -100,6 +100,15 @@ export function getReleaseTasks(state: GameState) {
 
 function requirementProgress(requirement: Requirement, state: GameState) {
   if (requirement.type === 'start') return { percent: 100, current: 1, target: 1, label: 'すぐ開始できます' };
+  if (requirement.type === 'rebirth') {
+    const current = state.prestige?.rebirthCount || 0;
+    return {
+      percent: Math.min(100, Math.floor((current / requirement.count) * 100)),
+      current,
+      target: requirement.count,
+      label: `転生${current}/${requirement.count}回`,
+    };
+  }
   if (requirement.type === 'item') {
     const current = state.items?.[requirement.item] || 0;
     return {
@@ -573,6 +582,7 @@ function jobUnlockMusing(key: string): Musing {
     shady: `勇者は「闇クエスト」を受けられるようになった。\n\n勇者「報酬が高い。説明が薄い。これは財布と胃が別々の意見を出すやつだ」\n\n赤い旗は、ただの布ではなかった。見ないふりをすれば進める。ちゃんと見れば足が止まる。勇者はその間で、しばらく黙った。\n\n勇者「危ない仕事ほど、最初は簡単そうな顔をしてくる。そういう顔、だいたい信用できない」\n\nここからは、稼げるけれど危うい道も選択肢になる。断ることも、進むことも、勇者の物語の分岐になる。`,
     delivery: `勇者は「配達アプリ」を起動できるようになった。\n\n勇者「スマホが鳴る。俺が走る。現代の召喚魔法、だいぶ雑だな」\n\n街は地図より複雑で、評価は天気より冷たいことがある。依頼を選んでいるつもりでも、通知に選ばれている気がしてくる。\n\n勇者「冒険者だった頃は地図の端が怖かった。今は配達先のピンが怖い」\n\nここから勇者は、街を走って小銭を積む。自由な働き方は、自由に疲れる働き方でもあった。`,
     streaming: `勇者は「動画投稿者」として動けるようになった。\n\n勇者「生活を切り抜いて、サムネを付けて、数字を見る。勇者業より心拍に悪いかもしれない」\n\nカメラの向こうに誰かがいる。いるかもしれない。いないかもしれない。その曖昧な気配に向かって、勇者は声を出すことにした。\n\n勇者「見られるために動くのか、動いた結果を見られるのか。順番を間違えると、かなりしんどいやつだ」\n\nここからは、作業だけでなく注目も資源になる。勇者の生活は、画面の向こう側へ少し漏れ出した。`,
+    rebirth_guide: `勇者は「転生案内」を始められるようになった。\n\n勇者「生まれ変わったばかりの勇者に、池の歩き方を教える。教える側になると、自分の人生も少し整理されるな」\n\n一度終わった人生を、もう一度なぞる仕事だ。初心者の質問に答えるたびに、自分が最初に覚えたことの順番が、少しずつ見えてくる。\n\n勇者「先生と呼ばれるほどの人生じゃない。でも、教えることで自分の答えも固まってくる。なんだか変な気分だ」\n\nここからは、稼ぐだけでなく、誰かの二周目を支える選択も増える。転生した勇者にだけ開く、静かな仕事が始まった。`,
   };
   return {
     id: `job-unlock-${key}`,

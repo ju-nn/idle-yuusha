@@ -74,7 +74,9 @@ export type FeedbackEvent = {
 export type Requirement =
   | { type: 'start' }
   | { type: 'item'; item: string; amount: number }
-  | { type: 'jobLevel'; job: string; level: number };
+  | { type: 'jobLevel'; job: string; level: number }
+  // 転生専用（2026-11-07 / ロードマップ5の残り）: 転生回数が条件。転生した勇者だけが開く。
+  | { type: 'rebirth'; count: number };
 
 export type Musing = {
   id?: string;

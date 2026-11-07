@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const JOBS = ['housekeeping', 'photography', 'nightwatch', 'booktrade'];
+const JOBS = ['housekeeping', 'photography', 'nightwatch', 'booktrade', 'rebirth_guide'];
 
 const entries = [];
 for (const job of JOBS) {

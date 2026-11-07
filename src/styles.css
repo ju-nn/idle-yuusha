@@ -136,6 +136,14 @@ button span { opacity:.82; }
 .jobButtonText b { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.18; }
 .jobButton small { color:var(--muted); font-size:.68rem; line-height:1.18; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .jobButton.active { border-color:rgba(15,143,111,.46); background:linear-gradient(90deg, rgba(15,143,111,.13), rgba(251,191,36,.12)); box-shadow:inset 4px 0 0 var(--accent); }
+/* 比較トグル用のセル（2026-11-07 / タップ端末での比較ツールチップ対応）。
+   仕事・エリアボタンはセルに入り、セルがグリッド／フレックスの項目になる。
+   トグルはボタンと別要素で、押しても仕事・エリアは切り替わらない。 */
+.jobCell, .areaCell { min-width:0; display:flex; flex-direction:column; gap:4px; }
+.areaCell .area { width:100%; }
+.compareToggle { align-self:flex-start; padding:2px 8px; font-size:.68rem; line-height:1.4; border-radius:999px; border:1px solid rgba(124,74,35,.25); background:rgba(255,255,255,.8); color:var(--muted); cursor:pointer; }
+.compareToggle[aria-expanded="true"] { color:var(--text); border-color:rgba(15,143,111,.5); background:rgba(15,143,111,.1); }
+.compareLine { font-size:.72rem; line-height:1.5; color:var(--text-soft); background:rgba(255,255,255,.75); border:1px dashed rgba(124,74,35,.25); border-radius:6px; padding:6px 8px; overflow-wrap:anywhere; }
 .jobButton .badge { position:absolute; top:4px; right:4px; padding:1px 5px; border-radius:999px; font-size:.62rem; line-height:1.35; }
 .jobIcon { width:1.28rem; height:1.28rem; border-radius:6px; background:var(--accent-soft); display:inline-flex; align-items:center; justify-content:center; color:var(--accent-text); }
 .main { min-width:0; max-width:100%; display:flex; flex-direction:column; gap:12px; }
@@ -588,6 +596,7 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
  .jobMenuPanel h2 { font-size:.92rem; }
  .jobList { flex:1 0 auto; display:flex; flex-wrap:nowrap; gap:7px; }
  .jobList .jobButton { flex:0 0 126px; width:126px; }
+ .jobList .jobCell { flex:0 0 126px; width:126px; scroll-snap-align:start; }
  .jobButton { min-height:56px; scroll-snap-align:start; grid-template-columns:auto minmax(0, 1fr); }
  .jobButton .badge { top:4px; right:4px; }
  .statGrid { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; }
@@ -1124,6 +1133,11 @@ html, body, #root {
     min-height:54px;
   }
 
+  .jobList .jobCell {
+    flex:0 0 124px;
+    width:124px;
+  }
+
   .main {
     grid-template-rows:minmax(0, 1fr);
   }
@@ -1241,6 +1255,11 @@ html, body, #root {
   }
 
   .jobList .jobButton {
+    flex-basis:112px;
+    width:112px;
+  }
+
+  .jobList .jobCell {
     flex-basis:112px;
     width:112px;
   }

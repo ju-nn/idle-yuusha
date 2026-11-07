@@ -10,6 +10,9 @@ export function checkRequirement(unlock: Requirement | undefined, state: GameSta
   if (!unlock || unlock.type === 'start') return true;
   if (unlock.type === 'jobLevel') return getJobLevel(state, unlock.job) >= unlock.level;
   if (unlock.type === 'item') return (state.items?.[unlock.item] || 0) >= unlock.amount;
+  // 転生専用: 転生回数が条件。転生は周回でリセットされないため、既存プレイヤーの
+  // 再ロックは起きない（転生した勇者はずっと転生済みのまま）。
+  if (unlock.type === 'rebirth') return (state.prestige?.rebirthCount || 0) >= unlock.count;
   return false;
 }
 
@@ -51,6 +54,13 @@ export function describeRequirement(unlock: Requirement | undefined, state: Game
   if (unlock.type === 'item') {
     const current = state.items?.[unlock.item] || 0;
     return `${itemName(unlock.item)}を手に入れると解禁（${current}/${unlock.amount}）`;
+  }
+  if (unlock.type === 'rebirth') {
+    const current = state.prestige?.rebirthCount || 0;
+    const gap = Math.max(0, unlock.count - current);
+    return gap > 0
+      ? `転生${unlock.count}回で解禁（現在${current}回／あと${gap}回）`
+      : `転生${unlock.count}回で解禁`;
   }
   return '未解禁';
 }

@@ -411,7 +411,26 @@ export function runSelfTests() {
   console.assert(getCollectionGoldMultiplier(initialState) === 1 && getCollectionXpMultiplier(initialState) === 1, 'fresh state should have no collection bonus');
   const allDiscoverable = getAllDiscoverableItemIds();
   const allMonsters = getAllMonsterIds();
-  console.assert(allMonsters.length === 44, `there should be 44 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allMonsters.length === 46, `there should be 46 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allMonsters.includes('past_life_echo') && allMonsters.includes('new_life_wisp'), 'rebirth corridor monsters should be counted');
+  // 転生専用コンテンツ（2026-11-07 / ロードマップ5の残り）：転生1回で解禁される仕事とエリア。
+  // 初期状態では未解禁、転生1回で解禁。転生は周回でリセットされないため再ロックは起きない。
+  console.assert(jobs.rebirth_guide && jobs.rebirth_guide.areas.length === 2 && jobs.rebirth_guide.upgrades.length === 3, 'rebirth guide job should have two areas and three upgrades');
+  console.assert(checkRequirement(jobs.rebirth_guide.unlock, initialState) === false, 'rebirth guide should be locked before any rebirth');
+  const rebirthedOnce = { ...initialState, prestige: { ...createInitialState(jobs).prestige!, rebirthCount: 1 } };
+  console.assert(checkRequirement(jobs.rebirth_guide.unlock, rebirthedOnce) === true, 'rebirth guide should unlock after one rebirth');
+  console.assert(describeRequirement(jobs.rebirth_guide.unlock, initialState).includes('転生1回'), 'rebirth unlock hint should name the rebirth count');
+  const rebirthCorridor = jobs.adventure.areas.find((area) => area.id === 'rebirth_corridor');
+  console.assert(rebirthCorridor && checkRequirement(rebirthCorridor.unlock, initialState) === false && checkRequirement(rebirthCorridor.unlock, rebirthedOnce) === true, 'rebirth corridor should unlock after one rebirth');
+  console.assert(!isJobUnlocked('rebirth_guide', initialState) && isJobUnlocked('rebirth_guide', rebirthedOnce), 'rebirth guide should be locked fresh and unlocked after rebirth');
+  // 解禁間隔の再設計（2026-11-07）：仕事の解禁は Lv3 までに収め、整備は Lv2 → Lv4 → Lv6 の2刻みにする。
+  console.assert(Object.values(jobs).every((job) => job.unlock.type !== 'jobLevel' || (job.unlock.level || 0) <= 3), 'every job gate should be at most level 3');
+  console.assert(Object.entries(jobs).filter(([key]) => key !== 'adventure').every(([, job]) => job.upgrades.some((upgrade) => (upgrade.level || 0) === 6)), 'every non-adventure job should have a level 6 upgrade');
+  const castleSalvage = jobs.merchant.areas.find((area) => area.id === 'castle_salvage');
+  const castleSalvageUnlock = castleSalvage?.unlock;
+  console.assert(castleSalvageUnlock?.type === 'jobLevel' && castleSalvageUnlock.job === 'adventure' && castleSalvageUnlock.level === 4, 'castle salvage should open at adventure level 4');
+  console.assert(jobs.delivery.unlock.type === 'jobLevel' && jobs.delivery.unlock.level === 3 && jobs.nightwatch.unlock.type === 'jobLevel' && jobs.nightwatch.unlock.job === 'delivery' && jobs.nightwatch.unlock.level === 3, 'delivery should open at office level 3 and nightwatch at delivery level 3');
+  console.assert(jobs.booktrade.unlock.type === 'jobLevel' && jobs.booktrade.unlock.level === 2, 'booktrade should open at merchant level 2');
   const completeState = { ...initialState, lifetime: { ...emptyLifetime(), discovered: allDiscoverable }, defeatedMonsters: allMonsters };
   console.assert(getCollectionGoldMultiplier(completeState) === 1.1 && getCollectionXpMultiplier(completeState) === 1.1, 'full discovery should give +10% gold and full defeat +10% xp');
   console.assert(getCollectionBonusLines(initialState).some((line) => line.includes('あと')), 'collection bonus lines should point to the remaining counts');

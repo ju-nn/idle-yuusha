@@ -32,6 +32,7 @@ const jobs: Record<string, Job> = {
       { id: 'fishing_better_rod', name: '中古の釣り竿', description: '釣れる気が少しする。現実でも"気がする"は大事。', cost: { gold: 30, resources: { fish: 4 } }, effects: { maxMp: 5, failReduction: 0.08 }, log: '釣りへの心理的抵抗が少し減った。失敗も少し減った。', level: 2 },
       { id: 'fishing_lure', name: 'ルアー', description: '魚の気を引くための疑似餌。釣り人の自尊心を少し守る。', cost: { gold: 50, resources: { fish: 8 } }, effects: { maxMp: 8, failReduction: 0.07 }, log: '魚を騙す技術が少し上達した。逃げられる率も下がった。', level: 3 },
       { id: 'fishing_boat', name: '小さなボート', description: '沖に出られる。風も来る。生活も少し揺れる。', cost: { gold: 120, resources: { wood: 20, fish: 15 } }, effects: { maxMp: 15, maxHp: 5, failReduction: 0.10 }, log: '海に出る勇気と、船酔いの予感を手に入れた。', level: 5 },
+    { id: 'fishing_tide_chart', name: '潮見表', description: '潮の満ち引きが読める表。魚の気分まで少し読める。', cost: { gold: 300, resources: { fish: 20, wood: 10 } }, effects: { maxMp: 14, failReduction: 0.06 }, log: '潮見表を手に入れた。釣りの失敗が少し減った。魚の都合も少し分かるようになった。', level: 6 },
     ],
     levelMusings: {
       1: [
@@ -69,6 +70,7 @@ const jobs: Record<string, Job> = {
   rest: { name: '休憩', type: 'idle', description: 'お金は増えない。でも壊れないために必要。かなり大事。', unlock: { type: 'item', item: 'permission_to_rest', amount: 1 }, areas: [{ id: 'nap', name: '短い昼寝', summary: '手軽に回復。罪悪感も少し来る。', seconds: 5, rewards: { xp: 9 }, drops: [D('field_note', 0.05), D('red_flag', 0.03), D('mute_button', 0.03), D('loose_blanket_thread', 0.05), D('slipped_slipper', 0.05), D('bent_hanger', 0.05), D('flat_pillow', 0.05)], failChance: 0, failMusings: [], musings: [M('勇者は短い昼寝をした。世界は救われていない。だが腰は少し救われた。まず腰から救国していく。'), M('勇者「何もしなかった。でも何も壊さなかった。今日はそれで勝ちでもいいか」\n\n勇者は地面に横たわった。空を見上げる。雲が流れていく。\n\n勇者「休むって、結構難しいんだよな。何もしないって、結構勇気がいる。休息にも練習がいるなら、俺は今かなり真面目に訓練している」\n\n勇者は目を閉じた。世界が遠ざかる。でも、完全には消えない。それは、まだ完全に休めていない証拠でもあった。\n\n勇者「少しずつ、休めるようになるといいな。せめて罪悪感だけ先に退勤してほしい」', [{ item: 'field_note', amount: 1 }], 'unlock', 'unlock')] }], upgrades: [
     { id: 'rest_comfy_pillow', name: '快適な枕', description: '昼寝の質が上がる。罪悪感も少し下がる。', cost: { gold: 40, resources: {} }, effects: { maxMp: 6 }, log: '枕の高さが、人生の高さに合った気がする。', level: 2 },
     { id: 'rest_eye_mask', name: 'アイマスク', description: '光を遮断する。安心感を遮断しない。', cost: { gold: 60, resources: {} }, effects: { maxMp: 10 }, log: '世界が暗くなっても、心は少し明るくなった。', level: 3 },
+    { id: 'rest_blanket', name: '厚手の毛布', description: '昼寝の毛布が厚くなった。罪悪感は薄いまま、温かさだけ増えた。', cost: { gold: 220, resources: {} }, effects: { maxMp: 16, maxHp: 8 }, log: '毛布が厚くなった。休憩の質が少し上がった。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -91,6 +93,7 @@ const jobs: Record<string, Job> = {
   woodcutting: { name: '木こり', type: 'idle', description: '考えることが少なくて楽。成果は見える。手首は別意見。', unlock: { type: 'jobLevel', job: 'fishing', level: 2 }, areas: [{ id: 'backyard_tree', name: '裏庭の細い木', summary: '近い。簡単。あまり稼げない。', seconds: 6, rewards: { gold: [1, 4], wood: [2, 4], xp: 11 }, drops: [D('twig', 0.7, [1, 3]), D('hinoki_stick', 0.08), D('old_pickaxe', 0.06), D('acorn', 0.07), D('bent_nail', 0.06), D('peeled_bark', 0.06), D('broken_pruning_shears', 0.05)], failChance: 0.12, failMusings: ['斧を木に挟まれた。道具に反撃された。貸した覚えはない', '刃の角度を間違えた。木は無言で採点が厳しい', '振りかぶりすぎて転んだ。敵がいないのに敗北演出が出た', '木が予想外の方向に倒れた。物理、たまに連絡なしで裏切る', '斧が滑った。木が逃げた。俺も逃げた。全員判断が早い', '木の硬さを舐めていた。手首だけが今日の成果を覚えている'], musings: [M('裏庭の木を切った。\n\n勇者「頭を使わない作業はありがたい。手首だけは、はっきり反対している」', [{ item: 'twig', amount: 1 }]), M('勇者は『ひのきのぼう』を手に入れた。\n\n勇者「棒だ。どう見ても棒だ。でも手に持つと、なぜか\"何か倒せる側\"になった気がする。危ない自己肯定感だな」\n\n勇者は棒を振ってみた。空を切る。でも、空を切った感覚がある。\n\n勇者「武器を持つって、こういうことか。相手がいなくても、自分が少し物騒になる」\n\n勇者は棒を腰に差した。まだ戦う相手はいない。でも、戦う準備はできた。それは、逃げる判断を少し遅らせる準備でもあった。', [{ item: 'hinoki_stick', amount: 1 }], 'unlock', 'unlock'), M('木の根元から古びたツルハシが出てきた。\n\n勇者「道具が出ると、やれる仕事が増える。便利って、だいたい面倒の招待状なんだよな」', [{ item: 'old_pickaxe', amount: 1 }], 'unlock')] }], upgrades: [
     { id: 'woodcutting_wrist_care', name: '手首ケアセット', description: '木こりのあとに手首へ謝罪するための道具。', cost: { gold: 45, resources: { wood: 10 } }, effects: { maxHp: 10, failReduction: 0.08 }, log: '身体コストを無視しない勇者になった。斧の扱いも少し慣れた。', level: 2 },
     { id: 'woodcutting_axe', name: 'まともな斧', description: '裏庭の木にはオーバースペック。でも安心感は別。', cost: { gold: 80, resources: { wood: 15, ore: 5 } }, effects: { maxHp: 15, failReduction: 0.07 }, log: '切るという行為が、少し楽になった。失敗も少し減った。', level: 4 },
+    { id: 'woodcutting_log_cart', name: '丸太運び台車', description: '切った木を運ぶ台車。腰への請求書が少し軽くなる。', cost: { gold: 260, resources: { wood: 25, ore: 8 } }, effects: { maxHp: 16, failReduction: 0.06 }, log: '台車を手に入れた。木こりの失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -115,10 +118,11 @@ const jobs: Record<string, Job> = {
     { id: 'wood_bundle', name: '木材の束売り', summary: '木材をまとめて売る。重いものは利益も腰も重い。', seconds: 6, unlock: { type: 'jobLevel', job: 'woodcutting', level: 1 }, rewards: { xp: 9 }, sell: { resource: 'wood', amount: [2, 4], price: 2 }, drops: [D('dried_ink_pen', 0.05)], failChance: 0.10, failMusings: ['重すぎて運ぶ途中で落とした。腰が先に請求書を出した', '束がばらけた。結び方が甘かった', '客が値切った。木材も値切られた', '雨に濡れて木材が膨れた。商品が太った', '客が品定めをして買わなかった。俺の時間も品定めされた'], musings: [M('勇者は木材を束にして売った。\n\n勇者「木を切って、束ねて、売る。これもう労働のフルコースでは？」')] },
     { id: 'ore_buyer', name: '鉱石の買い取り', summary: '鉱石を高く売る。単価はいいが、そもそも掘るのがしんどい。', seconds: 7, unlock: { type: 'item', item: 'old_pickaxe', amount: 1 }, rewards: { xp: 10 }, sell: { resource: 'ore', amount: [1, 2], price: 8 }, drops: [], failChance: 0.10, failMusings: ['買い取り価格が下がっていた。市場は約束しない', '鉱石の品質を指摘された。掘るより選別が大事らしい', '客が値切った。鉱石も値切られた', '鉱石が混ざっていた。選別が甘かった', '客が品定めをして買わなかった。俺の時間も品定めされた'], musings: [M('鉱石はいい値で売れた。\n\n勇者「高く売れる素材は、だいたい集めるまでに腰が先払いしている」')] },
     { id: 'adventure_salvage', name: '冒険素材の買い取り', summary: '戦利品を売る。戦ったあとに値札を付けると急に現実。', unlock: { type: 'jobLevel', job: 'adventure', level: 2 }, seconds: 8, rewards: { xp: 12 }, sellItems: [{ item: 'slime_jelly', amount: [1, 3], price: 7 }, { item: 'goblin_ear', amount: [1, 1], price: 16 }, { item: 'wolf_fang', amount: [1, 1], price: 22 }], drops: [D('merchant_license', 0.04)], failChance: 0.14, failMusings: ['戦利品の説明に困った。正直に言うと売れにくい', '買い取り表にないと言われた。世界にも対象外がある', '状態が悪いと言われた。戦闘後のものに新品感を求めないでほしい', '鑑定待ちで時間が溶けた。価値判断も労働だ'], musings: [M('冒険素材を売った。戦利品が生活費に変わる瞬間、勇者は少しだけ商売を信じた。\n\n勇者「倒した相手の素材で夕飯を買う。倫理は後で考える。今は米だ」')] },
-    { id: 'castle_salvage', name: '城跡骨董市', summary: '古い鎧片を売る。歴史的価値と生活費が同じ箱に入る。', unlock: { type: 'jobLevel', job: 'adventure', level: 6 }, seconds: 10, rewards: { xp: 16 }, sellItems: [{ item: 'rusty_armor_plate', amount: [1, 2], price: 28 }, { item: 'castle_key_fragment', amount: [1, 1], price: 42 }, { item: 'quiet_crown', amount: [1, 1], price: 90 }], drops: [D('overdue_notice', 0.03)], failChance: 0.18, failMusings: ['骨董商に長い顔をされた。価値の顔が読めない', '錆び具合を褒められた。褒め方にも種類がある', '由来を聞かれて黙った。拾った、は弱い', '値段が思ったより渋い。歴史にも相場がある'], musings: [M('城跡の古い鎧片を売った。伝説の残骸にも値札は付く。\n\n勇者「歴史的価値って、腹が減ってる時はだいたい売却価格に翻訳される」', [{ item: 'overdue_notice', amount: 1 }], 'unlock')] },
+    { id: 'castle_salvage', name: '城跡骨董市', summary: '古い鎧片を売る。歴史的価値と生活費が同じ箱に入る。', unlock: { type: 'jobLevel', job: 'adventure', level: 4 }, seconds: 10, rewards: { xp: 16 }, sellItems: [{ item: 'rusty_armor_plate', amount: [1, 2], price: 28 }, { item: 'castle_key_fragment', amount: [1, 1], price: 42 }, { item: 'quiet_crown', amount: [1, 1], price: 90 }], drops: [D('overdue_notice', 0.03)], failChance: 0.18, failMusings: ['骨董商に長い顔をされた。価値の顔が読めない', '錆び具合を褒められた。褒め方にも種類がある', '由来を聞かれて黙った。拾った、は弱い', '値段が思ったより渋い。歴史にも相場がある'], musings: [M('城跡の古い鎧片を売った。伝説の残骸にも値札は付く。\n\n勇者「歴史的価値って、腹が減ってる時はだいたい売却価格に翻訳される」', [{ item: 'overdue_notice', amount: 1 }], 'unlock')] },
   ], upgrades: [
     { id: 'merchant_sign', name: '看板', description: '店の存在をアピールする。客が来るかは別問題。', cost: { gold: 55, resources: { wood: 12 } }, effects: { maxMp: 8, failReduction: 0.05 }, log: '店の看板を掲げた。客の流れが少し変わった。', level: 2 },
     { id: 'merchant_cart', name: '手押し車', description: '在庫を運べる。腰への負担も運べる。', cost: { gold: 100, resources: { wood: 25, ore: 8 } }, effects: { maxHp: 12, failReduction: 0.05 }, log: '運搬の負担が少し減った。値段交渉の負担は減っていない。', level: 4 },
+    { id: 'merchant_ledger', name: '商いの帳簿', description: '売れた品と値段を記録する帳簿。値付けの根拠が少し増える。', cost: { gold: 280, resources: { wood: 20, ore: 10 } }, effects: { maxMp: 14, failReduction: 0.06 }, log: '帳簿を付け始めた。商いの失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -141,6 +145,7 @@ const jobs: Record<string, Job> = {
   farming: { name: '農業', type: 'farming', description: '種を植えて、時間経過で収穫する。自動放置とは少し違う体験。', unlock: { type: 'jobLevel', job: 'rest', level: 2 }, areas: [{ id: 'tiny_field', name: '小さな畑', summary: 'しょぼい大根を植えられる。', seconds: 10, rewards: { xp: 10 }, drops: [D('daikon_seed', 0.8), D('stray_sprout', 0.07), D('dry_soil_clod', 0.06), D('empty_seed_packet', 0.06), D('split_chopstick', 0.05), D('rusty_spout', 0.05)], failChance: 0, failMusings: [], musings: [M('勇者は『小さな畑のメモ』を見つけた。\n\n勇者「労働は嫌だけど、勝手に育つものは好きだ。俺の代わりに野菜が頑張ってくれるなら、こんなにありがたいことはない」\n\n勇者は畑の前に立った。土が耕されている。種を植える準備ができている。\n\n勇者「種を植えて、水をやって、待つ。それだけ。でも、待つ時間が、収穫への期待になる」\n\n勇者は種を手に取った。小さな種。これが大根になる。\n\n勇者「俺が頑張らなくても、野菜は育つ。俺が休んでいる間も、野菜は働いている。これが理想の労働形態では？」\n\n勇者は種を土に埋めた。土をかぶせる。水をやる。あとは待つだけだ。\n\n勇者「待つ時間も、労働の一部だと思えば、罪悪感も少し減るかも」', [{ item: 'daikon_seed', amount: 1 }], 'unlock', 'unlock')] }], upgrades: [
     { id: 'farming_hoe', name: '鍬', description: '土を耕す道具。耕すという言葉が、なんだか人生めいた。', cost: { gold: 50, resources: { wood: 10 } }, effects: { maxMp: 8 }, log: '土を耕す準備ができた。人生を耕す準備は、まだ。', level: 2 },
     { id: 'farming_watering_can', name: 'じょうろ', description: '水をやる。植物が喜ぶかは、植物に聞いて。', cost: { gold: 70, resources: { wood: 15 } }, effects: { maxMp: 12 }, log: '水やり道具を手に入れた。植物の反応は、まだ見ていない。', level: 3 },
+    { id: 'farming_greenhouse', name: '小さな温室', description: '雨の日でも育つ小さな温室。野菜の都合に天気が口を出さなくなる。', cost: { gold: 280, resources: { wood: 30 } }, effects: { maxMp: 16, maxHp: 8 }, log: '温室を建てた。農業の調子が少し安定した。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -163,6 +168,7 @@ const jobs: Record<string, Job> = {
   mining: { name: '採掘', type: 'idle', description: '一発当てたい気持ちで掘る。素材は強いが体力消耗も強い。', unlock: { type: 'jobLevel', job: 'woodcutting', level: 3 }, areas: [{ id: 'loose_rocks', name: '崩れかけの岩場', summary: '初歩の採掘場。腰に来る。', seconds: 7, rewards: { gold: [3, 9], ore: [1, 3], xp: 11 }, drops: [D('pebble_ore', 0.75, [1, 3]), D('glimmer_pebble', 0.08), D('chipped_gear', 0.06), D('rusty_screw', 0.06), D('cracked_lantern', 0.06), D('dusty_gloves', 0.05)], failChance: 0.20, failMusings: ['岩が崩れた。採掘というより逃走だった', '鉱脈を外した。勘は信頼できない', 'ツルハシが跳ね返った。岩が思ったより硬かった', '掘った穴が埋まった。自然は仕事を戻してくる', '岩粉が目に入った。採掘は目も掘る', '腰が悲鳴を上げた。岩は無言だ'], musings: [M('崩れかけの岩場で鉱石を掘った。\n\n勇者「一発当てたい気持ちが、ツルハシに出てるな」', [{ item: 'pebble_ore', amount: 1 }]), M('勇者は崩れかけの岩場に立った。\n\n勇者「採掘だ。岩を掘って鉱石を手に入れる。木こりより体力が要りそうだけど、報酬もいいらしい」\n\n勇者はツルハシを構えた。岩に向かって振り下ろす。岩が砕ける音が響く。\n\n勇者「新しい仕事は、新しい疲れを連れてくる。報酬がいいぶん、腰への説明が難しい」\n\n勇者は鉱石を拾い上げた。重い。でも、この重さは少しだけ生活費に近い。', [{ item: 'pebble_ore', amount: 1 }], 'unlock', 'unlock')] }], upgrades: [
     { id: 'mining_helmet', name: '採掘用ヘルメット', description: '頭を守る。思考は守らない。', cost: { gold: 65, resources: { ore: 10 } }, effects: { maxHp: 15, failReduction: 0.10 }, log: '頭の安全が確保された。崩れた岩にも少し対応できるようになった。', level: 2 },
     { id: 'mining_pickaxe', name: '新しいツルハシ', description: '掘る効率が上がる。腰の悲鳴も上がる。', cost: { gold: 90, resources: { wood: 20, ore: 15 } }, effects: { maxHp: 20, failReduction: 0.10 }, log: '道具が進化した。鉱脈を外す回数が少し減った。', level: 4 },
+    { id: 'mining_headlamp', name: '坑道ヘッドライト', description: '頭に付ける明かり。暗い岩場でも手元が見える。', cost: { gold: 300, resources: { ore: 25, wood: 10 } }, effects: { maxHp: 16, failReduction: 0.06 }, log: 'ヘッドライトを付けた。採掘の失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -235,6 +241,10 @@ const jobs: Record<string, Job> = {
       { id: 'fountain_koi', name: '噴水のコイ', hp: 118, attack: 19, rewards: { gold: [72, 114], xp: 66 }, drops: [D('castle_key_fragment', 0.5, [1, 1]), D('quiet_crown', 0.3, [1, 1])] },
       { id: 'throne_cat', name: '玉座の猫', hp: 124, attack: 20, rewards: { gold: [76, 120], xp: 70 }, drops: [D('quiet_crown', 0.35, [1, 1]), D('castle_key_fragment', 0.4, [1, 1])] },
     ], musings: [M('静かな中庭に入った。ラスボスの前室というより、誰も掃除していない高級物件だ。\n\n勇者「広い家に憧れたこともある。でも掃除範囲を見たら、急にワンルームが王国に見える」', [{ item: 'castle_key_fragment', amount: 1 }], 'unlock'), M('城の奥は静かだった。静かすぎて、財布の中身まで聞こえそうだった。\n\n勇者「静けさは好きだけど、ここまで静かだと請求の足音が目立つな」', [{ item: 'field_note', amount: 1 }])] },
+    { id: 'rebirth_corridor', name: '転生の回廊', summary: '転生した勇者だけが通れる回廊。前世の残響と、新しい命の灯が漂っている。', unlock: { type: 'rebirth', count: 1 }, seconds: 14, adventureCost: 90, rewards: { xp: 36 }, drops: [D('second_life_note', 0.15), D('castle_key_fragment', 0.10)], failChance: 0.28, failMusings: ['前世の自分に話しかけられた。返事に困った', '回廊の先が霞んだ。新しい人生、視界だけはまだ新人だ', '灯が消えかけた。命の灯にも省エネモードがあるらしい', '残響が財布の中身を数えた。数え直すのはやめてほしい'], encounterChance: 0.62, monsters: [
+      { id: 'past_life_echo', name: '前世の残響', hp: 130, attack: 21, rewards: { gold: [80, 130], xp: 74 }, drops: [D('second_life_note', 0.5, [1, 1])] },
+      { id: 'new_life_wisp', name: '新しい命の灯', hp: 145, attack: 23, rewards: { gold: [90, 145], xp: 82 }, drops: [D('rebirth_guidebook', 0.4, [1, 1]), D('second_life_note', 0.3, [1, 1])] },
+    ], musings: [M('転生の回廊に入った。ここは一度死んで、もう一度始めた勇者だけが通れる。\n\n勇者「前の人生の残り香がする。残り香にまで家賃を請求されないといいけど」', [{ item: 'second_life_note', amount: 1 }], 'unlock'), M('回廊の灯が、勇者の歩みに合わせて明るくなった。\n\n勇者「新しい命の灯って、要するに俺のやる気を可視化したやつだな。切れかけの蛍光灯みたいな色をしてる」', [{ item: 'second_life_note', amount: 1 }])] },
     { id: 'throne_room', name: '玉座の間', summary: '城の最奥。ボスしか出ない。勝つたびに連戦ボーナスが積み上がる。', unlock: { type: 'item', item: 'quiet_crown', amount: 1 }, seconds: 16, adventureCost: 120, rewards: { xp: 40 }, drops: [D('castle_key_fragment', 0.22, [1, 1]), D('quiet_crown', 0.06, [1, 1])], failChance: 0.30, failMusings: ['玉座の重圧に足が止まった。権威、実は体力勝負だ', '玉座の間の静けさに気圧された。静かすぎると心臓がうるさい', '廊下の絨毯で滑った。歴史ある床ほど滑る', '玉座を見たら座りたくなった。座る勇気と立つ勇気、両方要る'], encounterChance: 0.70, monsters: [
       { id: 'throne_mimic', name: '玉座ミミック', hp: 150, attack: 22, boss: true, rewards: { gold: [90, 150], xp: 80 }, drops: [D('castle_key_fragment', 0.6, [1, 1]), D('quiet_crown', 0.25, [1, 1])] },
       { id: 'retired_hero', name: '引退した先輩勇者', hp: 180, attack: 24, boss: true, rewards: { gold: [110, 170], xp: 95 }, drops: [D('quiet_crown', 0.3, [1, 1]), D('throne_key', 0.3, [1, 1])] },
@@ -285,6 +295,7 @@ const jobs: Record<string, Job> = {
   office: { name: '王国勤務', type: 'idle', description: '安定収入。ただし拘束が重い。', unlock: { type: 'jobLevel', job: 'merchant', level: 3 }, areas: [{ id: 'clerk', name: '王国庶務係', summary: '安定。雑務。地味にMPが減る。', seconds: 8, rewards: { gold: [12, 22], xp: 10 }, drops: [D('employee_badge', 0.04), D('cold_coffee', 0.06), D('scribbled_memo', 0.05), D('faded_sticky_note', 0.05), D('cracked_mug', 0.05), D('loose_shirt_button', 0.05)], failChance: 0, failMusings: [], musings: [M('勇者は王国庶務係として出勤した。\n\n勇者「決まった時間に決まった場所へ行けた。えらい。もう帰りたい」')] }], upgrades: [
     { id: 'office_desk', name: 'まともな机', description: '作業効率が上がる。腰への負担は下がらない。', cost: { gold: 80, resources: { wood: 20 } }, effects: { maxMp: 10 }, log: '机がまともになった。仕事のまともさは、まだ。', level: 2 },
     { id: 'office_chair', name: '快適な椅子', description: '座り心地がいい。拘束感は変わらない。', cost: { gold: 100, resources: { wood: 25 } }, effects: { maxMp: 15, maxHp: 8 }, log: '椅子が快適になった。拘束感は、まだ。', level: 4 },
+    { id: 'office_stamp', name: '決裁のハンコ', description: '押すだけで書類が進むハンコ。押す側の肩こりは進まない。', cost: { gold: 300, resources: { ore: 15, wood: 15 } }, effects: { maxMp: 16, maxHp: 10 }, log: 'ハンコを手に入れた。庶務の要領が少し良くなった。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -307,6 +318,7 @@ const jobs: Record<string, Job> = {
   remote: { name: '在宅作業', type: 'idle', description: '通勤なし。でも仕事と生活の境界が溶ける。', unlock: { type: 'jobLevel', job: 'office', level: 2 }, areas: [{ id: 'small_tasks', name: '小さな在宅タスク', summary: '通勤なし。単価は低い。', seconds: 7, rewards: { gold: [8, 16], xp: 10 }, drops: [D('mute_button', 0.04), D('tangled_cable', 0.06), D('worn_mousepad', 0.05), D('bent_paperclip', 0.05)], failChance: 0.15, failMusings: ['Wi-Fiが切れた。作業ではなく回線に負けた', '保存し忘れて作業が消えた。データは約束しない', '締め切りのメールに気づかなかった。通知設定の問題だ', '集中していたら昼ごはんを忘れた。失敗ではないが失敗だ'], musings: [M('在宅作業をした。通勤時間は消えた。代わりに、仕事と生活の境界も少し消えた。')] }], upgrades: [
     { id: 'remote_headphones', name: 'ノイズキャンセリングヘッドホン', description: '外界を遮断する。仕事への没入感を高める。', cost: { gold: 90, resources: { ore: 10 } }, effects: { maxMp: 12, failReduction: 0.08 }, log: '外界が静かになった。集中も少し続くようになった。', level: 2 },
     { id: 'remote_monitor', name: 'モニター', description: '画面が広い。作業範囲も広い。', cost: { gold: 120, resources: { ore: 20, wood: 10 } }, effects: { maxMp: 18, failReduction: 0.07 }, log: '視界が広がった。作業ミスも少し減った。', level: 4 },
+    { id: 'remote_standing_desk', name: '昇降デスク', description: '立っても座っても仕事ができる机。境界線は相変わらず薄い。', cost: { gold: 300, resources: { wood: 20, ore: 10 } }, effects: { maxMp: 14, failReduction: 0.06 }, log: '昇降デスクを導入した。在宅作業の失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -333,6 +345,7 @@ const jobs: Record<string, Job> = {
   ], upgrades: [
     { id: 'shady_disguise', name: '変装セット', description: '身分を隠す。不安は隠せない。', cost: { gold: 110, resources: { wood: 15 } }, effects: { maxMp: 14, failReduction: 0.12 }, log: '変装の準備ができた。騙される回数が少し減った気がする。', level: 2 },
     { id: 'shady_escape_plan', name: '逃走ルート計画', description: 'いざという時の逃げ道。心の逃げ道は別。', cost: { gold: 130, resources: { ore: 15 } }, effects: { maxMp: 20, maxHp: 12, failReduction: 0.13 }, log: '逃げ道を確保した。失敗しても逃げられる。少しだけ。', level: 4 },
+    { id: 'shady_safehouse', name: '隠れ家', description: '危ない依頼のあとに身を隠す場所。隠れる場所があると、断る勇気も少し出る。', cost: { gold: 320, resources: { ore: 15, wood: 20 } }, effects: { maxHp: 16, failReduction: 0.07 }, log: '隠れ家を確保した。闇クエストの失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -352,13 +365,14 @@ const jobs: Record<string, Job> = {
     ],
   },
 },
-  delivery: { name: '配達アプリ', type: 'idle', description: 'スマホの通知に従って街を走る。評価と天気が敵になる。', unlock: { type: 'jobLevel', job: 'office', level: 4 }, areas: [
+  delivery: { name: '配達アプリ', type: 'idle', description: 'スマホの通知に従って街を走る。評価と天気が敵になる。', unlock: { type: 'jobLevel', job: 'office', level: 3 }, areas: [
     { id: 'food_delivery', name: '食事配達', summary: '自転車で走る。時間との戦い。', seconds: 7, rewards: { gold: [15, 25], xp: 12 }, drops: [D('bike_upgrade', 0.08), D('delivery_app', 0.05), D('crumpled_coupon', 0.05), D('crushed_paper_bag', 0.05), D('torn_delivery_slip', 0.05), D('dented_lunchbox', 0.05)], failChance: 0.25, failMusings: ['道を間違えた。地図より現実が複雑だった', '荷物を落とした。謝罪が先に届いた', '雨で自転車が滑った。天気は協力しない', '時間通りに着いたのに不在だった。往復した'], musings: [M('勇者は配達を始めた。\n\n勇者「スマホの地図と現実の道が、微妙にズレてる。これが現代の冒険か」', [{ item: 'delivery_app', amount: 1 }], 'unlock')] },
     { id: 'lunch_peak_delivery', name: '昼ピーク配達', summary: '通知が鳴り続ける。街全体が締め切りになる。', unlock: { type: 'jobLevel', job: 'delivery', level: 2 }, seconds: 8, rewards: { gold: [24, 42], xp: 15 }, drops: [D('delivery_app', 0.08), D('bike_upgrade', 0.10), D('faded_timetable', 0.05)], failChance: 0.32, failMusings: ['店で待たされた。待機時間は報酬に反映されない', '同じ名前の店が二つあった。現代の迷宮だ', '低評価の気配を感じた。まだ押されていないのに痛い', '坂道が多すぎた。地図は高低差を軽く見ている'], musings: [M('昼ピークの通知が鳴った。受けるたびに小銭は増える。呼吸は減る。\n\n勇者「依頼を選んでるつもりだったけど、通知に選ばれてる気もする」')] },
     { id: 'rainy_surge_delivery', name: '雨の日ブースト配達', summary: '報酬は上がる。靴の中の水位も上がる。', unlock: { type: 'jobLevel', job: 'delivery', level: 4 }, seconds: 10, rewards: { gold: [42, 75], xp: 20 }, drops: [D('bike_upgrade', 0.14)], failChance: 0.40, failMusings: ['スマホ画面が濡れて操作できない。現代の魔法が水に弱い', '料理は温かい。勇者は冷たい', '水たまりを避けた先にも水たまりがあった', 'ブースト報酬を見るたびに判断力が少し濡れる'], musings: [M('雨の日の配達は報酬が跳ねた。跳ねた水も顔に来た。\n\n勇者「高くなるのは、誰かがやりたくないからだ。すごくわかる」', [{ item: 'bike_upgrade', amount: 1 }], 'unlock')] },
   ], upgrades: [
     { id: 'delivery_ebike', name: '電動アシスト自転車', description: '坂道も楽になる。でもバッテリー切れの恐怖が増える。', cost: { gold: 150, resources: { ore: 15, wood: 10 } }, effects: { maxMp: 12, maxHp: 8, failReduction: 0.12 }, log: '坂道が楽になった。配達ミスも少し減った。', level: 2 },
     { id: 'delivery_insulated_bag', name: '保冷バッグ', description: '食事の温度を保つ。自分の体温は保てない。', cost: { gold: 80, resources: { wood: 12 } }, effects: { maxMp: 10, failReduction: 0.08 }, log: '食事の温度は保てる。配達の安定感も少し増した。', level: 4 },
+    { id: 'delivery_rain_jacket', name: '防水ジャケット', description: '雨の日も走れるジャケット。濡れるのは靴の中だけになった。', cost: { gold: 300, resources: { ore: 10, wood: 15 } }, effects: { maxHp: 14, failReduction: 0.06 }, log: '防水ジャケットを手に入れた。配達の失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -385,6 +399,7 @@ const jobs: Record<string, Job> = {
   ], upgrades: [
     { id: 'streaming_webcam', name: '高画質Webカメラ', description: '顔が鮮明に映る。表情筋の疲労も鮮明に増える。', cost: { gold: 120, resources: { ore: 18 } }, effects: { maxMp: 15, failReduction: 0.08 }, log: '顔が鮮明になった。配信の安定感も少し増した。', level: 2 },
     { id: 'streaming_green_screen', name: 'グリーンスクリーン', description: '背景を自由に変えられる。現実は変えられない。', cost: { gold: 90, resources: { wood: 15 } }, effects: { maxMp: 12, failReduction: 0.07 }, log: '背景は変えられる。配信落ちも少し減った。', level: 4 },
+    { id: 'streaming_ring_light', name: 'リングライト', description: '顔を明るく映す輪っかの明かり。内容の明るさは別問題。', cost: { gold: 300, resources: { ore: 15, wood: 10 } }, effects: { maxMp: 14, failReduction: 0.06 }, log: 'リングライトを付けた。配信の失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -410,6 +425,7 @@ const jobs: Record<string, Job> = {
   ], upgrades: [
     { id: 'housekeeping_mop', name: 'プロのモップ', description: '油汚れへの説得力が上がる。手への負担は下がらない。', cost: { gold: 130, resources: { wood: 12 } }, effects: { maxMp: 12, failReduction: 0.10 }, log: 'モップがプロ仕様になった。油汚れへの説得力が上がった。', level: 2 },
     { id: 'housekeeping_kit', name: '掃除セット一式', description: '道具がそろうと、段取りも少し早くなる。', cost: { gold: 90, resources: { ore: 10 } }, effects: { maxMp: 10, failReduction: 0.08 }, log: '道具がそろった。掃除の段取りが少しだけ早くなった。', level: 4 },
+    { id: 'housekeeping_pro_kit', name: 'プロ仕様の掃除道具', description: '他人の家を掃除するための本格的な道具一式。自分の家は相変わらず後回し。', cost: { gold: 280, resources: { wood: 20, ore: 10 } }, effects: { maxHp: 14, failReduction: 0.06 }, log: 'プロ仕様の道具を揃えた。家事代行の失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -435,6 +451,7 @@ const jobs: Record<string, Job> = {
   ], upgrades: [
     { id: 'photography_lens', name: '明るいレンズ', description: '暗い場所でも撮れる。言い訳の数が減る。', cost: { gold: 140, resources: { ore: 15 } }, effects: { maxMp: 14, failReduction: 0.09 }, log: 'レンズが明るくなった。暗い場所での失敗も少し減った。', level: 2 },
     { id: 'photography_bag', name: 'カメラバッグ', description: '機材をまとめて運べる。肩への負担は増える。', cost: { gold: 80, resources: { wood: 10 } }, effects: { maxMp: 10, failReduction: 0.07 }, log: '機材がまとまった。撮影の段取りが少しだけ早くなった。', level: 4 },
+    { id: 'photography_tripod', name: '三脚', description: 'カメラを固定する三脚。手ブレの言い訳がひとつ減る。', cost: { gold: 300, resources: { wood: 15, ore: 15 } }, effects: { maxMp: 14, failReduction: 0.06 }, log: '三脚を立てた。写真販売の失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -454,12 +471,13 @@ const jobs: Record<string, Job> = {
     ],
   },
 },
-  nightwatch: { name: '夜間警備', type: 'idle', description: '夜の倉庫を見回る。眠気と静けさの二正面作戦。', unlock: { type: 'jobLevel', job: 'office', level: 3 }, areas: [
+  nightwatch: { name: '夜間警備', type: 'idle', description: '夜の倉庫を見回る。眠気と静けさの二正面作戦。', unlock: { type: 'jobLevel', job: 'delivery', level: 3 }, areas: [
     { id: 'warehouse_patrol', name: '倉庫夜警', summary: '静かすぎて、自分の足音が敵。', seconds: 9, rewards: { gold: [18, 32], xp: 14 }, drops: [D('patrol_log', 0.10), D('spare_battery', 0.08), D('night_shift_cookie', 0.06), D('cracked_lantern', 0.05)], failChance: 0.20, failMusings: ['巡回中に睡魔が来た。見回る側が見回られている', '懐中電灯が暗くなった。電池の残量も夜勤だ', '物音がして見に行ったら、風だった。風が一番の不審者だ', '記録を書き間違えた。夜中の字は別人だ'], musings: [M('勇者は倉庫の夜警を始めた。\n\n勇者「夜の倉庫は静かだ。静かすぎて、自分の足音が不審者に聞こえる。見回る仕事とは、静けさと仲良くすることらしい」', [{ item: 'patrol_log', amount: 1 }], 'unlock', 'unlock')] },
     { id: 'gate_nightwatch', name: '門番夜勤', summary: '門の前で夜を過ごす。来訪者はほぼ来ない。', unlock: { type: 'jobLevel', job: 'nightwatch', level: 2 }, seconds: 10, rewards: { gold: [30, 55], xp: 18 }, drops: [D('patrol_log', 0.12), D('spare_battery', 0.07), D('night_shift_cookie', 0.06)], failChance: 0.24, failMusings: ['門の前で立ったまま寝かけた。立ったまま寝る技術がついた', '夜食のクッキーを落とした。夜勤の楽しみが床に散った', '誰も来ない門を、念入りに守った。守るものがない守備だ'], musings: [M('門番の夜勤をした。誰も来なかった。\n\n勇者「来ないことを確認する仕事。来たら困るし、来なくても退屈だ。でも給料は来る。そこだけは確実だ」', [{ item: 'patrol_log', amount: 1 }], 'unlock', 'unlock')] },
   ], upgrades: [
     { id: 'nightwatch_flashlight', name: '強力ライト', description: '暗い倉庫も昼のように照らす。眠気は照らせない。', cost: { gold: 120, resources: { ore: 12 } }, effects: { maxMp: 12, failReduction: 0.10 }, log: 'ライトが強力になった。暗い場所での失敗も少し減った。', level: 2 },
     { id: 'nightwatch_chair', name: '仮眠用リクライニングチェア', description: '休憩の質が上がる。寝過ごしの質も上がる。', cost: { gold: 100, resources: { wood: 15 } }, effects: { maxHp: 10, failReduction: 0.08 }, log: '休憩用の椅子が来た。夜勤の持ちこたえ方が少し変わった。', level: 4 },
+    { id: 'nightwatch_thermos', name: '夜勤の魔法瓶', description: '夜中まで温かい魔法瓶。眠気との戦いに、温かい味方が増えた。', cost: { gold: 280, resources: { ore: 15, wood: 10 } }, effects: { maxHp: 16, failReduction: 0.06 }, log: '魔法瓶を用意した。夜間警備の失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -479,12 +497,13 @@ const jobs: Record<string, Job> = {
     ],
   },
 },
-  booktrade: { name: '古本せどり', type: 'idle', description: '古本を仕入れて売る。目利きと置き場所の戦い。', unlock: { type: 'jobLevel', job: 'merchant', level: 4 }, areas: [
+  booktrade: { name: '古本せどり', type: 'idle', description: '古本を仕入れて売る。目利きと置き場所の戦い。', unlock: { type: 'jobLevel', job: 'merchant', level: 2 }, areas: [
     { id: 'book_market', name: '古本市仕入れ', summary: '山積みの本から、売れる一冊を探す。', seconds: 8, rewards: { gold: [15, 30], xp: 14 }, drops: [D('faded_paperback', 0.10), D('torn_bookmark', 0.08), D('annotated_textbook', 0.06), D('folded_map', 0.05)], failChance: 0.18, failMusings: ['値札のない本を値切ったら、逆に値上がりした。交渉が下手だ', '重い本ばかり買った。肩が仕入れコストを払った', '売れると思った本が、自分の趣味だった。目利きと好みは別人だ', '雨で本が濡れた。紙は天気に弱い'], musings: [M('勇者は古本市で仕入れをした。\n\n勇者「山積みの本から売れそうな一冊を探す。目利きというより、運と読書量の合成だ。重いのは本だけじゃない。鞄も重い」', [{ item: 'faded_paperback', amount: 1 }], 'unlock', 'unlock')] },
     { id: 'online_listing', name: 'ネット出品', summary: '写真を撮って、説明を書いて、待つ。', unlock: { type: 'jobLevel', job: 'booktrade', level: 2 }, seconds: 7, rewards: { gold: [22, 42], xp: 16 }, drops: [D('annotated_textbook', 0.10), D('faded_paperback', 0.08), D('torn_bookmark', 0.06)], failChance: 0.22, failMusings: ['説明文を書きすぎて、買う気が読む気になった', '出品写真が暗すぎた。本の魅力が夜になった', '値付けを迷って、結局元の値段に戻した。往復した'], musings: [M('ネット出品をした。\n\n勇者「本の説明を書くたびに、自分がその本を読みたくなる。売るための文章が、読む理由を増やす。商売としては逆走だ」', [{ item: 'annotated_textbook', amount: 1 }], 'unlock', 'unlock')] },
   ], upgrades: [
     { id: 'booktrade_shelf', name: '頑丈な本棚', description: '在庫の置き場所が増える。部屋の余白は減る。', cost: { gold: 110, resources: { wood: 18 } }, effects: { maxMp: 12, failReduction: 0.09 }, log: '本棚が頑丈になった。在庫の置き場所が増え、仕入れの失敗も少し減った。', level: 2 },
     { id: 'booktrade_loupe', name: 'ルーペ', description: '本の状態を細かく見られる。値付けの根拠が増える。', cost: { gold: 90, resources: { ore: 10 } }, effects: { maxMp: 10, failReduction: 0.07 }, log: 'ルーペが来た。本の傷みが見えるようになり、仕入れの失敗も少し減った。', level: 4 },
+    { id: 'booktrade_reading_lamp', name: '読書灯', description: '本の状態を照らす明かり。値付けの根拠が少し明るくなる。', cost: { gold: 280, resources: { wood: 20, ore: 10 } }, effects: { maxMp: 14, failReduction: 0.06 }, log: '読書灯を付けた。古本せどりの失敗が少し減った。', level: 6 },
   ],
   levelMusings: {
     1: [
@@ -501,6 +520,36 @@ const jobs: Record<string, Job> = {
     ],
     5: [
       M('古本せどりLv5：古本せどりの達人になった。\n\n勇者「本は回るものだ。誰かの本棚から、誰かの本棚へ。俺はその間の、少しだけ長い休憩所だ」', [{ item: 'annotated_textbook', amount: 2 }], 'level_up'),
+    ],
+  },
+},
+  // 転生専用仕事（2026-11-07 / ロードマップ5の残り「転生専用コンテンツ」）。
+  // 転生1回で解禁。生まれ変わったばかりの勇者に池の歩き方を教える仕事で、
+  // 教える側に回ることで自分の人生も少し整理される、という位置づけ。
+  // 解禁は転生回数だけが条件で、転生は周回でリセットされないため既存プレイヤーの再ロックは起きない。
+  rebirth_guide: { name: '転生案内', type: 'idle', description: '生まれ変わったばかりの勇者に、池の歩き方を教える。教える側になると、自分の人生も少し整理される。', unlock: { type: 'rebirth', count: 1 }, areas: [
+    { id: 'first_steps', name: '初めての池案内', summary: '生まれたての勇者に、糸の垂らし方から教える。教える側も少し緊張する。', seconds: 8, rewards: { gold: [20, 40], xp: 16 }, drops: [D('second_life_note', 0.12), D('retiree_tea', 0.08)], failChance: 0.15, failMusings: ['教えた通りにやったら魚が逃げた。教えた側の責任が重い', '初心者の質問に答えられなかった。こっちも初心者だった頃のまま', '糸が絡まった。教えるより先にほどく作業が増えた', '「先生」と呼ばれた。先生と呼ばれるほどの人生かは、保留'], musings: [M('勇者は生まれ変わったばかりの勇者に、池の歩き方を教え始めた。\n\n勇者「釣り糸の垂らし方から教えるのか。俺が最初に覚えたのもこれだったな。教える側になると、自分の人生も少し整理される」', [{ item: 'rebirth_guidebook', amount: 1 }], 'unlock', 'unlock'), M('初めての池案内をした。相手の勇者は糸を垂らして、じっと水面を見ている。\n\n勇者「あの顔、見覚えがある。一周目の俺だ。あの頃の俺に、今の俺が教えるのか。なんだか変な気分だ」', [{ item: 'second_life_note', amount: 1 }])] },
+    { id: 'retiree_chat', name: '引退勇者の茶話会', summary: '引退した勇者たちとお茶を飲みながら、人生の段取りを話し合う。', unlock: { type: 'jobLevel', job: 'rebirth_guide', level: 2 }, seconds: 10, rewards: { gold: [35, 60], xp: 20 }, drops: [D('retiree_tea', 0.15), D('second_life_note', 0.10), D('rebirth_guidebook', 0.05)], failChance: 0.20, failMusings: ['お茶をこぼした。引退勇者の前で粗相をした', '先輩の話が長くて、お茶が冷めた。話は冷めない', '「若いね」と言われた。何周目かの人生で言われると、複雑だ', '茶話会の予定を忘れた。予定を忘れるのも、ある意味引退の余裕だ'], musings: [M('引退勇者の茶話会に参加した。お茶を飲みながら、人生の段取りを話し合う。\n\n勇者「引退した勇者は、みんな少しだけ穏やかだ。穏やかさって、転生の証より先に手に入るものだったのか」', [{ item: 'retiree_tea', amount: 1 }], 'unlock'), M('茶話会で、先輩勇者が「何周目？」と聞いてきた。\n\n勇者「二周目です、と答えたら『まだまだだね』と笑われた。何周したら『もう十分』って言われるんだろう。聞くのが少し怖い」', [{ item: 'second_life_note', amount: 1 }])] },
+  ], upgrades: [
+    { id: 'rebirth_guide_manual', name: '案内の手引き（改訂版）', description: '転生案内の手引きを、自分用に書き直した版。初回は自分用だったはずが、誰かへの案内になっている。', cost: { gold: 150, resources: { fish: 10, wood: 10 } }, effects: { maxMp: 12, failReduction: 0.06 }, log: '手引きを改訂した。案内の失敗が少し減った。教える側の準備が整ってきた。', level: 2 },
+    { id: 'rebirth_guide_badge', name: '転生案内の腕章', description: '案内役の証。付けると、生まれたての勇者が少しだけ安心して寄ってくる。', cost: { gold: 260, resources: { ore: 15, wood: 15 } }, effects: { maxHp: 14, maxMp: 10, failReduction: 0.06 }, log: '腕章を付けた。案内役としての自覚が少し生まれた。失敗も少し減った。', level: 4 },
+    { id: 'rebirth_guide_lantern', name: '案内の提灯', description: '回廊の灯を小さくした提灯。暗い道でも、新しい命の灯が見える。', cost: { gold: 400, resources: { ore: 20, wood: 20 } }, effects: { maxHp: 16, maxMp: 14, failReduction: 0.07 }, log: '提灯を手に入れた。案内の道が少し明るくなった。失敗も少し減った。', level: 6 },
+  ],
+  levelMusings: {
+    1: [
+      M('転生案内Lv1：勇者は転生案内を始めた。\n\n勇者「生まれ変わったばかりの勇者に、池の歩き方を教える。教える側になると、自分の人生も少し整理されるな」', [{ item: 'second_life_note', amount: 1 }], 'level_up'),
+    ],
+    2: [
+      M('転生案内Lv2：案内の段取りが少しわかってきた。\n\n勇者「初心者の質問に答えられるようになった。答えながら、自分の答えも少しずつ固まってくる」', [{ item: 'second_life_note', amount: 1 }], 'level_up'),
+    ],
+    3: [
+      M('転生案内Lv3：教えるのが少し上手くなった。\n\n勇者「教えるって、自分の人生をもう一度なぞることだな。なぞるたびに、少しだけ見えてくる」', [{ item: 'retiree_tea', amount: 1 }], 'level_up'),
+    ],
+    4: [
+      M('転生案内Lv4：案内役としての自信がついた。\n\n勇者「生まれたての勇者の顔が、少しだけほころぶとこっちも嬉しい。教える側の報酬って、こういうのか」', [{ item: 'second_life_note', amount: 2 }], 'level_up'),
+    ],
+    5: [
+      M('転生案内Lv5：転生案内の達人になった。\n\n勇者「何周目かの人生で、やっと人に教えられることが増えた。教えることは、自分の人生の棚卸しでもある」', [{ item: 'rebirth_guidebook', amount: 1 }], 'level_up'),
     ],
   },
 },

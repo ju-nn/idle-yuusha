@@ -103,6 +103,7 @@ const jobIcons: Record<string, IconName> = {
   shady: 'shieldAlert',
   streaming: 'video',
   woodcutting: 'tree',
+  rebirth_guide: 'message',
 };
 
 export function JobIcon({ id }: { id: string }) {

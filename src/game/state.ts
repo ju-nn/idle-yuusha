@@ -178,6 +178,27 @@ function normalizeLifetime(raw: Partial<import('../types').LifetimeStats> | unde
   };
 }
 
+function normalizeWeekly(raw: Partial<import('../types').WeeklyState> | undefined): import('../types').WeeklyState | undefined {
+  if (!raw || typeof raw !== 'object' || typeof raw.weekKey !== 'string') return undefined;
+  const num = (value: unknown) => (typeof value === 'number' && value >= 0 ? Math.floor(value) : 0);
+  const baseline = raw.baseline;
+  if (!baseline || typeof baseline !== 'object') return undefined;
+  return {
+    weekKey: raw.weekKey,
+    baseline: {
+      cycles: num(baseline.cycles),
+      goldEarned: num(baseline.goldEarned),
+      kills: num(baseline.kills),
+      salesGold: num(baseline.salesGold),
+      harvests: num(baseline.harvests),
+      chestsOpened: num(baseline.chestsOpened),
+      musingsRead: num(baseline.musingsRead),
+      discovered: num(baseline.discovered),
+    },
+    claimed: Array.from(new Set((raw.claimed || []).filter((id): id is string => typeof id === 'string'))),
+  };
+}
+
 function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameState): GameState {
   const normalizedItems = Object.fromEntries(Object.entries(parsed.items || {}).map(([key, value]) => [
     key,
@@ -235,6 +256,8 @@ function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameSt
     traitChanges: typeof parsed.traitChanges === 'number' && parsed.traitChanges >= 0 ? Math.floor(parsed.traitChanges) : 0,
     // 通算の歩み: 旧セーブ（未記録）や不正な値は 0・空に倒す。引退・転生でも引き継ぐ。
     lifetime: normalizeLifetime(parsed.lifetime),
+    // 週間目標: 旧セーブ（未記録）や不正な値は未設定扱い。次の tick で今週の起点が作られる。
+    weekly: normalizeWeekly(parsed.weekly),
     // 自動休憩の復帰先: 仕事とエリアが実在するものだけ残す。不正・未記録は未設定扱い。
     autoRestReturn: parsed.autoRestReturn && typeof parsed.autoRestReturn.job === 'string' && gameJobs[parsed.autoRestReturn.job]
       ? { job: parsed.autoRestReturn.job, area: typeof parsed.autoRestReturn.area === 'string' ? parsed.autoRestReturn.area : gameJobs[parsed.autoRestReturn.job].areas[0].id }

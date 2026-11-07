@@ -170,6 +170,34 @@ export type OfflineTier = 'short' | 'hours' | 'overnight' | 'days';
 // 特性（Trait）: ビルドの方向性。1つだけ有効。未選択は null。
 export type TraitId = 'craftsman' | 'adventurer' | 'merchant' | 'easygoing';
 
+// 週間目標（ロードマップ7「リテンション施策」）。
+export type WeeklyGoalTier = 'easy' | 'medium' | 'hard';
+export type WeeklyGoalKind = 'cycles' | 'goldEarned' | 'kills' | 'salesGold' | 'harvests' | 'chestsOpened' | 'musingsRead' | 'discovered';
+export type WeeklyGoal = {
+  id: string;
+  label: string;
+  kind: WeeklyGoalKind;
+  target: number;
+  rewardGold: number;
+  tier: WeeklyGoalTier;
+};
+// 週間目標の起点：週の始まり時点の通算カウンタ。進捗は lifetime との差分で測る。
+export type WeeklyBaseline = {
+  cycles: number;
+  goldEarned: number;
+  kills: number;
+  salesGold: number;
+  harvests: number;
+  chestsOpened: number;
+  musingsRead: number;
+  discovered: number;
+};
+export type WeeklyState = {
+  weekKey: string;
+  baseline: WeeklyBaseline;
+  claimed: string[];
+};
+
 export type GameState = {
   saveVersion?: number;
   offlineSummary?: {
@@ -212,6 +240,9 @@ export type GameState = {
   achievements: string[];
   // 通算の歩み（累計カウンタ）。旧セーブは未記録扱い。
   lifetime?: LifetimeStats;
+  // 週間目標の進行。旧セーブは未記録扱い（次の tick で今週の起点が作られる）。
+  // 引退・転生でも引き継ぐ。
+  weekly?: WeeklyState;
   equipmentInventory: EquipmentItem[];
   equipped: Partial<Record<EquipmentSlot, string>>;
   seenEquipmentBaseIds: string[];

@@ -1,4 +1,4 @@
-import { ACHIEVEMENTS, itemDesc, itemName } from '../data/catalog';
+import { ACHIEVEMENTS, itemDesc, itemKind, itemName } from '../data/catalog';
 import { jobs, upgrades } from '../data/gameData';
 import { simulateMonsterBattle } from './combat';
 import { getJobDropItems } from './collection';
@@ -6,7 +6,7 @@ import { getAdventureEntryCost } from './equipment';
 import { describeUpgradeEffects, formatResourceName, rewardText } from './formatters';
 import { getFarmingProgress } from './farming';
 import { enqueueMusing } from './musings';
-import { addAchievement, addItems, applyMilestoneAchievements, checkMilestoneAchievements, emptyLifetime, getAchievementBonusLines, getAchievementGoldMultiplier, getAchievementProgress, getLifePlan, getNextTarget, rollDrops } from './progression';
+import { addAchievement, addItems, applyMilestoneAchievements, checkMilestoneAchievements, emptyLifetime, getAchievementBonusLines, getAchievementGoldMultiplier, getAchievementProgress, getAllDiscoverableItemIds, getAllMonsterIds, getCollectionBonusLines, getCollectionGoldMultiplier, getCollectionXpMultiplier, getLifePlan, getNextTarget, rollDrops } from './progression';
 import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } from './requirements';
 import { xpToNext } from './progression';
 import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
@@ -14,10 +14,12 @@ import { buyPrestigeUpgrade, buyRebirthUpgrade, canRebirth, canRetire, createPre
 import { defaultSettings } from './settings';
 import { runTick } from './tick';
 import { autoSellGainedItems, isAutoSellTarget } from './automation';
-import { getEquipmentPower, getChestLimit } from './equipment';
+import { getEquipmentPower, getChestLimit, isEquipmentBaseInSeason } from './equipment';
 import { getSynergyAdventureFailReduction, getSynergyAttackBonus, getSynergyChains, getSynergyDropChanceMultiplier, getSynergyEntryCostReductionPct, getSynergyHarvestBonus, getSynergySellBonusPct, getSynergyUpgradeDiscountPct, getChainHintForJob, getUpgradeGoldCost } from './synergy';
 import { getTraitAttackBonus, getTraitChangeCost, getTraitFailReduction, getTraitHarvestBonus, getTraitJobGoldBonusPct, getTraitOfflineMultiplier, getTraitRestXpMultiplier, getTraitSellBonusPct, selectTrait } from './traits';
 import { getCropRewards } from './farming';
+import { getCurrentSeason, SEASONAL_ITEM_IDS, seasonStartMusingId } from './seasons';
+import { claimWeeklyGoal, ensureWeeklyState, getWeekKey, getWeeklyGoals } from './weekly';
 import { getHeroAttack } from './combat';
 import { bossStreakBonusPct, nextBossStreak } from './combat';
 import { getFailChance } from './progression';
@@ -373,5 +375,56 @@ export function runSelfTests() {
   console.assert(retiredWithLifetime.lifetime?.cycles === 100, 'retire should keep lifetime counters');
   const traitPicked = applyMilestoneAchievements(selectTrait({ ...initialState, gold: 0 }, 'craftsman'));
   console.assert(traitPicked.trait === 'craftsman' && traitPicked.achievements.includes('trait_craftsman'), 'choosing the craftsman trait should grant trait_craftsman');
+  // 週間目標・季節イベント・図鑑コンプリート報酬（2026-11-07 / ロードマップ7）。
+  // 週キー：月曜始まりで、同じ週の月曜〜日曜は同じキー、翌月曜は別キー。
+  console.assert(getWeekKey(new Date(2026, 10, 9)) === getWeekKey(new Date(2026, 10, 15)), 'monday to sunday of the same week should share a week key');
+  console.assert(getWeekKey(new Date(2026, 10, 9)) !== getWeekKey(new Date(2026, 10, 16)), 'next monday should start a new week key');
+  console.assert(getWeeklyGoals(getWeekKey(new Date(2026, 10, 9))).length === 3, 'each week should have three goals');
+  console.assert(JSON.stringify(getWeeklyGoals('2026-W46')) === JSON.stringify(getWeeklyGoals('2026-W46')), 'weekly goals should be deterministic per week key');
+  // 週またぎ：同じ週は同じ state、週が変われば baseline を取り直して claimed を空にする。
+  const weekState = ensureWeeklyState(initialState, new Date(2026, 10, 9));
+  console.assert(weekState.weekly?.weekKey === getWeekKey(new Date(2026, 10, 9)), 'ensureWeeklyState should stamp the current week key');
+  console.assert(ensureWeeklyState(weekState, new Date(2026, 10, 12)) === weekState, 'ensureWeeklyState should return the same state within the week');
+  const grownWeekly = { ...weekState, lifetime: { ...emptyLifetime(), cycles: 120, goldEarned: 5000 } };
+  const nextWeek = ensureWeeklyState(grownWeekly, new Date(2026, 10, 16));
+  console.assert(nextWeek.weekly?.baseline.cycles === 120 && nextWeek.weekly?.claimed.length === 0, 'a new week should re-baseline from lifetime and clear claims');
+  // 受け取り：達成済み・未受取だけ金が増え、2回目は冪等。未達成は無変化。
+  const claimable = { ...weekState, lifetime: { ...emptyLifetime(), cycles: 1000, goldEarned: 100000, kills: 100, salesGold: 100000, harvests: 100, chestsOpened: 100, musingsRead: 100, discovered: Array.from({ length: 50 }, (_, i) => `item-${i}`) } };
+  const firstGoal = getWeeklyGoals(claimable.weekly!.weekKey)[0];
+  const claimedOnce = claimWeeklyGoal(claimable, firstGoal.id, new Date(2026, 10, 9));
+  console.assert(claimedOnce.gold === claimable.gold + firstGoal.rewardGold && claimedOnce.weekly?.claimed.includes(firstGoal.id), 'claiming an achieved weekly goal should pay its reward once');
+  console.assert(claimWeeklyGoal(claimedOnce, firstGoal.id, new Date(2026, 10, 9)).gold === claimedOnce.gold, 'claiming the same weekly goal twice should not pay again');
+  console.assert(claimWeeklyGoal(weekState, firstGoal.id, new Date(2026, 10, 9)).gold === weekState.gold, 'claiming an unachieved weekly goal should pay nothing');
+  // 季節：月→季節の対応と冬の年またぎ。
+  console.assert(getCurrentSeason(new Date(2026, 2, 15)).id === 'spring' && getCurrentSeason(new Date(2026, 6, 1)).id === 'summer', 'march should be spring and july summer');
+  console.assert(getCurrentSeason(new Date(2026, 9, 1)).id === 'autumn' && getCurrentSeason(new Date(2026, 11, 25)).id === 'winter', 'october should be autumn and december winter');
+  console.assert(getCurrentSeason(new Date(2027, 0, 15)).id === 'winter' && getCurrentSeason(new Date(2027, 0, 15)).daysLeft > 0, 'january should be winter with days left');
+  console.assert(seasonStartMusingId(getCurrentSeason(new Date(2026, 11, 25))) === seasonStartMusingId(getCurrentSeason(new Date(2027, 0, 15))), 'december and january of one winter should share a season musing id');
+  console.assert(getCurrentSeason(new Date(2026, 10, 7)).daysLeft > 0 && getCurrentSeason(new Date(2026, 10, 7)).eventName === '秋の収穫祭', 'november should show the autumn festival with days left');
+  // 季節お守りの抽選フィルタ：季節違いは候補外、無季節はいつでも候補。
+  console.assert(isEquipmentBaseInSeason('spring_sprout_charm', 'spring') && !isEquipmentBaseInSeason('spring_sprout_charm', 'summer'), 'spring charm should be a candidate only in spring');
+  console.assert(isEquipmentBaseInSeason('winter_lamp_charm', 'winter') && isEquipmentBaseInSeason('better_stick', 'winter'), 'winter charm and seasonless bases should be candidates in winter');
+  console.assert(SEASONAL_ITEM_IDS.length === 4 && SEASONAL_ITEM_IDS.every((id) => itemKind(id) === '素材'), 'there should be four seasonal material items');
+  // 図鑑コンプリート：未達成は倍率1.0、全発見で金+10%、全討伐でXP+10%。
+  console.assert(getCollectionGoldMultiplier(initialState) === 1 && getCollectionXpMultiplier(initialState) === 1, 'fresh state should have no collection bonus');
+  const allDiscoverable = getAllDiscoverableItemIds();
+  const allMonsters = getAllMonsterIds();
+  console.assert(allMonsters.length === 44, `there should be 44 monsters to defeat (got ${allMonsters.length})`);
+  const completeState = { ...initialState, lifetime: { ...emptyLifetime(), discovered: allDiscoverable }, defeatedMonsters: allMonsters };
+  console.assert(getCollectionGoldMultiplier(completeState) === 1.1 && getCollectionXpMultiplier(completeState) === 1.1, 'full discovery should give +10% gold and full defeat +10% xp');
+  console.assert(getCollectionBonusLines(initialState).some((line) => line.includes('あと')), 'collection bonus lines should point to the remaining counts');
+  console.assert(!allDiscoverable.some((id) => SEASONAL_ITEM_IDS.includes(id)), 'seasonal items should not count toward collection completion');
+  // 旧セーブ：weekly 無しは未設定扱いで、次の tick で今週の起点が作られる。
+  const migratedNoWeekly = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedNoWeekly.weekly === undefined, 'old save without weekly should migrate as unset');
+  const migratedWithWeekly = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {}, weekly: { weekKey: '2026-W45', baseline: { cycles: 10, goldEarned: 100, kills: 1, salesGold: 50, harvests: 0, chestsOpened: 0, musingsRead: 2, discovered: 3 }, claimed: ['weekly_cycles_50'] } } as Partial<typeof initialState>, initialState);
+  console.assert(migratedWithWeekly.weekly?.weekKey === '2026-W45' && migratedWithWeekly.weekly?.claimed.includes('weekly_cycles_50'), 'weekly state should survive migration');
+  const migratedBadWeekly = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {}, weekly: { weekKey: 42, baseline: null, claimed: 'no' } } as unknown as Partial<typeof initialState>, initialState);
+  console.assert(migratedBadWeekly.weekly === undefined, 'invalid weekly values should normalize to unset');
+  // 引退・転生でも週間目標の進行を引き継ぐ。
+  const retiredWeekly = retire({ ...grownState, lifetime: { ...emptyLifetime(), cycles: 100 }, weekly: weekState.weekly }, initialState);
+  console.assert(retiredWeekly.weekly?.weekKey === weekState.weekly?.weekKey, 'retire should keep weekly progress');
+  const rebirthedWeekly = rebirth({ ...rebirthReady, lifetime: { ...emptyLifetime(), cycles: 100 }, weekly: weekState.weekly }, initialState);
+  console.assert(rebirthedWeekly.weekly?.weekKey === weekState.weekly?.weekKey, 'rebirth should keep weekly progress');
 }
 

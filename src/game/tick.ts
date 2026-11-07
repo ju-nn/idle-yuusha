@@ -7,8 +7,10 @@ import { formatResourceName, rewardText } from './formatters';
 import { enqueueMusing } from './musings';
 import { getPrestigeGoldMultiplier, getPrestigeMusingRewardMultiplier, getPrestigeXpMultiplier } from './prestige';
 import { getActiveArea, isJobUnlocked } from './requirements';
+import { getCurrentSeason, SEASON_ITEM_DROP_CHANCE, seasonItemMusing, seasonStartMusing, seasonStartMusingId } from './seasons';
+import { ensureWeeklyState } from './weekly';
 import { countOwnedUpgrades, getEffectiveDurationTicksForState } from './timing';
-import { addAchievement, announceJobUnlocks, checkMilestoneAchievements, clamp, emptyLifetime, getAchievementDropMultiplier, getAchievementGoldMultiplier, getAchievementXpMultiplier, getFailChance, grantItemRewards, isUniqueItem, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
+import { addAchievement, announceJobUnlocks, checkMilestoneAchievements, clamp, emptyLifetime, getAchievementDropMultiplier, getAchievementGoldMultiplier, getAchievementXpMultiplier, getCollectionGoldMultiplier, getCollectionXpMultiplier, getFailChance, grantItemRewards, isUniqueItem, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
 import { getSynergyDropChanceMultiplier } from './synergy';
 import { getTraitJobGoldBonusPct, getTraitRestXpMultiplier } from './traits';
 import { autoSellGainedItems, autoSellLogText } from './automation';
@@ -149,9 +151,21 @@ function maybeAutoRest(prev: GameState, recoveredHp: number, recoveredMp: number
   };
 }
 
+// 季節開始ぼやき：季節が変わった最初の tick で一度だけキューに入れる。
+// seenMusingIds を見て未出のときだけ enqueue する（年またぎの冬は季節年で区別）。
+function maybeSeasonStartMusing(prev: GameState, now: number): GameState {
+  const season = getCurrentSeason(now);
+  if ((prev.seenMusingIds || []).includes(seasonStartMusingId(season))) return prev;
+  return enqueueMusing(prev, seasonStartMusing(season), { now }).state;
+}
+
 export function runTick(prev: GameState): GameState {
-  if (!isJobUnlocked(prev.activeJob, prev)) return prev;
   const now = Date.now();
+  // 週間目標の週切り替えと季節開始ぼやきは、仕事の解禁チェックより先に行う。
+  // ライブtick・オフラインtickの両方で週の切り替えが起きる。
+  prev = ensureWeeklyState(prev, now);
+  prev = maybeSeasonStartMusing(prev, now);
+  if (!isJobUnlocked(prev.activeJob, prev)) return prev;
   const job = jobs[prev.activeJob];
   if (!job || job.type === 'farming') return prev;
   const area = getActiveArea(prev.activeJob, prev.activeArea);
@@ -316,6 +330,16 @@ export function runTick(prev: GameState): GameState {
   gainedDrops.forEach((d) => {
     nextItems[d.item] = isUniqueItem(d.item) ? 1 : (nextItems[d.item] || 0) + d.amount;
   });
+  // 季節限定アイテム：サイクル完了時に、現在の季節の品を未所持なら低確率で落とす。
+  // 素材（複数所持可）なので isUniqueItem 扱いにはしない。初回は図鑑の発見として残る。
+  const season = getCurrentSeason(now);
+  const seasonItemId = season.itemId;
+  if (!(prev.items?.[seasonItemId] || 0) && !(nextItems[seasonItemId] || 0) && Math.random() < SEASON_ITEM_DROP_CHANCE) {
+    nextItems[seasonItemId] = 1;
+    newItems.push(seasonItemId);
+    eventLog.unshift(`季節の品：${itemName(seasonItemId)}を手に入れた。${season.eventName}だけの、ささやかな収穫。`);
+    addMusing(seasonItemMusing(seasonItemId, season));
+  }
   if (Math.random() < 0.022) {
     const bonusResource = (Object.keys(resources) as ResourceKey[]).find((key) => Boolean(area.rewards[key]));
     const luckyType = Math.random();
@@ -561,10 +585,11 @@ export function runTick(prev: GameState): GameState {
   // XPの永続強化は、このサイクルで得た分だけにまとめて掛ける（既存の進み具合は変えない）。
   // 特性：のんびり屋気質で仕事が休憩なら、さらに ×1.25（永続強化の倍率と掛け合わせ）。
   // 実績ボーナス：実績10個ごとに +2%（金報酬と同じ率）。
+  // 図鑑ボーナス：全討伐で +10%（実績ボーナスと掛け合わせ）。
   const gainedXpThisCycle = xp - data.xp;
   if (gainedXpThisCycle > 0) {
     const traitXpMultiplier = prev.activeJob === 'rest' ? getTraitRestXpMultiplier(prev) : 1;
-    xp = data.xp + Math.floor(gainedXpThisCycle * getPrestigeXpMultiplier(prev) * traitXpMultiplier * getAchievementXpMultiplier(prev));
+    xp = data.xp + Math.floor(gainedXpThisCycle * getPrestigeXpMultiplier(prev) * traitXpMultiplier * getAchievementXpMultiplier(prev) * getCollectionXpMultiplier(prev));
   }
   while (xp >= xpToNext(level)) {
     xp -= xpToNext(level);
@@ -617,8 +642,9 @@ export function runTick(prev: GameState): GameState {
   const traitGoldGain = Math.floor(baseGoldGain * getTraitJobGoldBonusPct(prev) / 100);
   // 収入の永続強化は稼いだ分にだけ掛ける（冒険費用などの支出は割り引かない）。
   // 実績ボーナス：実績10個ごとに金報酬 +2%（永続強化の倍率と掛け合わせ）。
+  // 図鑑ボーナス：全発見で +10%（実績ボーナスと掛け合わせ）。
   const earnedGold = baseGoldGain + traitGoldGain + sellGold + adventureGold + bonusGold + autoSellGold;
-  let goldGain = Math.floor(earnedGold * getPrestigeGoldMultiplier(prev) * getAchievementGoldMultiplier(prev)) - adventureEntryCost;
+  let goldGain = Math.floor(earnedGold * getPrestigeGoldMultiplier(prev) * getAchievementGoldMultiplier(prev) * getCollectionGoldMultiplier(prev)) - adventureEntryCost;
   if (goldGain > 0 && prev.activeJob !== 'merchant' && consumeBoon('market_sense')) {
     const marketBonus = Math.max(1, Math.floor(goldGain * 0.12));
     goldGain += marketBonus;

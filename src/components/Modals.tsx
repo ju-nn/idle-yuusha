@@ -3,11 +3,13 @@ import chestClosed from '../assets/sprites/hero/chest-closed.png';
 import { ACHIEVEMENTS, itemDesc, itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import { getJobDropItems } from '../game/collection';
-import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipmentOptionText, getChestLimit, getEquipmentBonus, getEquipmentLimit, getEquipmentSellValue } from '../game/equipment';
+import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipmentBaseName, equipmentOptionText, getChestLimit, getEquipmentBonus, getEquipmentLimit, getEquipmentSellValue } from '../game/equipment';
 import { formatResourceName } from '../game/formatters';
 import { MUSING_LABELS } from '../game/musings';
 import { canRebirth, canRetire, getNextPrestigeCost, getNextRebirthCost, getPrestigeScore, getPrestigeSpeedMultiplier, getPrestigeStage, getRebirthPoints, getRebirthStage, getRetirementPoints, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, REBIRTH_POINT_NAME, REBIRTH_REQUIRED_RETIREMENTS, REBIRTH_UPGRADES, RETIRE_REQUIRED_SCORE } from '../game/prestige';
-import { getAchievementBonusLines, getAchievementProgress, getFailChance, xpToNext } from '../game/progression';
+import { getAchievementBonusLines, getAchievementProgress, getCollectionBonusLines, getFailChance, xpToNext } from '../game/progression';
+import { getCurrentSeason } from '../game/seasons';
+import { getWeeklyGoalProgresses, getWeeklySummary } from '../game/weekly';
 import { getSynergyChains } from '../game/synergy';
 import { isJobUnlocked, getActiveArea } from '../game/requirements';
 import { GAME_SPEED_DIVISOR, countOwnedUpgrades, getEffectiveDurationTicksForState, getWorkSpeedMultiplier } from '../game/timing';
@@ -32,7 +34,33 @@ function fmtNum(value: number) {
   return Number.isInteger(value) ? `${value}` : value.toFixed(1);
 }
 
-export function StatsModal({ state, onClose, onSelectTrait }: { state: GameState; onClose: () => void; onSelectTrait: (id: TraitId) => void }) {
+function WeeklyGoalsSection({ state, onClaimWeeklyGoal }: { state: GameState; onClaimWeeklyGoal: (goalId: string) => void }) {
+  const season = getCurrentSeason();
+  const progresses = getWeeklyGoalProgresses(state);
+  const summary = getWeeklySummary(state);
+  const seasonItemOwned = (state.items?.[season.itemId] || 0) > 0;
+  return <>
+    <div className="statsRows">
+      <div className="statsRow"><span>{season.eventName}</span><b>{season.description}（残り{season.daysLeft}日）</b></div>
+      <div className="statsRow"><span>季節の品</span><b>{itemName(season.itemId)}{seasonItemOwned ? '（入手済み）' : '（未入手・サイクル完了時にまれに落ちる）'}</b></div>
+      <div className="statsRow"><span>季節のお守り</span><b>{equipmentBaseName(season.charmBaseId)}（今の季節だけ宝箱から出る）</b></div>
+      <div className="statsRow"><span>今週の目標</span><b>{summary.claimed}/{summary.total}個受け取り済み</b></div>
+    </div>
+    {progresses.map(({ goal, current, done, claimed }) => {
+      const percent = Math.min(100, Math.round((current / goal.target) * 100));
+      return <div key={goal.id}>
+        <div className="statsRow"><span>{goal.label}</span><b>{current}/{goal.target} ・ 報酬{goal.rewardGold}G</b></div>
+        <div className="targetBar"><i style={{ width: `${percent}%` }} /></div>
+        <button className="primary weeklyClaimButton" onClick={() => onClaimWeeklyGoal(goal.id)} disabled={!done || claimed}>
+          {claimed ? '受け取り済み' : done ? '受け取る' : '未達成'}
+        </button>
+      </div>;
+    })}
+    <p className="sub">週間目標は月曜始まりで切り替わる。進捗は今週の始まりからの歩みで測るので、週が変わればまた最初から。報酬は金だけ。無理のない範囲で。</p>
+  </>;
+}
+
+export function StatsModal({ state, onClose, onSelectTrait, onClaimWeeklyGoal }: { state: GameState; onClose: () => void; onSelectTrait: (id: TraitId) => void; onClaimWeeklyGoal: (goalId: string) => void }) {
   const activeJob = jobs[state.activeJob] || jobs.fishing;
   const activeArea = getActiveArea(state.activeJob, state.activeArea) || activeJob.areas[0];
   const activeData = state.jobData[state.activeJob] || { level: 1, xp: 0, seenMusings: [] };
@@ -134,6 +162,17 @@ export function StatsModal({ state, onClose, onSelectTrait }: { state: GameState
         {getAchievementBonusLines(state).map((line) => <div className="statsRow" key={line}><span>実績</span><b>{line}</b></div>)}
       </div>
       <p className="sub">実績を集めるほど、仕事の金報酬・XP・ドロップ確率が少しずつ上がる。図鑑の「実績」タブで、未解禁のヒントと進み具合が見える。</p>
+    </div>
+    <div>
+      <div className="sectionHead"><h3>今週の目標と季節イベント</h3></div>
+      <WeeklyGoalsSection state={state} onClaimWeeklyGoal={onClaimWeeklyGoal} />
+    </div>
+    <div>
+      <div className="sectionHead"><h3>図鑑コンプリートボーナス</h3></div>
+      <div className="statsRows">
+        {getCollectionBonusLines(state).map((line) => <div className="statsRow" key={line}><span>図鑑</span><b>{line}</b></div>)}
+      </div>
+      <p className="sub">季節限定の品は期間外は手に入らないので、全発見の数には含めない。集めた分だけ、仕事の金報酬とXPが少しずつ上がる。</p>
     </div>
     <div>
       <div className="sectionHead"><h3>全体と上限</h3></div>

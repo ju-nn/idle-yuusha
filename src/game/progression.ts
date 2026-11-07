@@ -1,5 +1,7 @@
 import { ACHIEVEMENTS, itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
+import { getJobDropItems } from './collection';
+import { SEASONAL_ITEM_IDS } from './seasons';
 import { checkRequirement, describeRequirement, isJobUnlocked } from './requirements';
 import type { Area, GameState, LifetimeStats, Musing, Requirement, ResourceKey, Upgrade } from '../types';
 import { enqueueMusing } from './musings';
@@ -300,6 +302,70 @@ export function emptyLifetime(): LifetimeStats {
 
 function lifetimeOf(state: GameState): LifetimeStats {
   return state.lifetime || emptyLifetime();
+}
+
+// ---- 図鑑コンプリート報酬（ロードマップ7） ----
+// 全発見＝季節限定アイテムを除く全発見物（図鑑の発見物タブと同じ母集団）を
+// すべて lifetime.discovered に持つこと。全討伐＝全44種のモンスター撃破。
+// 達成時の永続ボーナス：全発見で金報酬 +10%、全討伐で XP +10%。
+// 実績ボーナスと同じ箇所に掛け合わせる派生計算のみ。
+export function getAllDiscoverableItemIds(): string[] {
+  const seasonal = new Set(SEASONAL_ITEM_IDS);
+  return Array.from(new Set(Object.keys(jobs).flatMap((jobKey) => getJobDropItems(jobKey)))).filter((id) => !seasonal.has(id));
+}
+
+export function getAllMonsterIds(): string[] {
+  const ids = new Set<string>();
+  Object.values(jobs).forEach((job) => {
+    job.areas.forEach((area) => {
+      (area.monsters || []).forEach((monster) => ids.add(monster.id));
+    });
+  });
+  return Array.from(ids);
+}
+
+export function getCollectionProgress(state: GameState): {
+  itemsFound: number;
+  itemsTotal: number;
+  itemsComplete: boolean;
+  monstersDefeated: number;
+  monstersTotal: number;
+  monstersComplete: boolean;
+} {
+  const allItems = getAllDiscoverableItemIds();
+  const discovered = new Set((state.lifetime?.discovered || []));
+  const itemsFound = allItems.filter((id) => discovered.has(id)).length;
+  const allMonsters = getAllMonsterIds();
+  const defeated = new Set(state.defeatedMonsters || []);
+  const monstersDefeated = allMonsters.filter((id) => defeated.has(id)).length;
+  return {
+    itemsFound,
+    itemsTotal: allItems.length,
+    itemsComplete: allItems.length > 0 && itemsFound >= allItems.length,
+    monstersDefeated,
+    monstersTotal: allMonsters.length,
+    monstersComplete: allMonsters.length > 0 && monstersDefeated >= allMonsters.length,
+  };
+}
+
+export function getCollectionGoldMultiplier(state: GameState): number {
+  return getCollectionProgress(state).itemsComplete ? 1.1 : 1;
+}
+
+export function getCollectionXpMultiplier(state: GameState): number {
+  return getCollectionProgress(state).monstersComplete ? 1.1 : 1;
+}
+
+export function getCollectionBonusLines(state: GameState): string[] {
+  const progress = getCollectionProgress(state);
+  return [
+    progress.itemsComplete
+      ? `図鑑 全発見：金報酬 +10%（達成済み）`
+      : `図鑑 全発見まであと${progress.itemsTotal - progress.itemsFound}種（${progress.itemsFound}/${progress.itemsTotal}）— 達成で金報酬 +10%`,
+    progress.monstersComplete
+      ? `図鑑 全討伐：XP +10%（達成済み）`
+      : `図鑑 全討伐まであと${progress.monstersTotal - progress.monstersDefeated}種（${progress.monstersDefeated}/${progress.monstersTotal}）— 達成でXP +10%`,
+  ];
 }
 
 // ---- 実績ボーナス（コンプリート報酬連動） ----

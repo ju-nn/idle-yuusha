@@ -24,6 +24,8 @@ import { getLifePlan, applyMilestoneAchievements } from './game/progression';
 import { buyPrestigeUpgrade, buyRebirthUpgrade, getRebirthOfflineCapHours, rebirth, retire } from './game/prestige';
 import { getActiveArea, isJobUnlocked } from './game/requirements';
 import { runTick } from './game/tick';
+import { getCurrentSeason } from './game/seasons';
+import { claimWeeklyGoal, getWeeklySummary } from './game/weekly';
 import { countOwnedUpgrades, getEffectiveDurationTicksForState, getWorkSpeedMultiplier, TICK_INTERVAL_MS } from './game/timing';
 import { selectTrait } from './game/traits';
 import type { EquipmentItem, GameState, TraitId } from './types';
@@ -138,9 +140,11 @@ function MiniProgress({ value, total }: { value: number; total: number }) {
   return <div className="miniBar"><i style={{ width: `${percent}%` }} /></div>;
 }
 
-function LifePlanCard({ state, musingCount }: { state: GameState; musingCount: number }) {
+function LifePlanCard({ state, musingCount, openStats }: { state: GameState; musingCount: number; openStats: () => void }) {
   const plan = getLifePlan(state);
   const snapshot = getReleaseSnapshot(state, musingCount);
+  const weeklySummary = getWeeklySummary(state);
+  const season = getCurrentSeason();
   return (
     <Card title="生活ナビ" tone="notice lifePlan">
       <div className="lifePrimary">
@@ -154,6 +158,7 @@ function LifePlanCard({ state, musingCount }: { state: GameState; musingCount: n
         <div className="releaseScore"><span>生活完成度</span><b>{snapshot.overall}%</b></div>
         <MiniProgress value={snapshot.overall} total={100} />
         <div className="lifeStats">{snapshot.stats.slice(0, 2).map((stat) => <span key={stat.label}>{stat.label} {stat.value}/{stat.total}</span>)}</div>
+        <div className="lifeWeekly"><span>今週の目標 {weeklySummary.claimed}/{weeklySummary.total} ・{season.eventName}（残り{season.daysLeft}日）</span><button onClick={openStats}>詳しく</button></div>
       </div>
     </Card>
   );
@@ -316,6 +321,7 @@ export default function App() {
   const handleHarvestCrop = () => setState(harvestCrop);
   const handleBuyUpgrade = (u: typeof activeJob.upgrades[number]) => { playUiSound('buy'); setState((prev) => buyUpgrade(prev, u)); };
   const handleClaimDaily = () => setState(claimDailyBonus);
+  const handleClaimWeeklyGoal = (goalId: string) => { playUiSound('click'); setState((prev) => claimWeeklyGoal(prev, goalId)); };
   const handleBuyPrestigeUpgrade = (id: string) => setState((prev) => buyPrestigeUpgrade(prev, id));
   const handleRetire = () => setState((prev) => retire(prev, initialState));
   const handleBuyRebirthUpgrade = (id: string) => setState((prev) => buyRebirthUpgrade(prev, id));
@@ -367,7 +373,7 @@ export default function App() {
       <div className="layout">
         <div className="side">
           <JobMenu state={state} selectJob={handleSelectJob} />
-          <LifePlanCard state={state} musingCount={readMusings.length} />
+          <LifePlanCard state={state} musingCount={readMusings.length} openStats={() => { playUiSound('open'); setStatsOpen(true); }} />
         </div>
         <main className="main">
           <div className="activityGrid">
@@ -384,7 +390,7 @@ export default function App() {
       {collectionOpen && <CollectionModal state={state} musings={readMusings} achievements={state.achievements} onClose={() => setCollectionOpen(false)} />}
       {prestigeOpen && <PrestigeModal state={state} buyPrestigeUpgrade={handleBuyPrestigeUpgrade} retire={() => { handleRetire(); setPrestigeOpen(false); }} buyRebirthUpgrade={handleBuyRebirthUpgrade} rebirth={() => { handleRebirth(); setPrestigeOpen(false); }} onClose={() => setPrestigeOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} reset={() => { reset(); setSettingsOpen(false); }} />}
-      {statsOpen && <StatsModal state={state} onClose={() => setStatsOpen(false)} onSelectTrait={handleSelectTrait} />}
+      {statsOpen && <StatsModal state={state} onClose={() => setStatsOpen(false)} onSelectTrait={handleSelectTrait} onClaimWeeklyGoal={handleClaimWeeklyGoal} />}
       {!titleDone && bootInfo.showTitle && <TitleScreen hasSave={bootInfo.hasSave} onFinish={() => setTitleDone(true)} onOpenSettings={() => { setTitleDone(true); playUiSound('open'); setSettingsOpen(true); }} />}
     </div>
   );

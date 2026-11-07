@@ -4,6 +4,7 @@ import { getSynergyEntryCostReductionPct, getSynergySellBonusPct } from './syner
 import { getTraitSellBonusPct } from './traits';
 import { getPrestigeChestMultiplier, getRebirthChestLimitBonus } from './prestige';
 import { applyMilestoneAchievements, emptyLifetime } from './progression';
+import { getCurrentSeason, type SeasonId } from './seasons';
 import { loadUserSettings } from './settings';
 
 export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
@@ -69,6 +70,9 @@ type EquipmentBase = {
   onlyRarity?: EquipmentRarity;
   jobs?: string[];
   jobTypes?: JobType[];
+  // 季節限定のお守り：この季節のときだけ抽選の候補に入る。
+  // 未設定の土台はいつでも候補に入る（既存プレイヤーの抽選を変えない）。
+  season?: SeasonId;
 };
 
 const BASES: EquipmentBase[] = [
@@ -138,6 +142,11 @@ const BASES: EquipmentBase[] = [
   { baseId: 'sleeping_bag_armor', name: '寝袋の鎧', slot: 'armor', minRarity: 'rare', description: 'どこでも寝られる覚悟が、そのまま防御になる。朝露だけは少し染みる。' },
   { baseId: 'radio_exercise_charm', name: '朝のラジオ体操のお守り', slot: 'charm', description: 'ラジオの号令で体がほぐれる。腕を大きく回すと、運も少し回り出す。' },
   { baseId: 'midnight_convenience_charm', name: '深夜のコンビニのお守り', slot: 'charm', onlyRarity: 'legendary', description: '夜中の明かりと温かいおにぎりの安心感を閉じ込めた。何があっても、ここだけは開いている。' },
+  // 季節限定のお守り（ロードマップ7）。今の季節のときだけ宝箱の抽選候補に入る。
+  { baseId: 'spring_sprout_charm', name: '春の芽吹きのお守り', slot: 'charm', description: '芽吹きの季節の匂いがする。新しいことを始める勇気が少しだけ湧く。', season: 'spring' },
+  { baseId: 'summer_lantern_charm', name: '夏の夜祭りのお守り', slot: 'charm', description: '夜祭りの提灯の明かりを閉じ込めた。暑い夜でも、少しだけ涼しい顔ができる。', season: 'summer' },
+  { baseId: 'autumn_harvest_charm', name: '秋の収穫祭のお守り', slot: 'charm', description: '収穫祭の賑わいを閉じ込めた。実りの季節は、財布にも少しだけ優しい。', season: 'autumn' },
+  { baseId: 'winter_lamp_charm', name: '冬の静かな灯りのお守り', slot: 'charm', description: '冬の夜の静かな灯りを閉じ込めた。寒い日ほど、帰る場所が恋しくなる。', season: 'winter' },
 ];
 
 type OptionTemplate = {
@@ -184,15 +193,27 @@ function rarityRank(rarity: EquipmentRarity) {
   return ['common', 'uncommon', 'rare', 'epic', 'legendary'].indexOf(rarity);
 }
 
-function pickBase(rarity: EquipmentRarity, jobId: string, jobType: JobType) {
+// 土台が今の季節の抽選候補に入るか。季節が付いていない土台はいつでも候補。
+export function isEquipmentBaseInSeason(baseId: string, seasonId: SeasonId): boolean {
+  const base = BASES.find((candidate) => candidate.baseId === baseId);
+  if (!base) return false;
+  return !base.season || base.season === seasonId;
+}
+
+export function equipmentBaseName(baseId: string): string {
+  return BASES.find((candidate) => candidate.baseId === baseId)?.name || baseId;
+}
+
+function pickBase(rarity: EquipmentRarity, jobId: string, jobType: JobType, seasonId: SeasonId = getCurrentSeason().id) {
   const candidates = BASES.filter((base) => {
     if (base.onlyRarity && base.onlyRarity !== rarity) return false;
     if (base.minRarity && rarityRank(rarity) < rarityRank(base.minRarity)) return false;
     if (base.jobs && !base.jobs.includes(jobId)) return false;
     if (base.jobTypes && !base.jobTypes.includes(jobType)) return false;
+    if (base.season && base.season !== seasonId) return false;
     return true;
   });
-  const fallback = BASES.filter((base) => !base.onlyRarity && (!base.minRarity || rarityRank(rarity) >= rarityRank(base.minRarity)));
+  const fallback = BASES.filter((base) => !base.onlyRarity && (!base.minRarity || rarityRank(rarity) >= rarityRank(base.minRarity)) && (!base.season || base.season === seasonId));
   const pool = candidates.length ? candidates : fallback;
   return pool[Math.floor(Math.random() * pool.length)];
 }

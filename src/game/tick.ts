@@ -4,7 +4,8 @@ import type { GameState, ResourceKey } from '../types';
 import { bossStreakBonusPct, nextBossStreak, simulateMonsterBattle } from './combat';
 import { getAdventureEntryCost, getChestLimit, getEquipmentBonus, getResourceGainMultiplier, getSellPriceMultiplier, maybeDropChest, openTreasureChest } from './equipment';
 import { formatResourceName, rewardText } from './formatters';
-import { enqueueMusing } from './musings';
+import { enqueueMusing, routeAmbientMusing } from './musings';
+import { getCatGoldMultiplier, getCatXpMultiplier, maybeCatVisit, refreshCatState } from './companion';
 import { getPrestigeGoldMultiplier, getPrestigeMusingRewardMultiplier, getPrestigeXpMultiplier } from './prestige';
 import { getActiveArea, isJobUnlocked } from './requirements';
 import { getCurrentSeason, SEASON_ITEM_DROP_CHANCE, seasonItemMusing, seasonStartMusing, seasonStartMusingId } from './seasons';
@@ -76,16 +77,9 @@ function maybeAmbientMusing(prev: GameState, now: number) {
   const useIdle = Math.random() < 0.7;
   const list = useIdle ? IDLE_MUSINGS : DAILY_MUSINGS;
   const text = list[Math.floor(Math.random() * list.length)];
-  return enqueueMusing(prev, {
-    id: `${useIdle ? 'idle' : 'daily'}-${list.indexOf(text)}`,
-    job: '勇者',
-    area: '放置時間',
-    text,
-    category: useIdle ? 'idle' : 'daily',
-    eventType: useIdle ? 'idle' : 'daily',
-    eventSubType: useIdle ? 'time_passed' : 'daily_chat',
-    cooldownSec: 60,
-  }, { now }).state;
+  // ぼやきハイブリッド表示：日常の繰り返しぼやきはメインキューには入れず、
+  // 画面の端を流れるティッカーへ。出来事ぼやきの読み物はキューに残す。
+  return routeAmbientMusing(prev, text, now);
 }
 
 function pickStateMusing(prev: GameState) {
@@ -159,12 +153,20 @@ function maybeSeasonStartMusing(prev: GameState, now: number): GameState {
   return enqueueMusing(prev, seasonStartMusing(season), { now }).state;
 }
 
-export function runTick(prev: GameState): GameState {
+export function runTick(prev: GameState, options: { offline?: boolean } = {}): GameState {
   const now = Date.now();
   // 週間目標の週切り替えと季節開始ぼやきは、仕事の解禁チェックより先に行う。
   // ライブtick・オフラインtickの両方で週の切り替えが起きる。
   prev = ensureWeeklyState(prev, now);
   prev = maybeSeasonStartMusing(prev, now);
+  // 相棒の猫：期限切れの来訪・バフを消す。来訪の抽選はライブtickだけ
+  // （オフライン進行のシミュレーション時間では振らない）。
+  prev = refreshCatState(prev, now);
+  if (!options.offline) prev = maybeCatVisit(prev, now);
+  // 猫バフはライブセッション限定。オフライン進行の計算時は 1 倍にする
+  // （90秒のバフが数日ぶんの進行に掛かるのを防ぐ）。
+  const catGoldMultiplier = options.offline ? 1 : getCatGoldMultiplier(prev, now);
+  const catXpMultiplier = options.offline ? 1 : getCatXpMultiplier(prev, now);
   if (!isJobUnlocked(prev.activeJob, prev)) return prev;
   const job = jobs[prev.activeJob];
   if (!job || job.type === 'farming') return prev;
@@ -589,7 +591,7 @@ export function runTick(prev: GameState): GameState {
   const gainedXpThisCycle = xp - data.xp;
   if (gainedXpThisCycle > 0) {
     const traitXpMultiplier = prev.activeJob === 'rest' ? getTraitRestXpMultiplier(prev) : 1;
-    xp = data.xp + Math.floor(gainedXpThisCycle * getPrestigeXpMultiplier(prev) * traitXpMultiplier * getAchievementXpMultiplier(prev) * getCollectionXpMultiplier(prev));
+    xp = data.xp + Math.floor(gainedXpThisCycle * getPrestigeXpMultiplier(prev) * traitXpMultiplier * getAchievementXpMultiplier(prev) * getCollectionXpMultiplier(prev) * catXpMultiplier);
   }
   while (xp >= xpToNext(level)) {
     xp -= xpToNext(level);
@@ -644,7 +646,7 @@ export function runTick(prev: GameState): GameState {
   // 実績ボーナス：実績10個ごとに金報酬 +2%（永続強化の倍率と掛け合わせ）。
   // 図鑑ボーナス：全発見で +10%（実績ボーナスと掛け合わせ）。
   const earnedGold = baseGoldGain + traitGoldGain + sellGold + adventureGold + bonusGold + autoSellGold;
-  let goldGain = Math.floor(earnedGold * getPrestigeGoldMultiplier(prev) * getAchievementGoldMultiplier(prev) * getCollectionGoldMultiplier(prev)) - adventureEntryCost;
+  let goldGain = Math.floor(earnedGold * getPrestigeGoldMultiplier(prev) * getAchievementGoldMultiplier(prev) * getCollectionGoldMultiplier(prev) * catGoldMultiplier) - adventureEntryCost;
   if (goldGain > 0 && prev.activeJob !== 'merchant' && consumeBoon('market_sense')) {
     const marketBonus = Math.max(1, Math.floor(goldGain * 0.12));
     goldGain += marketBonus;
@@ -803,7 +805,7 @@ export function runOfflineTicks(prev: GameState, ticks: number): GameState {
 
   const runPlain = (count: number) => {
     for (let i = 0; i < count && remaining > 0; i += 1) {
-      next = runTick(next);
+      next = runTick(next, { offline: true });
       remaining -= 1;
     }
   };

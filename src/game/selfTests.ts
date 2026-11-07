@@ -5,19 +5,21 @@ import { getJobDropItems } from './collection';
 import { getAdventureEntryCost } from './equipment';
 import { describeUpgradeEffects, formatResourceName, rewardText } from './formatters';
 import { getFarmingProgress } from './farming';
-import { enqueueMusing } from './musings';
+import { enqueueMusing, routeAmbientMusing } from './musings';
+import { claimCatVisit, createCatState, getCatGiftGold, getCatGoldMultiplier, getCatXpMultiplier, getPeople, maybeCatVisit, normalizeCatState, refreshCatState } from './companion';
+import { prestigeCostCurve } from './pricing';
 import { addAchievement, addItems, applyMilestoneAchievements, checkMilestoneAchievements, emptyLifetime, getAchievementBonusLines, getAchievementGoldMultiplier, getAchievementProgress, getAllDiscoverableItemIds, getAllMonsterIds, getCollectionBonusLines, getCollectionGoldMultiplier, getCollectionXpMultiplier, getLifePlan, getNextTarget, rollDrops } from './progression';
 import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } from './requirements';
 import { xpToNext } from './progression';
 import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
-import { buyPrestigeUpgrade, buyRebirthUpgrade, canRebirth, canRetire, createPrestigeState, getPrestigeOfflineMultiplier, getPrestigeScore, getPrestigeStage, getRebirthChestLimitBonus, getRebirthOfflineCapHours, getRebirthPoints, getRebirthSpeedMultiplier, getRebirthStage, getRetirementPoints, rebirth, retire } from './prestige';
+import { buyPrestigeUpgrade, buyRebirthUpgrade, canRebirth, canRetire, createPrestigeState, getPrestigeOfflineMultiplier, getPrestigeScore, getPrestigeStage, getRebirthChestLimitBonus, getRebirthOfflineCapHours, getRebirthPoints, getRebirthSpeedMultiplier, getRebirthStage, getRetirementPoints, PRESTIGE_UPGRADES, REBIRTH_UPGRADES, rebirth, retire } from './prestige';
 import { defaultSettings } from './settings';
 import { runTick } from './tick';
 import { autoSellGainedItems, isAutoSellTarget } from './automation';
 import { getEquipmentPower, getChestLimit, isEquipmentBaseInSeason } from './equipment';
 import { getSynergyAdventureFailReduction, getSynergyAttackBonus, getSynergyChains, getSynergyDropChanceMultiplier, getSynergyEntryCostReductionPct, getSynergyHarvestBonus, getSynergySellBonusPct, getSynergyUpgradeDiscountPct, getChainHintForJob, getUpgradeGoldCost } from './synergy';
 import { getTraitAttackBonus, getTraitChangeCost, getTraitFailReduction, getTraitHarvestBonus, getTraitJobGoldBonusPct, getTraitOfflineMultiplier, getTraitRestXpMultiplier, getTraitSellBonusPct, selectTrait } from './traits';
-import { getCropRewards } from './farming';
+import { getCropRewards, CROPS } from './farming';
 import { getCurrentSeason, getSeasonCalendar, SEASONAL_ITEM_IDS, seasonStartMusingId } from './seasons';
 import { claimWeeklyGoal, ensureWeeklyState, getWeekKey, getWeeklyGoals } from './weekly';
 import { getHeroAttack } from './combat';
@@ -460,5 +462,45 @@ export function runSelfTests() {
   console.assert(autumnCalendar.map((entry) => entry.monthsLabel).join('/') === '3〜5月/6〜8月/9〜11月/12〜2月', 'season calendar should cover the year without overlap');
   console.assert(new Set(autumnCalendar.map((entry) => entry.itemId)).size === 4 && autumnCalendar.every((entry) => SEASONAL_ITEM_IDS.includes(entry.itemId)), 'season calendar should list all four seasonal items');
   console.assert(getSeasonCalendar(new Date(2026, 2, 15)).find((entry) => entry.isCurrent)?.id === 'spring', 'march calendar should mark spring as current');
+  // 数値バランスの長期化（ロードマップ8）：単一指数の価格曲線。
+  console.assert(JSON.stringify(prestigeCostCurve(4, 5)) === JSON.stringify([4, 6, 9, 14, 20]), 'prestige cost curve should be a single exponential (base 4)');
+  console.assert(prestigeCostCurve(5, 6).join(',') === '5,8,11,17,25,38', 'prestige cost curve should scale with base');
+  console.assert([...PRESTIGE_UPGRADES, ...REBIRTH_UPGRADES].every((def) => JSON.stringify(def.costs) === JSON.stringify(prestigeCostCurve(def.costs[0], def.maxStage))), 'every prestige upgrade should follow the single exponential curve');
+  // XP 長期テール：Lv10 までは従来値と同一、Lv11 以降は指数で伸びる。
+  console.assert(xpToNext(10) === 1030 && xpToNext(11) === 1388, 'xp curve should keep level 10 and start the long tail at level 11');
+  console.assert(xpToNext(20) === 12516, 'xp curve should stretch the late game (level 20)');
+  // 実時間タイマー資源：72時間の保存食づくり。農業Lv10で解禁。
+  console.assert(CROPS.preserved_meal.growthMs === 72 * 60 * 60_000 && CROPS.preserved_meal.unlockLevel === 10, 'preserved meal should be a 72h crop unlocked at farming level 10');
+  console.assert(getJobDropItems('farming').includes('preserved_food'), 'farming collection should include preserved food');
+  // 相棒の猫：来訪の抽選となでる、バフの倍率と期限。
+  const catFresh = createCatState();
+  console.assert(catFresh.visits === 0 && catFresh.visit === null && catFresh.buff === null, 'fresh cat state should have no visits');
+  const catGrown = { ...initialState, lifetime: { ...emptyLifetime(), cycles: 100 } };
+  const catNoRoll = maybeCatVisit(catGrown, 100_000, 0.99);
+  console.assert(catNoRoll.cat?.visit === null && (catNoRoll.cat?.lastRollAt || 0) === 100_000, 'cat should not visit on a high roll');
+  const catVisited = maybeCatVisit(catGrown, 200_000, 0.01);
+  console.assert(catVisited.cat?.visit !== null && catVisited.cat?.visits === 1, 'cat should visit on a low roll after enough cycles');
+  const catClaimed = claimCatVisit({ ...catVisited, cat: { ...catVisited.cat!, visit: { buffId: 'gold_rush', appearedAt: 200_000, expiresAt: 200_000 + 300_000 } } }, 210_000);
+  console.assert(catClaimed.cat?.visit === null && catClaimed.cat?.buff?.id === 'gold_rush', 'petting the cat should activate its buff');
+  console.assert(getCatGoldMultiplier(catClaimed, 220_000) === 1.5 && getCatGoldMultiplier(catClaimed, 400_000) === 1, 'cat gold buff should be +50% while active and expire');
+  console.assert(getCatXpMultiplier(catClaimed, 220_000) === 1, 'gold rush should not boost xp');
+  const catGift = claimCatVisit({ ...catVisited, cat: { ...catVisited.cat!, visit: { buffId: 'gift', appearedAt: 200_000, expiresAt: 200_000 + 300_000 } } }, 210_000);
+  console.assert(catGift.gold === initialState.gold + getCatGiftGold(catGift), 'cat gift should grant gold immediately');
+  const catExpired = refreshCatState({ ...catClaimed, cat: { ...catClaimed.cat!, buff: { id: 'gold_rush', expiresAt: 300_000 } } }, 400_000);
+  console.assert(catExpired.cat?.buff === null, 'refresh should clear an expired cat buff');
+  const catNoClaim = claimCatVisit(initialState, 100_000);
+  console.assert(catNoClaim === initialState, 'petting without a visit should be a no-op');
+  console.assert(normalizeCatState({ visits: -3, lastRollAt: 'soon', visit: { buffId: 'nope', appearedAt: 0, expiresAt: 0 }, buff: { id: 'gold_rush', expiresAt: -5 } } as unknown as Parameters<typeof normalizeCatState>[0]).visits === 0, 'invalid cat state should normalize to no visits');
+  // 旧セーブ：猫なしは来訪なし扱い、ティッカーは読み込み時に消える。
+  const migratedNoCat = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedNoCat.cat?.visits === 0 && migratedNoCat.tickerMusing === null, 'old save without cat should migrate with no visits and no ticker');
+  // ぼやきハイブリッド：日常ぼやきはティッカーへ、キューは触らない。
+  const tickerState = routeAmbientMusing(initialState, 'テストのひとりごと。', 5000);
+  console.assert(tickerState.tickerMusing?.text === 'テストのひとりごと。' && tickerState.musingQueue.length === 0 && (tickerState.lastAmbientMusingAt || 0) === 5000, 'ambient musings should go to the ticker, not the queue');
+  // 図鑑の人物欄：勇者は常時、猫は来訪後、それ以外は未出でヒントつき。
+  const peopleFresh = getPeople(initialState);
+  console.assert(peopleFresh.length === 8 && peopleFresh[0].met === true && peopleFresh[1].met === false && peopleFresh.slice(2).every((person) => person.met === false && person.hint.length > 0), 'people book should list the hero, the cat, and future faces with hints');
+  const peopleMetCat = getPeople({ ...initialState, cat: { ...createCatState(), visits: 1 } });
+  console.assert(peopleMetCat[1].met === true && peopleMetCat[1].name === 'ミケ', 'cat should appear in the people book after the first visit');
 }
 

@@ -262,6 +262,35 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
   0% { transform:translateX(-102%); opacity:.9; }
   100% { transform:translateX(105%); opacity:0; }
 }
+/* ぼやきハイブリッド表示：日常ぼやきのティッカー。流れて消える雰囲気専用。
+   12秒でフェードアウトし、最後は高さも潰してカード内の余白を残さない。 */
+.musingTicker { display:flex; gap:6px; align-items:baseline; overflow:hidden; max-height:64px; margin-top:10px; padding:7px 10px; border:1px dashed rgba(107,75,33,.32); border-radius:6px; background:rgba(255,253,248,.55); color:var(--text-soft); font-size:.82rem; line-height:1.5; animation:tickerFlow 12s ease-out both; }
+.musingTicker .icon { flex:0 0 auto; width:14px; height:14px; margin-top:2px; color:#a16207; }
+.musingTicker span { min-width:0; }
+@keyframes tickerFlow {
+  0% { opacity:0; transform:translateY(4px); }
+  6% { opacity:1; transform:translateY(0); }
+  78% { opacity:1; max-height:64px; margin-top:10px; padding-top:7px; padding-bottom:7px; }
+  100% { opacity:0; transform:translateY(-2px); max-height:0; margin-top:0; padding-top:0; padding-bottom:0; border-width:0; }
+}
+/* 相棒の猫：来訪バナーとバフ表示。 */
+.catVisitBanner { display:grid; grid-template-columns:auto minmax(0, 1fr) auto; gap:12px; align-items:center; padding:12px 14px; border:1px solid rgba(161,98,7,.4); border-radius:8px; background:linear-gradient(135deg, rgba(255,251,235,.98), rgba(254,243,199,.92)); box-shadow:0 8px 24px rgba(161,98,7,.16); }
+.catVisitBanner .catIcon { display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:50%; background:rgba(161,98,7,.14); color:#92400e; }
+.catVisitBanner .catIcon .icon { width:26px; height:26px; }
+.catVisitBanner small { display:block; color:var(--accent-text); font-weight:900; font-size:.72rem; }
+.catVisitBanner b { display:block; margin-top:2px; }
+.catVisitBanner p { margin:3px 0 0; color:var(--text-soft); font-size:.84rem; line-height:1.45; }
+.catVisitBanner button { white-space:nowrap; }
+.catBuffChip { display:flex; gap:8px; align-items:center; padding:8px 12px; border:1px solid rgba(5,150,105,.35); border-radius:999px; background:rgba(236,253,245,.9); color:var(--text-soft); font-size:.84rem; }
+.catBuffChip .icon { width:16px; height:16px; color:#047857; }
+.catBuffChip b { margin-left:auto; color:var(--text); }
+/* 図鑑の人物欄。 */
+.peopleList { list-style:none; margin:10px 0 0; padding:0; display:grid; gap:8px; }
+.peopleList li { border:1px solid rgba(90,56,25,.14); border-radius:6px; background:rgba(255,253,248,.7); padding:10px 12px; }
+.peopleList li.unmet { opacity:.75; }
+.peopleList small { display:block; color:var(--muted); font-size:.74rem; font-weight:800; }
+.peopleList b { display:block; margin-top:1px; }
+.peopleList p { margin:3px 0 0; color:var(--text-soft); font-size:.86rem; line-height:1.5; }
 .area small.failRate { color:var(--danger); background:rgba(248,113,113,.12); border-radius:10px; padding:4px 7px; }
 .failReductionTag { color:#86efac; font-size:.82em; }
 

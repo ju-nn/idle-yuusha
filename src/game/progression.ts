@@ -18,7 +18,15 @@ export function clamp(value: number, min: number, max: number) { return Math.max
 // レベル曲線: 序盤の「次の解禁まで遠い」詰まりを均すため、2026-10-28 に緩和。
 // 旧: 45 + Lv^2 * 12（Lv1→57, Lv2→93, Lv5→345, Lv10→1245）
 // 新: 30 + Lv^2 * 10（Lv1→40, Lv2→70, Lv5→280, Lv10→1030）
-export function xpToNext(level: number) { return Math.floor(30 + level * level * 10); }
+// 長期テール（ロードマップ8「数値バランスの長期化」）: Lv11 以降は単一指数で
+// 伸ばす（×1.12^(Lv-10)。Lv11→1388, Lv15→4013, Lv20→12516）。
+// Lv10 までは従来値と完全一致し、既存プレイヤーの到達レベルは変わらない。
+// 数ヶ月遊べる曲線の本体で、序盤の緩和と長期の伸びを両立させる。
+export function xpToNext(level: number) {
+  const base = Math.floor(30 + level * level * 10);
+  if (level <= 10) return base;
+  return Math.floor(base * Math.pow(1.12, level - 10));
+}
 function pick<T>(arr: T[]) { return arr[Math.floor(Math.random() * arr.length)]; }
 export function isUniqueItem(item: string) {
   return itemKind(item) === '重要';

@@ -198,6 +198,25 @@ export type WeeklyState = {
   claimed: string[];
 };
 
+// 相棒の猫「ミケ」（登場人物施策）。来訪はランダム出現＋短時間バフ。
+// visit は「猫が来ている」状態（5分で帰る）、buff は「なでた」後の効果。
+// 旧セーブは未記録扱い（来訪なし）。引退・転生でも引き継ぐ。
+export type CatBuffId = 'gold_rush' | 'focus' | 'gift';
+export type CatVisit = { buffId: CatBuffId; appearedAt: number; expiresAt: number };
+export type CatState = {
+  visits: number;
+  lastRollAt: number;
+  lastVisitAt: number;
+  visit: CatVisit | null;
+  buff: { id: CatBuffId; expiresAt: number } | null;
+};
+
+// ぼやきハイブリッド表示：日常の繰り返しぼやき（idle/daily）は
+// メインのぼやきキューには入れず、画面の端を流れるティッカー専用にする。
+// 出来事ぼやき（event/firstTime/failure/milestone/state）は従来通り
+// スタックして「次へ」で読む。ティッカーは見逃し損なしの雰囲気専用。
+export type TickerMusing = { text: string; at: number };
+
 export type GameState = {
   saveVersion?: number;
   offlineSummary?: {
@@ -275,6 +294,10 @@ export type GameState = {
   // 自動休憩の復帰先: HP/MP不足で休憩へ自動切替したとき、回復後に戻る仕事とエリア。
   // 手動で仕事を選ぶと消える（プレイヤーの意思を優先する）。旧セーブは未設定扱い。
   autoRestReturn?: { job: string; area: string } | null;
+  // 相棒の猫: 旧セーブは未記録扱い（来訪なし）。引退・転生でも引き継ぐ。
+  cat?: CatState;
+  // ティッカー表示中の日常ぼやき: 雰囲気専用で、リロード時に消える一時的な表示。
+  tickerMusing?: TickerMusing | null;
   prestige?: PrestigeState;
   // 特性: 選択中のビルド方向（未選択は null）と変更回数。旧セーブは未選択扱い。
   trait?: TraitId | null;

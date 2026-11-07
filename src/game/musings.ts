@@ -90,3 +90,15 @@ export function enqueueMusing(prev: GameState, rawMusing: Musing, options: { pre
 export function enqueueManyMusings(prev: GameState, musings: Musing[], options: { now?: number } = {}) {
   return musings.reduce((result, musing) => enqueueMusing(result.state, musing, options), { state: prev, accepted: false, musing: undefined as Musing | undefined });
 }
+
+// ぼやきハイブリッド表示（2026-11-07 ユーザー承認）。
+// 日常の繰り返しぼやき（idle/daily）はメインのぼやきキューには入れない。
+// 画面の端を流れて消えるティッカー専用にする（見逃し損なし・読み返し不要）。
+// 出来事ぼやきは従来通りキューへ。ティッカー文は図鑑の読了数には数えない。
+export function routeAmbientMusing(prev: GameState, text: string, now: number): GameState {
+  return {
+    ...prev,
+    tickerMusing: { text, at: now },
+    lastAmbientMusingAt: now,
+  };
+}

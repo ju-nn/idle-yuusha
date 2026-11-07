@@ -1,6 +1,7 @@
 import type { GameState, Job, Musing, OfflineTier } from '../types';
 import { itemKind } from '../data/catalog';
 import { jobs as gameJobs } from '../data/gameData';
+import { createCatState, normalizeCatState } from './companion';
 import { createPrestigeState, getPrestigeOfflineMultiplier, getRebirthOfflineCapHours, normalizePrestigeState } from './prestige';
 import { xpToNext } from './progression';
 import { getTraitOfflineMultiplier } from './traits';
@@ -79,6 +80,8 @@ export function createInitialState(jobs: Record<string, Job>): GameState {
     prestige: createPrestigeState(),
     trait: null,
     traitChanges: 0,
+    cat: createCatState(),
+    tickerMusing: null,
     lifetime: { cycles: 0, goldEarned: 0, kills: 0, salesGold: 0, harvests: 0, chestsOpened: 0, musingsRead: 0, maxCombo: 0, discovered: [] },
   };
 }
@@ -259,6 +262,10 @@ function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameSt
     lifetime: normalizeLifetime(parsed.lifetime),
     // 週間目標: 旧セーブ（未記録）や不正な値は未設定扱い。次の tick で今週の起点が作られる。
     weekly: normalizeWeekly(parsed.weekly),
+    // 相棒の猫: 旧セーブ（未記録）は来訪なし扱い。引退・転生でも引き継ぐ。
+    cat: normalizeCatState(parsed.cat),
+    // ティッカーは一時的な表示のため、読み込み時は消す（古い文を残さない）。
+    tickerMusing: null,
     // 自動休憩の復帰先: 仕事とエリアが実在するものだけ残す。不正・未記録は未設定扱い。
     autoRestReturn: parsed.autoRestReturn && typeof parsed.autoRestReturn.job === 'string' && gameJobs[parsed.autoRestReturn.job]
       ? { job: parsed.autoRestReturn.job, area: typeof parsed.autoRestReturn.area === 'string' ? parsed.autoRestReturn.area : gameJobs[parsed.autoRestReturn.job].areas[0].id }

@@ -59,6 +59,20 @@ export const CROPS = {
     unlockLevel: 8,
     musing: '一日待ったら米ができた。固定費より米が増える世界で暮らしたい。',
   },
+  // 実時間タイマー資源（ロードマップ8・クッキークリッカー移植原則(6)）。
+  // 農業に絡む長時間タイマーで、3日がかりの保存食づくり。待つほど育つ
+  // 農業の最長枠で、数ヶ月曲線の「戻ってくる理由」のひとつになる。
+  preserved_meal: {
+    name: '三日がかりの保存食',
+    seedName: '保存食の仕込み',
+    growthMs: 72 * 60 * 60_000,
+    rewards: [{ item: 'preserved_food', amount: 6 }, { item: 'safe_potato', amount: 4 }],
+    bonusEveryMs: 12 * 60 * 60_000,
+    bonusItem: { item: 'preserved_food', amount: 2 },
+    maxBonus: 6,
+    unlockLevel: 10,
+    musing: '三日待った保存食。待つほど味がつくなら、人生の待ち時間にも味をつけたい。',
+  },
 } as const;
 
 export type CropId = keyof typeof CROPS;

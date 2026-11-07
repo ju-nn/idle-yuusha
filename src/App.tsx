@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import ambientCloudUrl from './assets/sprites/hero/cloud.png';
 import chestSheetUrl from './assets/sprites/hero/chest-open-sheet.png';
 import { Header } from './components/Header';
+import { Icon } from './components/Icon';
 import { AreaGrid, CurrentJobCard, UpgradePanel } from './components/JobPanels';
 import { JobMenu } from './components/JobMenu';
 import { ChestModal, CollectionModal, EquipmentModal, LogModal, PrestigeModal, SettingsModal, StatsModal } from './components/Modals';
@@ -20,6 +21,7 @@ import type { CropId } from './game/farming';
 import { formatResourceName } from './game/formatters';
 import { loadUserSettings } from './game/settings';
 import { clearSave, createInitialState, loadState, SAVE_KEY, saveState } from './game/state';
+import { claimCatVisit, getCatBuffDef } from './game/companion';
 import { getLifePlan, applyMilestoneAchievements } from './game/progression';
 import { buyPrestigeUpgrade, buyRebirthUpgrade, getRebirthOfflineCapHours, rebirth, retire } from './game/prestige';
 import { getActiveArea, isJobUnlocked } from './game/requirements';
@@ -194,6 +196,24 @@ function ChestOpeningOverlay({ reveal, onClose, equipItem }: { reveal: ChestReve
   </div>;
 }
 
+function CatVisitBanner({ state, onPet }: { state: GameState; onPet: () => void }) {
+  const now = Date.now();
+  const cat = state.cat;
+  const visit = cat?.visit && now < cat.visit.expiresAt ? cat.visit : null;
+  const buff = cat?.buff && now < cat.buff.expiresAt ? cat.buff : null;
+  if (visit) {
+    const def = getCatBuffDef(visit.buffId);
+    const remainSec = Math.max(0, Math.ceil((visit.expiresAt - now) / 1000));
+    return <div className="catVisitBanner" role="status"><span className="catIcon" aria-hidden="true"><Icon name="cat" /></span><div><small>相棒の猫がやってきた</small><b>ミケが足元で丸くなっている</b><p>なでると「{def.name}」（{def.description}）がもらえる。あと{remainSec}秒でどこかへ行く。見逃しても損はない。</p></div><button className="primary" onClick={onPet}>なでる</button></div>;
+  }
+  if (buff) {
+    const def = getCatBuffDef(buff.id);
+    const remainSec = Math.max(0, Math.ceil((buff.expiresAt - now) / 1000));
+    return <div className="catBuffChip" role="status"><Icon name="cat" /><span>{def.name}：{def.description}</span><b>残り{remainSec}秒</b></div>;
+  }
+  return null;
+}
+
 function OfflineReturnCard({ state, onClose }: { state: GameState; onClose: () => void }) {
   const summary = state.offlineSummary;
   if (!summary) return null;
@@ -324,6 +344,7 @@ export default function App() {
   const handlePlantCrop = (cropId: CropId) => setState((prev) => plantCrop(prev, cropId));
   const handleHarvestCrop = () => setState(harvestCrop);
   const handleBuyUpgrade = (u: typeof activeJob.upgrades[number]) => { playUiSound('buy'); setState((prev) => buyUpgrade(prev, u)); };
+  const handleClaimCat = () => { playUiSound('click'); setState((prev) => claimCatVisit(prev, Date.now())); };
   const handleClaimDaily = () => setState(claimDailyBonus);
   const handleClaimWeeklyGoal = (goalId: string) => { playUiSound('click'); setState((prev) => claimWeeklyGoal(prev, goalId)); };
   const handleBuyPrestigeUpgrade = (id: string) => setState((prev) => buyPrestigeUpgrade(prev, id));
@@ -380,6 +401,7 @@ export default function App() {
           <LifePlanCard state={state} musingCount={readMusings.length} openStats={() => { playUiSound('open'); setStatsOpen(true); }} />
         </div>
         <main className="main">
+          <CatVisitBanner state={state} onPet={handleClaimCat} />
           <div className="activityGrid">
             <MusingPanel state={state} totalMusings={totalMusings} musingCount={readMusings.length} canAdvance={canAdvance} advanceMusing={handleAdvanceMusing} />
             <CurrentJobCard job={activeJob} area={activeArea} data={activeData} progress={progress} speedMultiplier={workSpeedMultiplier} effectiveDurationTicks={progressDuration} latestLog={state.eventLog?.[0] || 'まだ作業ログはない。'} openLog={() => { playUiSound('open'); setLogOpen(true); }} openAreas={() => { playUiSound('open'); setAreaOpen(true); }} openUpgrades={() => { playUiSound('open'); setUpgradesOpen(true); }} farmingReady={farmingReady} state={state} plantCrop={handlePlantCrop} harvestCrop={handleHarvestCrop} selectArea={handleSelectArea} buyUpgrade={handleBuyUpgrade} />

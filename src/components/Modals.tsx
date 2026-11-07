@@ -3,6 +3,7 @@ import chestClosed from '../assets/sprites/hero/chest-closed.png';
 import { ACHIEVEMENTS, itemDesc, itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import { getJobDropItems } from '../game/collection';
+import { getPeople } from '../game/companion';
 import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipmentBaseName, equipmentOptionText, getChestLimit, getEquipmentBonus, getEquipmentLimit, getEquipmentSellValue } from '../game/equipment';
 import { formatResourceName } from '../game/formatters';
 import { MUSING_LABELS } from '../game/musings';
@@ -237,7 +238,7 @@ function EquipmentCard({ item, equipped, currentEquipped, equipItem, sellEquipme
 }
 
 export function CollectionModal({ state, musings, achievements, onClose }: { state: GameState; musings: Musing[]; achievements: string[]; onClose: () => void }) {
-  const [filter, setFilter] = useState<'all' | 'items' | 'equipment' | 'monsters' | 'musings' | 'achievements' | 'guide'>('all');
+  const [filter, setFilter] = useState<'all' | 'items' | 'equipment' | 'monsters' | 'musings' | 'achievements' | 'people' | 'guide'>('all');
   const tabs = [
     { id: 'all', label: 'すべて' },
     { id: 'guide', label: '遊び方' },
@@ -246,12 +247,19 @@ export function CollectionModal({ state, musings, achievements, onClose }: { sta
     { id: 'monsters', label: '討伐' },
     { id: 'musings', label: 'ぼやき' },
     { id: 'achievements', label: '実績' },
+    { id: 'people', label: '人物' },
   ] as const;
-  return <Modal title="図鑑" description="発見物・装備・討伐・ぼやき・実績をまとめて確認する。遊び方は「遊び方」タブで。" onClose={onClose} wide><CollectionSummary state={state} musings={musings} achievements={achievements} /><div className="bookTabs">{tabs.map((tab) => <button key={tab.id} className={filter === tab.id ? 'active' : ''} onClick={() => setFilter(tab.id)}>{tab.label}</button>)}</div>{filter === 'guide' ? <div className="bookGrid single"><HowToGuide /></div> : <div className={`bookGrid ${filter !== 'all' ? 'single' : ''}`}>{(filter === 'all' || filter === 'items') && <DiscoveryBook state={state} />}{(filter === 'all' || filter === 'equipment') && <EquipmentBook state={state} />}{(filter === 'all' || filter === 'monsters') && <BestiaryBook state={state} />}{(filter === 'all' || filter === 'musings') && <MusingBook musings={musings} />}{(filter === 'all' || filter === 'achievements') && <AchievementBook state={state} achievements={achievements} />}</div>}</Modal>;
+  return <Modal title="図鑑" description="発見物・装備・討伐・ぼやき・実績・人物をまとめて確認する。遊び方は「遊び方」タブで。" onClose={onClose} wide><CollectionSummary state={state} musings={musings} achievements={achievements} /><div className="bookTabs">{tabs.map((tab) => <button key={tab.id} className={filter === tab.id ? 'active' : ''} onClick={() => setFilter(tab.id)}>{tab.label}</button>)}</div>{filter === 'guide' ? <div className="bookGrid single"><HowToGuide /></div> : <div className={`bookGrid ${filter !== 'all' ? 'single' : ''}`}>{(filter === 'all' || filter === 'items') && <DiscoveryBook state={state} />}{(filter === 'all' || filter === 'equipment') && <EquipmentBook state={state} />}{(filter === 'all' || filter === 'monsters') && <BestiaryBook state={state} />}{(filter === 'all' || filter === 'musings') && <MusingBook musings={musings} />}{(filter === 'all' || filter === 'achievements') && <AchievementBook state={state} achievements={achievements} />}{(filter === 'all' || filter === 'people') && <PeopleBook state={state} />}</div>}</Modal>;
+}
+
+function PeopleBook({ state }: { state: GameState }) {
+  const people = getPeople(state);
+  const metCount = people.filter((person) => person.met).length;
+  return <Card title="人物"><p className="sub">出会った人物 {metCount}/{people.length}。まだの人物は「？？？」で、会えるヒントだけ見える。</p><ul className="peopleList">{people.map((person) => <li key={person.id} className={person.met ? 'met' : 'unmet'}><div><small>{person.role}</small><b>{person.met ? person.name : '？？？'}</b><p>{person.met ? person.description : person.hint}</p></div></li>)}</ul></Card>;
 }
 
 function HowToGuide() {
-  return <Card title="遊び方"><p className="sub">魔王討伐より、まず今日を回す。生活を整えて、少しずつ自由に近づく放置RPGです。</p><ol className="howToSteps"><li><b>仕事を選ぶ</b><p>仕事メニューから仕事とエリアを選びます。選んだ仕事が自動で進みます。</p></li><li><b>ぼやきは「次へ」で読む</b><p>何か出来事が起きるとぼやきが出ます。報酬は出来事のときに自動でもらえます。「次へ」は読むための操作です。</p></li><li><b>素材を売って、装備を整える</b><p>素材は商人で売ってGに変えます。装備は宝箱から手に入り、強いものに付け替えます。</p></li><li><b>拠点整備で暮らしを楽にする</b><p>素材を使って拠点を整えると、HP・MPの上限などが増えます。</p></li><li><b>離れても進む</b><p>閉じている間も最大3日分まで進みます。戻ったら帰還バナーで成果を確認します。</p></li></ol><div className="howToNotes"><b>図鑑の見方</b><p>未発見は「？？？」で表示されます。★は重要アイテムです。討伐は、初めて倒した相手だけ名前が出ます。</p><b>次に目指すもの</b><p>まだ解禁されていない仕事やエリアは「？？？＋解禁条件のヒント」で表示されます。条件を満たすと自動で解禁されます。すでに使えているものが、後からロックされることはありません。</p><b>困ったら</b><p>設定から、アイテム自動売却・自動装備・宝箱の自動開封・自動休憩・タイトル画面の表示を切り替えられます。セーブのバックアップも設定から書き出せます。</p></div></Card>;
+  return <Card title="遊び方"><p className="sub">魔王討伐より、まず今日を回す。生活を整えて、少しずつ自由に近づく放置RPGです。</p><ol className="howToSteps"><li><b>仕事を選ぶ</b><p>仕事メニューから仕事とエリアを選びます。選んだ仕事が自動で進みます。</p></li><li><b>ぼやきは「次へ」で読む</b><p>何か出来事が起きるとぼやきが出ます。報酬は出来事のときに自動でもらえます。「次へ」は読むための操作です。日常のひとりごとは、画面の端を流れるだけのティッカー表示になります。</p></li><li><b>素材を売って、装備を整える</b><p>素材は商人で売ってGに変えます。装備は宝箱から手に入り、強いものに付け替えます。</p></li><li><b>拠点整備で暮らしを楽にする</b><p>素材を使って拠点を整えると、HP・MPの上限などが増えます。</p></li><li><b>離れても進む</b><p>閉じている間も最大3日分まで進みます。戻ったら帰還バナーで成果を確認します。</p></li></ol><div className="howToNotes"><b>図鑑の見方</b><p>未発見は「？？？」で表示されます。★は重要アイテムです。討伐は、初めて倒した相手だけ名前が出ます。</p><b>次に目指すもの</b><p>まだ解禁されていない仕事やエリアは「？？？＋解禁条件のヒント」で表示されます。条件を満たすと自動で解禁されます。すでに使えているものが、後からロックされることはありません。</p><b>困ったら</b><p>設定から、アイテム自動売却・自動装備・宝箱の自動開封・自動休憩・タイトル画面の表示を切り替えられます。セーブのバックアップも設定から書き出せます。</p><b>相棒の猫</b><p>拠点に住み着いた猫が、たまにやってきます。「なでる」と短いご褒美がもらえます。見逃しても損はありません。会った人物は図鑑の「人物」タブに残ります。</p></div></Card>;
 }
 
 function rebirthEffectText(upgradeId: string, stage: number): string {

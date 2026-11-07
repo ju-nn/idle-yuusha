@@ -8,7 +8,7 @@ import { enqueueMusing } from './musings';
 import { getPrestigeGoldMultiplier, getPrestigeMusingRewardMultiplier, getPrestigeXpMultiplier } from './prestige';
 import { getActiveArea, isJobUnlocked } from './requirements';
 import { countOwnedUpgrades, getEffectiveDurationTicksForState } from './timing';
-import { addAchievement, announceJobUnlocks, clamp, getFailChance, grantItemRewards, isUniqueItem, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
+import { addAchievement, announceJobUnlocks, checkMilestoneAchievements, clamp, emptyLifetime, getAchievementDropMultiplier, getAchievementGoldMultiplier, getAchievementXpMultiplier, getFailChance, grantItemRewards, isUniqueItem, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
 import { getSynergyDropChanceMultiplier } from './synergy';
 import { getTraitJobGoldBonusPct, getTraitRestXpMultiplier } from './traits';
 import { autoSellGainedItems, autoSellLogText } from './automation';
@@ -233,6 +233,7 @@ export function runTick(prev: GameState): GameState {
   // ボス連勝数: 玉座の間でのみ積み上がる。敗北・遭遇なし・玉座の間以外での
   // サイクル完了で 0 に戻る（作業失敗では途切れない）。
   let bossStreak = prev.bossStreak || 0;
+  let battleWon = false;
   const adventureEntryCost = job.type === 'adventure' ? getAdventureEntryCost(prev, area.adventureCost || 0) : 0;
   let bonusGold = 0;
   let level = data.level;
@@ -243,7 +244,7 @@ export function runTick(prev: GameState): GameState {
   let musingState = prev;
   const nextItems = { ...(prev.items || {}) };
   const resources = { ...prev.resources };
-  const gainedDrops = rollDrops(area.drops, getSynergyDropChanceMultiplier(prev)).filter((d) => !isUniqueItem(d.item) || !prev.items?.[d.item]);
+  const gainedDrops = rollDrops(area.drops, getSynergyDropChanceMultiplier(prev) * getAchievementDropMultiplier(prev)).filter((d) => !isUniqueItem(d.item) || !prev.items?.[d.item]);
   const newItems = gainedDrops.filter((d) => !prev.items?.[d.item]).map((d) => d.item);
   let achievements = prev.achievements || [];
   let defeatedMonsters = prev.defeatedMonsters || [];
@@ -458,7 +459,8 @@ export function runTick(prev: GameState): GameState {
         adventureHpCost = Math.min(recoveredHp, Math.ceil(battle.hpCost * 0.7) + 1);
         adventureMpCost = Math.min(recoveredMp, Math.max(1, Math.ceil(battle.mpCost * 0.7)));
       } else {
-      const monsterDrops = rollDrops(monster.drops, getSynergyDropChanceMultiplier(prev)).filter((d) => !isUniqueItem(d.item) || !nextItems[d.item]);
+      battleWon = true;
+      const monsterDrops = rollDrops(monster.drops, getSynergyDropChanceMultiplier(prev) * getAchievementDropMultiplier(prev)).filter((d) => !isUniqueItem(d.item) || !nextItems[d.item]);
       if (monsterDrops.length) combatEvents.push(`戦利品：${monsterDrops.map((d) => `${itemName(d.item)}+${d.amount}`).join(' / ')}`);
       monsterDrops.forEach((d) => {
         nextItems[d.item] = isUniqueItem(d.item) ? 1 : (nextItems[d.item] || 0) + d.amount;
@@ -558,10 +560,11 @@ export function runTick(prev: GameState): GameState {
 
   // XPの永続強化は、このサイクルで得た分だけにまとめて掛ける（既存の進み具合は変えない）。
   // 特性：のんびり屋気質で仕事が休憩なら、さらに ×1.25（永続強化の倍率と掛け合わせ）。
+  // 実績ボーナス：実績10個ごとに +2%（金報酬と同じ率）。
   const gainedXpThisCycle = xp - data.xp;
   if (gainedXpThisCycle > 0) {
     const traitXpMultiplier = prev.activeJob === 'rest' ? getTraitRestXpMultiplier(prev) : 1;
-    xp = data.xp + Math.floor(gainedXpThisCycle * getPrestigeXpMultiplier(prev) * traitXpMultiplier);
+    xp = data.xp + Math.floor(gainedXpThisCycle * getPrestigeXpMultiplier(prev) * traitXpMultiplier * getAchievementXpMultiplier(prev));
   }
   while (xp >= xpToNext(level)) {
     xp -= xpToNext(level);
@@ -613,8 +616,9 @@ export function runTick(prev: GameState): GameState {
   // 特性：商人気質なら、仕事の金報酬に +10%（売却額の +15% とは別枠。冒険の出発費は割り引かない）。
   const traitGoldGain = Math.floor(baseGoldGain * getTraitJobGoldBonusPct(prev) / 100);
   // 収入の永続強化は稼いだ分にだけ掛ける（冒険費用などの支出は割り引かない）。
+  // 実績ボーナス：実績10個ごとに金報酬 +2%（永続強化の倍率と掛け合わせ）。
   const earnedGold = baseGoldGain + traitGoldGain + sellGold + adventureGold + bonusGold + autoSellGold;
-  let goldGain = Math.floor(earnedGold * getPrestigeGoldMultiplier(prev)) - adventureEntryCost;
+  let goldGain = Math.floor(earnedGold * getPrestigeGoldMultiplier(prev) * getAchievementGoldMultiplier(prev)) - adventureEntryCost;
   if (goldGain > 0 && prev.activeJob !== 'merchant' && consumeBoon('market_sense')) {
     const marketBonus = Math.max(1, Math.floor(goldGain * 0.12));
     goldGain += marketBonus;
@@ -684,6 +688,23 @@ export function runTick(prev: GameState): GameState {
     achievements = addAchievement({ ...prev, achievements }, 'release_goal', eventLog);
   }
 
+  // 通算の歩みを更新し、実績の節目をまとめて判定する。引退・転生でも引き継ぐ。
+  const prevLifetime = prev.lifetime || emptyLifetime();
+  const nextLifetime = {
+    ...prevLifetime,
+    cycles: prevLifetime.cycles + 1,
+    goldEarned: prevLifetime.goldEarned + Math.max(0, goldGain),
+    kills: prevLifetime.kills + (battleWon ? 1 : 0),
+    salesGold: prevLifetime.salesGold + Math.max(0, sellGold) + Math.max(0, autoSellGold),
+    maxCombo: Math.max(prevLifetime.maxCombo || 0, nextStreak),
+    discovered: Array.from(new Set([
+      ...(prevLifetime.discovered || []),
+      ...Object.keys(nextItems).filter((id) => (nextItems[id] || 0) > 0),
+      ...Object.keys(prev.items || {}).filter((id) => (prev.items?.[id] || 0) > 0),
+    ])),
+  };
+  achievements = checkMilestoneAchievements({ ...progressState, achievements, bossStreak, defeatedMonsters, lifetime: nextLifetime }, eventLog);
+
   const stateMusing = pickStateMusing({ ...prev, hp: recoveredHp, mp: recoveredMp, gold: prev.gold + goldGain, resources, items: nextItems });
   if (stateMusing) {
     addMusing({
@@ -713,6 +734,7 @@ export function runTick(prev: GameState): GameState {
     musingQueue: queue.slice(-20),
     combatLog: combatEvents.length ? [...combatEvents, ...(prev.combatLog || [])].slice(0, 12) : (prev.combatLog || []),
     achievements,
+    lifetime: nextLifetime,
     equipmentInventory: prev.equipmentInventory || [],
     equipped: prev.equipped || {},
     seenEquipmentBaseIds: prev.seenEquipmentBaseIds || [],

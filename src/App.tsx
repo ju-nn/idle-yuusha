@@ -20,7 +20,7 @@ import type { CropId } from './game/farming';
 import { formatResourceName } from './game/formatters';
 import { loadUserSettings } from './game/settings';
 import { clearSave, createInitialState, loadState, SAVE_KEY, saveState } from './game/state';
-import { getLifePlan } from './game/progression';
+import { getLifePlan, applyMilestoneAchievements } from './game/progression';
 import { buyPrestigeUpgrade, buyRebirthUpgrade, getRebirthOfflineCapHours, rebirth, retire } from './game/prestige';
 import { getActiveArea, isJobUnlocked } from './game/requirements';
 import { runTick } from './game/tick';
@@ -322,7 +322,7 @@ export default function App() {
   const handleRebirth = () => setState((prev) => rebirth(prev, initialState));
   const handleEquipItem = (uid: string) => setState((prev) => equipItem(prev, uid));
   const handleSellEquipment = (uid: string) => setState((prev) => sellEquipment(prev, uid));
-  const handleSelectTrait = (id: TraitId) => { playUiSound('click'); setState((prev) => selectTrait(prev, id)); };
+  const handleSelectTrait = (id: TraitId) => { playUiSound('click'); setState((prev) => applyMilestoneAchievements(selectTrait(prev, id))); };
   const handleToggleEquipmentLock = (uid: string) => setState((prev) => toggleEquipmentLock(prev, uid));
   const showChestReveal = (beforeUid: string | undefined, next: GameState, openedCount = 1) => {
     const item = next.equipmentInventory?.[0];

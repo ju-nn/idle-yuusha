@@ -1,4 +1,4 @@
-import { itemDesc, itemName } from '../data/catalog';
+import { ACHIEVEMENTS, itemDesc, itemName } from '../data/catalog';
 import { jobs, upgrades } from '../data/gameData';
 import { simulateMonsterBattle } from './combat';
 import { getJobDropItems } from './collection';
@@ -6,7 +6,7 @@ import { getAdventureEntryCost } from './equipment';
 import { describeUpgradeEffects, formatResourceName, rewardText } from './formatters';
 import { getFarmingProgress } from './farming';
 import { enqueueMusing } from './musings';
-import { addItems, getLifePlan, getNextTarget, rollDrops } from './progression';
+import { addAchievement, addItems, applyMilestoneAchievements, checkMilestoneAchievements, emptyLifetime, getAchievementBonusLines, getAchievementGoldMultiplier, getAchievementProgress, getLifePlan, getNextTarget, rollDrops } from './progression';
 import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } from './requirements';
 import { xpToNext } from './progression';
 import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
@@ -342,5 +342,36 @@ export function runSelfTests() {
       delete (globalThis as unknown as Record<string, unknown>).localStorage;
     }
   }
+  // 実績120件（2026-11-07）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。
+  const achievementIds = Object.keys(ACHIEVEMENTS);
+  console.assert(achievementIds.length === 120, `achievements should total 120 (got ${achievementIds.length})`);
+  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 120, 'achievement names should be unique');
+  console.assert(Object.values(ACHIEVEMENTS).every((a) => a.name && a.description && a.hint && a.category), 'every achievement should have a name, description, hint and category');
+  const twentyFour = achievementIds.filter((id) => !['achievements_25', 'achievements_50', 'achievements_75', 'achievements_100', 'achievements_120', 'ten_achievements'].includes(id)).slice(0, 24);
+  const milestoneLogs: string[] = [];
+  const with25 = addAchievement({ ...initialState, achievements: twentyFour }, twentyFour.length ? achievementIds.find((id) => !twentyFour.includes(id) && !id.startsWith('achievements_') && id !== 'ten_achievements')! : 'first_fish', milestoneLogs);
+  console.assert(with25.includes('achievements_25'), 'the 25th achievement should also grant achievements_25');
+  const allBut120 = achievementIds.filter((id) => id !== 'achievements_120' && id !== 'synergy_all_7');
+  const completed = addAchievement({ ...initialState, achievements: allBut120 }, 'synergy_all_7', []);
+  console.assert(completed.length === 120 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 120');
+  const milestoneState = {
+    ...initialState,
+    jobData: { ...initialState.jobData, fishing: { level: 5, xp: 0, seenMusings: [] }, mining: { level: 2, xp: 0, seenMusings: [] }, rest: { level: 2, xp: 0, seenMusings: [] }, nightwatch: { level: 2, xp: 0, seenMusings: [] }, woodcutting: { level: 4, xp: 0, seenMusings: [] }, housekeeping: { level: 2, xp: 0, seenMusings: [] }, booktrade: { level: 3, xp: 0, seenMusings: [] } },
+    lifetime: { ...emptyLifetime(), cycles: 100 },
+  };
+  const checked = checkMilestoneAchievements(milestoneState, []);
+  console.assert(checked.includes('job5_fishing'), 'fishing level 5 should grant job5_fishing');
+  console.assert(checked.includes('cycles_100'), '100 lifetime cycles should grant cycles_100');
+  console.assert(checked.includes('synergy_all_7'), 'all seven synergy chains active should grant synergy_all_7');
+  console.assert(getAchievementGoldMultiplier({ ...initialState, achievements: [] }) === 1, 'no achievements should mean no gold bonus');
+  console.assert(getAchievementGoldMultiplier({ ...initialState, achievements: Array.from({ length: 20 }, (_, i) => `test-${i}`) }) === 1.04, '20 achievements should give +4% gold');
+  console.assert(getAchievementBonusLines({ ...initialState, achievements: [] }).some((line) => line.includes('次の節目：実績10個')), 'bonus lines should point to the next milestone');
+  console.assert(getAchievementProgress({ ...initialState, jobData: { ...initialState.jobData, fishing: { level: 3, xp: 0, seenMusings: [] } } }, 'job5_fishing')?.current === 3, 'job5_fishing progress should track the job level');
+  const migratedNoLifetime = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedNoLifetime.lifetime?.cycles === 0 && (migratedNoLifetime.lifetime?.discovered || []).length === 0, 'a save without lifetime should gain empty lifetime counters');
+  const retiredWithLifetime = retire({ ...grownState, lifetime: { ...emptyLifetime(), cycles: 100 } }, initialState);
+  console.assert(retiredWithLifetime.lifetime?.cycles === 100, 'retire should keep lifetime counters');
+  const traitPicked = applyMilestoneAchievements(selectTrait({ ...initialState, gold: 0 }, 'craftsman'));
+  console.assert(traitPicked.trait === 'craftsman' && traitPicked.achievements.includes('trait_craftsman'), 'choosing the craftsman trait should grant trait_craftsman');
 }
 

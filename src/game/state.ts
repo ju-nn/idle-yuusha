@@ -78,6 +78,7 @@ export function createInitialState(jobs: Record<string, Job>): GameState {
     prestige: createPrestigeState(),
     trait: null,
     traitChanges: 0,
+    lifetime: { cycles: 0, goldEarned: 0, kills: 0, salesGold: 0, harvests: 0, chestsOpened: 0, musingsRead: 0, maxCombo: 0, discovered: [] },
   };
 }
 
@@ -162,6 +163,21 @@ export function migrateState(parsed: Partial<GameState>, initialState: GameState
   return next;
 }
 
+function normalizeLifetime(raw: Partial<import('../types').LifetimeStats> | undefined): import('../types').LifetimeStats {
+  const num = (value: unknown) => (typeof value === 'number' && value >= 0 ? Math.floor(value) : 0);
+  return {
+    cycles: num(raw?.cycles),
+    goldEarned: num(raw?.goldEarned),
+    kills: num(raw?.kills),
+    salesGold: num(raw?.salesGold),
+    harvests: num(raw?.harvests),
+    chestsOpened: num(raw?.chestsOpened),
+    musingsRead: num(raw?.musingsRead),
+    maxCombo: num(raw?.maxCombo),
+    discovered: Array.from(new Set((raw?.discovered || []).filter((id): id is string => typeof id === 'string'))),
+  };
+}
+
 function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameState): GameState {
   const normalizedItems = Object.fromEntries(Object.entries(parsed.items || {}).map(([key, value]) => [
     key,
@@ -217,6 +233,8 @@ function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameSt
     // 特性: 旧セーブ（trait フィールドなし）は未選択扱い。不正な値は null に倒す。
     trait: isValidTraitId(parsed.trait) ? parsed.trait : null,
     traitChanges: typeof parsed.traitChanges === 'number' && parsed.traitChanges >= 0 ? Math.floor(parsed.traitChanges) : 0,
+    // 通算の歩み: 旧セーブ（未記録）や不正な値は 0・空に倒す。引退・転生でも引き継ぐ。
+    lifetime: normalizeLifetime(parsed.lifetime),
     // 自動休憩の復帰先: 仕事とエリアが実在するものだけ残す。不正・未記録は未設定扱い。
     autoRestReturn: parsed.autoRestReturn && typeof parsed.autoRestReturn.job === 'string' && gameJobs[parsed.autoRestReturn.job]
       ? { job: parsed.autoRestReturn.job, area: typeof parsed.autoRestReturn.area === 'string' ? parsed.autoRestReturn.area : gameJobs[parsed.autoRestReturn.job].areas[0].id }

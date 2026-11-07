@@ -1,7 +1,7 @@
 import { itemKind } from '../data/catalog';
 import type { GameState, PrestigeState } from '../types';
 import { enqueueMusing } from './musings';
-import { addAchievement } from './progression';
+import { addAchievement, applyMilestoneAchievements, emptyLifetime } from './progression';
 
 // プレステージ第1層「引退」。
 // 生活をひと通り回した勇者が区切りを付けて引退すると、歩みが「思い出ポイント」に変わる。
@@ -238,7 +238,7 @@ export function buyPrestigeUpgrade(prev: GameState, upgradeId: string): GameStat
     achievements,
     eventLog,
   };
-  return enqueueMusing(next, {
+  return enqueueMusing(applyMilestoneAchievements(next), {
     id: 'prestige-first-upgrade',
     job: '勇者',
     area: '思い出',
@@ -320,6 +320,7 @@ export function retire(prev: GameState, initialState: GameState): GameState {
     mp: maxMp,
     maxMp,
     achievements,
+    lifetime: prev.lifetime || emptyLifetime(),
     readMusings: prev.readMusings || [],
     seenMusingIds: Array.from(new Set([...(prev.seenMusingIds || []), 'intro_001', retireMusing.id])),
     recentMusingIds: [retireMusing.id, ...(prev.recentMusingIds || [])].slice(0, 10),
@@ -338,7 +339,7 @@ export function retire(prev: GameState, initialState: GameState): GameState {
     lastSavedAt: Date.now(),
     lastCertainMusingAt: Date.now(),
   };
-  return next;
+  return applyMilestoneAchievements(next);
 }
 
 // ---- 転生（第2層）のアクション ----
@@ -363,7 +364,7 @@ export function buyRebirthUpgrade(prev: GameState, upgradeId: string): GameState
     achievements,
     eventLog,
   };
-  return enqueueMusing(next, {
+  return enqueueMusing(applyMilestoneAchievements(next), {
     id: 'rebirth-first-upgrade',
     job: '勇者',
     area: '転生',
@@ -440,6 +441,7 @@ export function rebirth(prev: GameState, initialState: GameState): GameState {
     mp: maxMp,
     maxMp,
     achievements,
+    lifetime: prev.lifetime || emptyLifetime(),
     readMusings: prev.readMusings || [],
     seenMusingIds: Array.from(new Set([...(prev.seenMusingIds || []), 'intro_001', rebirthMusing.id])),
     recentMusingIds: [rebirthMusing.id, ...(prev.recentMusingIds || [])].slice(0, 10),
@@ -458,5 +460,5 @@ export function rebirth(prev: GameState, initialState: GameState): GameState {
     lastSavedAt: Date.now(),
     lastCertainMusingAt: Date.now(),
   };
-  return next;
+  return applyMilestoneAchievements(next);
 }

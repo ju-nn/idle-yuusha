@@ -210,6 +210,8 @@ export type GameState = {
   farming: { plantedAt: number | null; cropId: string | null; readyAt: number | null };
   tutorialStep: string;
   achievements: string[];
+  // 通算の歩み（累計カウンタ）。旧セーブは未記録扱い。
+  lifetime?: LifetimeStats;
   equipmentInventory: EquipmentItem[];
   equipped: Partial<Record<EquipmentSlot, string>>;
   seenEquipmentBaseIds: string[];
@@ -245,4 +247,22 @@ export type GameState = {
 export type Achievement = {
   name: string;
   description: string;
+  // 未解禁のときに図鑑で見せるヒント（条件の言い換え）。無い場合は定型文を表示する。
+  hint?: string;
+  // 図鑑でのグルーピング用。'仕事' | '戦闘' | '収集' | '生活' | '周回' | '実績' | '連鎖'。
+  category?: string;
+};
+
+// 通算の歩み: 実績の節目判定に使う累計カウンタ。引退・転生でも引き継ぐ
+// （周回でリセットされる進行とは別枠）。旧セーブは未記録扱い（すべて 0）。
+export type LifetimeStats = {
+  cycles: number;
+  goldEarned: number;
+  kills: number;
+  salesGold: number;
+  harvests: number;
+  chestsOpened: number;
+  musingsRead: number;
+  maxCombo: number;
+  discovered: string[];
 };

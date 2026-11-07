@@ -3,6 +3,7 @@ import { enqueueMusing } from './musings';
 import { getSynergyEntryCostReductionPct, getSynergySellBonusPct } from './synergy';
 import { getTraitSellBonusPct } from './traits';
 import { getPrestigeChestMultiplier, getRebirthChestLimitBonus } from './prestige';
+import { applyMilestoneAchievements, emptyLifetime } from './progression';
 import { loadUserSettings } from './settings';
 
 export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
@@ -461,12 +462,13 @@ export function openTreasureChest(prev: GameState, uid: string): GameState {
     achievements: equipment.rarity === 'legendary'
       ? Array.from(new Set([...(prev.achievements || []), 'first_chest_open', 'first_equipment', 'first_legendary_equipment']))
       : Array.from(new Set([...(prev.achievements || []), 'first_chest_open', 'first_equipment'])),
+    lifetime: { ...(prev.lifetime || emptyLifetime()), chestsOpened: (prev.lifetime?.chestsOpened || 0) + 1 },
     eventLog: [
       `宝箱開封：${chest.name}から${equipmentText}。${equipment.description}`,
       ...prev.eventLog,
     ].slice(0, 24),
   };
-  return enqueueMusing(maybeAutoEquip(next, equipment), {
+  return enqueueMusing(maybeAutoEquip(applyMilestoneAchievements(next), equipment), {
     id: equipment.rarity === 'legendary' ? `legendary-equipment-${equipment.baseId}` : 'first-open-chest',
     job: '勇者',
     area: '宝箱',

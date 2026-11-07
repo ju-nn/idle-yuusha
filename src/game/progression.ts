@@ -1,9 +1,9 @@
 import { ACHIEVEMENTS, itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import { checkRequirement, describeRequirement, isJobUnlocked } from './requirements';
-import type { Area, GameState, Musing, Requirement, ResourceKey, Upgrade } from '../types';
+import type { Area, GameState, LifetimeStats, Musing, Requirement, ResourceKey, Upgrade } from '../types';
 import { enqueueMusing } from './musings';
-import { getSynergyAdventureFailReduction, getUpgradeGoldCost } from './synergy';
+import { getSynergyAdventureFailReduction, getSynergyChains, getUpgradeGoldCost } from './synergy';
 import { getTraitFailReduction } from './traits';
 
 export { describeUpgradeEffects, formatResourceName, rewardText } from './formatters';
@@ -266,12 +266,216 @@ export function getLifePlan(state: GameState) {
 export function addAchievement(prev: GameState, id: string, logs: string[]) {
   if (!ACHIEVEMENTS[id] || prev.achievements.includes(id)) return prev.achievements;
   logs.unshift(`実績解除：${ACHIEVEMENTS[id].name} — ${ACHIEVEMENTS[id].description}`);
-  let next = [id, ...prev.achievements];
-  if (next.length >= 10 && ACHIEVEMENTS.ten_achievements && !next.includes('ten_achievements')) {
-    logs.unshift(`実績解除：${ACHIEVEMENTS.ten_achievements.name} — ${ACHIEVEMENTS.ten_achievements.description}`);
-    next = ['ten_achievements', ...next];
+  return grantAchievementMilestones([id, ...prev.achievements], logs);
+}
+
+// 実績の節目（コンプリート報酬の区切り）。実績数が区切りに届いたら、その場で
+// 節目実績も付与する。120 は全120個の到達点で、114個の通常実績＋節目5個＝119
+// の状態で最後の1個が入ると、節目が付与されてちょうど120になる。
+const ACHIEVEMENT_MILESTONES = [
+  { at: 10, id: 'ten_achievements' },
+  { at: 25, id: 'achievements_25' },
+  { at: 50, id: 'achievements_50' },
+  { at: 75, id: 'achievements_75' },
+  { at: 100, id: 'achievements_100' },
+  { at: 119, id: 'achievements_120' },
+];
+
+function grantAchievementMilestones(next: string[], logs: string[]): string[] {
+  let out = next;
+  for (const milestone of ACHIEVEMENT_MILESTONES) {
+    if (out.length >= milestone.at && ACHIEVEMENTS[milestone.id] && !out.includes(milestone.id)) {
+      logs.unshift(`実績解除：${ACHIEVEMENTS[milestone.id].name} — ${ACHIEVEMENTS[milestone.id].description}`);
+      out = [milestone.id, ...out];
+    }
   }
-  return next;
+  return out;
+}
+
+// ---- 通算の歩み（lifetime） ----
+
+export function emptyLifetime(): LifetimeStats {
+  return { cycles: 0, goldEarned: 0, kills: 0, salesGold: 0, harvests: 0, chestsOpened: 0, musingsRead: 0, maxCombo: 0, discovered: [] };
+}
+
+function lifetimeOf(state: GameState): LifetimeStats {
+  return state.lifetime || emptyLifetime();
+}
+
+// ---- 実績ボーナス（コンプリート報酬連動） ----
+// 実績10個ごとに金報酬・XPが +2%（120個で +24%）、25個ごとにドロップ確率が +2%
+// （120個で +8%）。派生計算のみで、セーブ形式は変えない。
+export function getAchievementBonusPct(state: GameState): number {
+  return Math.floor((state.achievements || []).length / 10) * 2;
+}
+
+export function getAchievementGoldMultiplier(state: GameState): number {
+  return 1 + getAchievementBonusPct(state) / 100;
+}
+
+export function getAchievementXpMultiplier(state: GameState): number {
+  return 1 + getAchievementBonusPct(state) / 100;
+}
+
+export function getAchievementDropMultiplier(state: GameState): number {
+  return 1 + Math.floor((state.achievements || []).length / 25) * 0.02;
+}
+
+export function getAchievementBonusLines(state: GameState): string[] {
+  const count = (state.achievements || []).length;
+  const lines: string[] = [];
+  const pct = getAchievementBonusPct(state);
+  lines.push(pct > 0
+    ? `実績 ${count}個：金報酬・XP +${pct}%`
+    : `実績 ${count}個：金報酬・XPのボーナスは実績10個から（次は10個で+2%）`);
+  const dropPct = Math.floor(count / 25) * 2;
+  lines.push(dropPct > 0
+    ? `実績 ${count}個：ドロップ確率 +${dropPct}%`
+    : `実績 ${count}個：ドロップ確率のボーナスは実績25個から（次は25個で+2%）`);
+  const nextMilestone = [10, 25, 50, 75, 100, 120].find((at) => count < at);
+  if (nextMilestone) lines.push(`次の節目：実績${nextMilestone}個（あと${nextMilestone - count}個）`);
+  else lines.push('実績コンプリート：120個すべて集めた。');
+  return lines;
+}
+
+// ---- 実績の節目判定（中央チェック） ----
+// 各所の出来事のあとに呼ぶ。条件を満たす実績をまとめて付与する（冪等）。
+// 既存の addAchievement 呼び出しはそのまま残し、ここは累計・横断条件の受け皿にする。
+export function checkMilestoneAchievements(state: GameState, eventLog: string[]): string[] {
+  let achievements = state.achievements || [];
+  const grant = (id: string) => {
+    achievements = addAchievement({ ...state, achievements }, id, eventLog);
+  };
+  const jobData = state.jobData || {};
+  for (const key of Object.keys(jobs)) {
+    const level = jobData[key]?.level || 1;
+    if (level >= 5) grant(`job5_${key}`);
+    if (level >= 10) grant(`job10_${key}`);
+  }
+  const jobKeys = Object.keys(jobs);
+  if (jobKeys.every((key) => (jobData[key]?.level || 1) >= 5)) grant('all_jobs_lv5');
+  if (jobKeys.every((key) => (jobData[key]?.level || 1) >= 10)) grant('all_jobs_lv10');
+  const lt = lifetimeOf(state);
+  if (lt.cycles >= 100) grant('cycles_100');
+  if (lt.cycles >= 1000) grant('cycles_1000');
+  if (lt.cycles >= 5000) grant('cycles_5000');
+  if (lt.goldEarned >= 10000) grant('gold_10k');
+  if (lt.goldEarned >= 100000) grant('gold_100k');
+  if (lt.goldEarned >= 1000000) grant('gold_1m');
+  if (lt.kills >= 10) grant('kills_10');
+  if (lt.kills >= 100) grant('kills_100');
+  if (lt.kills >= 300) grant('kills_300');
+  const defeated = state.defeatedMonsters || [];
+  if (defeated.includes('throne_mimic')) grant('boss_throne_mimic');
+  if (defeated.includes('retired_hero')) grant('boss_retired_hero');
+  if (defeated.includes('silent_demon_king')) grant('boss_silent_demon_king');
+  if (defeated.includes('household_demon_king')) grant('boss_household_demon_king');
+  if ((state.bossStreak || 0) >= 5) grant('boss_streak_5');
+  if (defeated.length >= 20) grant('monsters_20');
+  if (defeated.length >= 44) grant('monsters_44');
+  if ((lt.discovered || []).length >= 50) grant('discovered_50');
+  if ((lt.discovered || []).length >= 100) grant('discovered_100');
+  const bases = state.seenEquipmentBaseIds || [];
+  if (bases.length >= 30) grant('equip_bases_30');
+  if (bases.length >= 66) grant('equip_bases_66');
+  const legendaryCount = (state.equipmentInventory || []).filter((item) => item.rarity === 'legendary').length;
+  if (legendaryCount >= 3) grant('legendary_3');
+  if (lt.chestsOpened >= 10) grant('chests_10');
+  if (lt.chestsOpened >= 50) grant('chests_50');
+  if (lt.salesGold >= 10000) grant('sales_10k');
+  if (lt.salesGold >= 100000) grant('sales_100k');
+  if (lt.harvests >= 10) grant('harvests_10');
+  if (lt.harvests >= 100) grant('harvests_100');
+  if (lt.musingsRead >= 25) grant('musings_25');
+  if (lt.musingsRead >= 50) grant('musings_50');
+  if ((state.dailyBonus?.streak || 0) >= 7) grant('streak_7');
+  if ((state.dailyBonus?.streak || 0) >= 30) grant('streak_30');
+  const prestige = state.prestige;
+  if (prestige) {
+    if (prestige.retireCount >= 5) grant('retire_5');
+    if (prestige.retireCount >= 10) grant('retire_10');
+    if (prestige.rebirthCount >= 5) grant('rebirth_5');
+    const prestigeOwned = Object.values(prestige.upgrades || {}).filter((stage) => (stage || 0) > 0).length;
+    if (prestigeOwned >= 8) grant('prestige_upgrades_8');
+    const rebirthOwned = Object.values(prestige.rebirthUpgrades || {}).filter((stage) => (stage || 0) > 0).length;
+    if (rebirthOwned >= 5) grant('rebirth_upgrades_5');
+    if (prestige.totalEarned >= 395) grant('memory_395');
+  }
+  if (state.trait) grant(`trait_${state.trait}`);
+  if ((state.traitChanges || 0) >= 1) grant('trait_changed');
+  if (getSynergyChains(state).every((chain) => chain.active !== '')) grant('synergy_all_7');
+  // 直接セットで付与された実績（宝箱開封など）が節目を越えていた場合の追いつき。
+  achievements = grantAchievementMilestones(achievements, eventLog);
+  return achievements;
+}
+
+// 状態全体に節目チェックを適用する。何も変わらなければ同じ state を返す。
+export function applyMilestoneAchievements(prev: GameState): GameState {
+  const eventLog = [...(prev.eventLog || [])];
+  const achievements = checkMilestoneAchievements(prev, eventLog);
+  if (achievements === prev.achievements && eventLog.length === (prev.eventLog || []).length) return prev;
+  return { ...prev, achievements, eventLog: eventLog.slice(0, 24) };
+}
+
+// 図鑑での進捗表示用。累計・回数系の実績の「現在/目標」を返す。
+export function getAchievementProgress(state: GameState, id: string): { current: number; target: number } | null {
+  const jobData = state.jobData || {};
+  const lt = lifetimeOf(state);
+  const jobMatch = id.match(/^job(5|10)_([a-z_]+)$/);
+  if (jobMatch) return { current: jobData[jobMatch[2]]?.level || 1, target: Number(jobMatch[1]) };
+  const table: Record<string, { current: number; target: number }> = {
+    all_jobs_lv5: { current: Object.keys(jobs).filter((key) => (jobData[key]?.level || 1) >= 5).length, target: Object.keys(jobs).length },
+    all_jobs_lv10: { current: Object.keys(jobs).filter((key) => (jobData[key]?.level || 1) >= 10).length, target: Object.keys(jobs).length },
+    cycles_100: { current: lt.cycles, target: 100 },
+    cycles_1000: { current: lt.cycles, target: 1000 },
+    cycles_5000: { current: lt.cycles, target: 5000 },
+    gold_10k: { current: lt.goldEarned, target: 10000 },
+    gold_100k: { current: lt.goldEarned, target: 100000 },
+    gold_1m: { current: lt.goldEarned, target: 1000000 },
+    kills_10: { current: lt.kills, target: 10 },
+    kills_100: { current: lt.kills, target: 100 },
+    kills_300: { current: lt.kills, target: 300 },
+    boss_throne_mimic: { current: (state.defeatedMonsters || []).includes('throne_mimic') ? 1 : 0, target: 1 },
+    boss_retired_hero: { current: (state.defeatedMonsters || []).includes('retired_hero') ? 1 : 0, target: 1 },
+    boss_silent_demon_king: { current: (state.defeatedMonsters || []).includes('silent_demon_king') ? 1 : 0, target: 1 },
+    boss_household_demon_king: { current: (state.defeatedMonsters || []).includes('household_demon_king') ? 1 : 0, target: 1 },
+    boss_streak_5: { current: state.bossStreak || 0, target: 5 },
+    monsters_20: { current: (state.defeatedMonsters || []).length, target: 20 },
+    monsters_44: { current: (state.defeatedMonsters || []).length, target: 44 },
+    discovered_50: { current: (lt.discovered || []).length, target: 50 },
+    discovered_100: { current: (lt.discovered || []).length, target: 100 },
+    equip_bases_30: { current: (state.seenEquipmentBaseIds || []).length, target: 30 },
+    equip_bases_66: { current: (state.seenEquipmentBaseIds || []).length, target: 66 },
+    legendary_3: { current: (state.equipmentInventory || []).filter((item) => item.rarity === 'legendary').length, target: 3 },
+    chests_10: { current: lt.chestsOpened, target: 10 },
+    chests_50: { current: lt.chestsOpened, target: 50 },
+    sales_10k: { current: lt.salesGold, target: 10000 },
+    sales_100k: { current: lt.salesGold, target: 100000 },
+    harvests_10: { current: lt.harvests, target: 10 },
+    harvests_100: { current: lt.harvests, target: 100 },
+    musings_25: { current: lt.musingsRead, target: 25 },
+    musings_50: { current: lt.musingsRead, target: 50 },
+    streak_7: { current: state.dailyBonus?.streak || 0, target: 7 },
+    streak_30: { current: state.dailyBonus?.streak || 0, target: 30 },
+    retire_5: { current: state.prestige?.retireCount || 0, target: 5 },
+    retire_10: { current: state.prestige?.retireCount || 0, target: 10 },
+    rebirth_5: { current: state.prestige?.rebirthCount || 0, target: 5 },
+    prestige_upgrades_8: { current: Object.values(state.prestige?.upgrades || {}).filter((stage) => (stage || 0) > 0).length, target: 8 },
+    rebirth_upgrades_5: { current: Object.values(state.prestige?.rebirthUpgrades || {}).filter((stage) => (stage || 0) > 0).length, target: 5 },
+    memory_395: { current: state.prestige?.totalEarned || 0, target: 395 },
+    trait_craftsman: { current: state.trait === 'craftsman' ? 1 : 0, target: 1 },
+    trait_adventurer: { current: state.trait === 'adventurer' ? 1 : 0, target: 1 },
+    trait_merchant: { current: state.trait === 'merchant' ? 1 : 0, target: 1 },
+    trait_easygoing: { current: state.trait === 'easygoing' ? 1 : 0, target: 1 },
+    trait_changed: { current: state.traitChanges || 0, target: 1 },
+    achievements_25: { current: (state.achievements || []).length, target: 25 },
+    achievements_50: { current: (state.achievements || []).length, target: 50 },
+    achievements_75: { current: (state.achievements || []).length, target: 75 },
+    achievements_100: { current: (state.achievements || []).length, target: 100 },
+    achievements_120: { current: (state.achievements || []).length, target: 120 },
+    synergy_all_7: { current: getSynergyChains(state).filter((chain) => chain.active !== '').length, target: 7 },
+  };
+  return table[id] || null;
 }
 
 function unlockedJobKeys(state: GameState) {

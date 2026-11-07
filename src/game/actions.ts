@@ -2,7 +2,7 @@ import { jobs } from '../data/gameData';
 import type { GameState, ResourceKey, Upgrade } from '../types';
 import { rewardText } from './formatters';
 import { enqueueMusing } from './musings';
-import { addAchievement, addItems, announceJobUnlocks } from './progression';
+import { addAchievement, addItems, announceJobUnlocks, applyMilestoneAchievements, emptyLifetime } from './progression';
 import { isAreaUnlocked, isJobUnlocked } from './requirements';
 import { CROPS, getCropRewards, type CropId } from './farming';
 import { autoSellGainedItems, autoSellLogText } from './automation';
@@ -49,7 +49,7 @@ export function claimDailyBonus(prev: GameState): GameState {
     achievements,
     eventLog,
   };
-  return enqueueMusing(next, {
+  return enqueueMusing(applyMilestoneAchievements(next), {
     id: `daily-bonus-${today}`,
     job: '勇者',
     area: '今日の生活',
@@ -73,7 +73,9 @@ export function advanceMusing(prev: GameState): GameState {
   const readEntry = [{ ...displayed, readAt, claimed: true }];
   const eventLog = prev.eventLog;
   const achievements = displayed.id === 'intro_001' ? addAchievement(prev, 'first_musing', [...eventLog]) : prev.achievements;
-  return {
+  const prevLifetime = prev.lifetime || emptyLifetime();
+  const nextLifetime = { ...prevLifetime, musingsRead: prevLifetime.musingsRead + 1 };
+  return applyMilestoneAchievements({
     ...prev,
     currentMusing: currentUnread
       ? (next || { ...displayed, readAt, claimed: true })
@@ -82,8 +84,9 @@ export function advanceMusing(prev: GameState): GameState {
     readMusings: [...readEntry, ...(prev.readMusings || [])].slice(0, 80),
     tutorialStep: displayed.id === 'intro_001' ? 'select_fishing' : prev.tutorialStep,
     achievements,
+    lifetime: nextLifetime,
     eventLog,
-  };
+  });
 }
 
 export function selectJob(prev: GameState, key: string): GameState {
@@ -200,9 +203,18 @@ export function harvestCrop(prev: GameState): GameState {
     items: harvestItems,
     combo: { ...(prev.combo || { streak: 0, boons: {} }), boons: { ...(prev.combo?.boons || {}), home_meal: Math.max(prev.combo?.boons?.home_meal || 0, 5) } },
     achievements,
+    lifetime: {
+      ...(prev.lifetime || emptyLifetime()),
+      harvests: (prev.lifetime?.harvests || 0) + 1,
+      salesGold: (prev.lifetime?.salesGold || 0) + harvestGold,
+      discovered: Array.from(new Set([
+        ...((prev.lifetime || emptyLifetime()).discovered || []),
+        ...Object.keys(harvestItems).filter((id) => (harvestItems[id] || 0) > 0),
+      ])),
+    },
     eventLog,
   };
-  return announceJobUnlocks(prev, enqueueMusing(next, musing, { prepend: true }).state);
+  return announceJobUnlocks(prev, enqueueMusing(applyMilestoneAchievements(next), musing, { prepend: true }).state);
 }
 
 export const harvestDaikon = harvestCrop;

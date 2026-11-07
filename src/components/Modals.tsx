@@ -7,7 +7,7 @@ import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipment
 import { formatResourceName } from '../game/formatters';
 import { MUSING_LABELS } from '../game/musings';
 import { canRebirth, canRetire, getNextPrestigeCost, getNextRebirthCost, getPrestigeScore, getPrestigeSpeedMultiplier, getPrestigeStage, getRebirthPoints, getRebirthStage, getRetirementPoints, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, REBIRTH_POINT_NAME, REBIRTH_REQUIRED_RETIREMENTS, REBIRTH_UPGRADES, RETIRE_REQUIRED_SCORE } from '../game/prestige';
-import { getFailChance, xpToNext } from '../game/progression';
+import { getAchievementBonusLines, getAchievementProgress, getFailChance, xpToNext } from '../game/progression';
 import { getSynergyChains } from '../game/synergy';
 import { isJobUnlocked, getActiveArea } from '../game/requirements';
 import { GAME_SPEED_DIVISOR, countOwnedUpgrades, getEffectiveDurationTicksForState, getWorkSpeedMultiplier } from '../game/timing';
@@ -129,6 +129,13 @@ export function StatsModal({ state, onClose, onSelectTrait }: { state: GameState
       <p className="sub">特性は1つだけ。変えたくなったら、いつでもここから変えられる。生き方の模様替えは、意外と高い。</p>
     </div>
     <div>
+      <div className="sectionHead"><h3>実績ボーナス</h3></div>
+      <div className="statsRows">
+        {getAchievementBonusLines(state).map((line) => <div className="statsRow" key={line}><span>実績</span><b>{line}</b></div>)}
+      </div>
+      <p className="sub">実績を集めるほど、仕事の金報酬・XP・ドロップ確率が少しずつ上がる。図鑑の「実績」タブで、未解禁のヒントと進み具合が見える。</p>
+    </div>
+    <div>
       <div className="sectionHead"><h3>全体と上限</h3></div>
       <div className="collectionSummary statsSummary">
         <SummaryPill label="所持金" value={`${state.gold}G`} />
@@ -191,7 +198,7 @@ export function CollectionModal({ state, musings, achievements, onClose }: { sta
     { id: 'musings', label: 'ぼやき' },
     { id: 'achievements', label: '実績' },
   ] as const;
-  return <Modal title="図鑑" description="発見物・装備・討伐・ぼやき・実績をまとめて確認する。遊び方は「遊び方」タブで。" onClose={onClose} wide><CollectionSummary state={state} musings={musings} achievements={achievements} /><div className="bookTabs">{tabs.map((tab) => <button key={tab.id} className={filter === tab.id ? 'active' : ''} onClick={() => setFilter(tab.id)}>{tab.label}</button>)}</div>{filter === 'guide' ? <div className="bookGrid single"><HowToGuide /></div> : <div className={`bookGrid ${filter !== 'all' ? 'single' : ''}`}>{(filter === 'all' || filter === 'items') && <DiscoveryBook state={state} />}{(filter === 'all' || filter === 'equipment') && <EquipmentBook state={state} />}{(filter === 'all' || filter === 'monsters') && <BestiaryBook state={state} />}{(filter === 'all' || filter === 'musings') && <MusingBook musings={musings} />}{(filter === 'all' || filter === 'achievements') && <AchievementBook achievements={achievements} />}</div>}</Modal>;
+  return <Modal title="図鑑" description="発見物・装備・討伐・ぼやき・実績をまとめて確認する。遊び方は「遊び方」タブで。" onClose={onClose} wide><CollectionSummary state={state} musings={musings} achievements={achievements} /><div className="bookTabs">{tabs.map((tab) => <button key={tab.id} className={filter === tab.id ? 'active' : ''} onClick={() => setFilter(tab.id)}>{tab.label}</button>)}</div>{filter === 'guide' ? <div className="bookGrid single"><HowToGuide /></div> : <div className={`bookGrid ${filter !== 'all' ? 'single' : ''}`}>{(filter === 'all' || filter === 'items') && <DiscoveryBook state={state} />}{(filter === 'all' || filter === 'equipment') && <EquipmentBook state={state} />}{(filter === 'all' || filter === 'monsters') && <BestiaryBook state={state} />}{(filter === 'all' || filter === 'musings') && <MusingBook musings={musings} />}{(filter === 'all' || filter === 'achievements') && <AchievementBook state={state} achievements={achievements} />}</div>}</Modal>;
 }
 
 function HowToGuide() {
@@ -390,6 +397,19 @@ function MusingBook({ musings }: { musings: Musing[] }) {
   return <Card title="ぼやき図鑑"><p className="sub">読んだぼやきの本文と種類が残る。</p><div className="musingFilters"><button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>全部 <span>{musings.length}</span></button>{Object.entries(MUSING_LABELS).map(([key, label]) => <button key={key} className={filter === key ? 'active' : ''} onClick={() => setFilter(key as keyof typeof MUSING_LABELS)}>{label} <span>{counts[key] || 0}</span></button>)}</div>{filtered.length === 0 ? <p className="sub">この種類の記録はまだない。</p> : filtered.map((m, i) => <div className="musingArchive" key={`${m.text}-${i}`}><small>{m.eventType ? (MUSING_LABELS[m.eventType] || '出来事') : '出来事'} / {m.job} / {m.area}</small><p>{m.text}</p></div>)}</Card>;
 }
 
-function AchievementBook({ achievements }: { achievements: string[] }) {
-  return <Card title="実績"><p className="sub">ユーモア寄りの節目。性能というより、勇者の人生ログ。</p>{Object.entries(ACHIEVEMENTS).map(([id, a]) => { const unlocked = achievements.includes(id); return <div className={`achievement ${unlocked ? 'unlocked' : ''}`} key={id}><b>{unlocked ? a.name : '？？？'}</b><p>{unlocked ? a.description : 'まだその瞬間は来ていない。来ないなら来ないで平和。'}</p></div>; })}</Card>;
+const ACHIEVEMENT_CATEGORY_ORDER = ['仕事', '戦闘', '収集', '生活', '周回', '連鎖', '実績'];
+
+function AchievementBook({ state, achievements }: { state: GameState; achievements: string[] }) {
+  const groups = ACHIEVEMENT_CATEGORY_ORDER.map((category) => ({
+    category,
+    entries: Object.entries(ACHIEVEMENTS).filter(([, a]) => (a.category || '実績') === category),
+  })).filter((group) => group.entries.length > 0);
+  return <Card title="実績"><p className="sub">ユーモア寄りの節目。集めるほど金報酬・XP・ドロップ確率が上がる。未解禁はヒントと進み具合で、次に目指すものが見える。</p>{groups.map((group) => {
+    const unlockedCount = group.entries.filter(([id]) => achievements.includes(id)).length;
+    return <div key={group.category}><div className="sectionHead"><h3>{group.category}（{unlockedCount}/{group.entries.length}）</h3></div>{group.entries.map(([id, a]) => {
+      const unlocked = achievements.includes(id);
+      const progress = unlocked ? null : getAchievementProgress(state, id);
+      return <div className={`achievement ${unlocked ? 'unlocked' : ''}`} key={id}><b>{unlocked ? a.name : '？？？'}</b><p>{unlocked ? a.description : (a.hint ? `ヒント：${a.hint}` : 'まだその瞬間は来ていない。来ないなら来ないで平和。')}</p>{progress && <p className="sub">進捗：{Math.min(progress.current, progress.target)}/{progress.target}</p>}</div>;
+    })}</div>;
+  })}</Card>;
 }

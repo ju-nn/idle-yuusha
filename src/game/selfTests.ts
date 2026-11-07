@@ -1,5 +1,7 @@
 import { ACHIEVEMENTS, itemDesc, itemKind, itemName } from '../data/catalog';
 import { jobs, upgrades } from '../data/gameData';
+import { AREA_ART } from '../assets/areaArt';
+import { SCENE_ART } from '../assets/sceneArtAll';
 import { simulateMonsterBattle } from './combat';
 import { getJobDropItems } from './collection';
 import { getAdventureEntryCost } from './equipment';
@@ -423,6 +425,10 @@ export function runSelfTests() {
   const rebirthCorridor = jobs.adventure.areas.find((area) => area.id === 'rebirth_corridor');
   console.assert(rebirthCorridor && checkRequirement(rebirthCorridor.unlock, initialState) === false && checkRequirement(rebirthCorridor.unlock, rebirthedOnce) === true, 'rebirth corridor should unlock after one rebirth');
   console.assert(!isJobUnlocked('rebirth_guide', initialState) && isJobUnlocked('rebirth_guide', rebirthedOnce), 'rebirth guide should be locked fresh and unlocked after rebirth');
+  // エリア専用イラスト（2026-11-07）：冒険エリアのうち4種は専用絵を持ち、残り3種は仕事絵＋色調変化にフォールバックする。
+  console.assert(Object.keys(AREA_ART).length === 4 && ['forest', 'mountain', 'cave', 'throne_room'].every((id) => AREA_ART[id]?.startsWith('data:image/webp;base64,')), 'four adventure areas should have dedicated art');
+  console.assert(jobs.adventure.areas.filter((area) => AREA_ART[area.id]).length === 4, 'dedicated area art should cover exactly four adventure areas');
+  console.assert(jobs.adventure.areas.every((area) => AREA_ART[area.id] || SCENE_ART.adventure), 'every adventure area should resolve to area art or the adventure job art');
   // 解禁間隔の再設計（2026-11-07）：仕事の解禁は Lv3 までに収め、整備は Lv2 → Lv4 → Lv6 の2刻みにする。
   console.assert(Object.values(jobs).every((job) => job.unlock.type !== 'jobLevel' || (job.unlock.level || 0) <= 3), 'every job gate should be at most level 3');
   console.assert(Object.entries(jobs).filter(([key]) => key !== 'adventure').every(([, job]) => job.upgrades.some((upgrade) => (upgrade.level || 0) === 6)), 'every non-adventure job should have a level 6 upgrade');

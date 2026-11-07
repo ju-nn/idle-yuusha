@@ -2244,7 +2244,10 @@ button.primary:active:not(:disabled) {
   object-position: center 68%;
   user-select: none;
   pointer-events: none;
+  /* シーン切り替えの軽いフェード（CSSのみ。HeroScene の key 変更で再生される） */
+  animation: sceneFade .45s ease;
 }
+@keyframes sceneFade { from { opacity: 0; } to { opacity: 1; } }
 .heroScene.job-woodcutting .sceneArt, .heroScene.job-adventure .sceneArt { object-position: center 56%; }
 
 /* --- HP/MP ミニバー（増減トランジション） --- */

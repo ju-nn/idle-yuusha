@@ -2,6 +2,7 @@ import type { GameState, Job, Musing, OfflineTier } from '../types';
 import { itemKind } from '../data/catalog';
 import { jobs as gameJobs } from '../data/gameData';
 import { createPrestigeState, getPrestigeOfflineMultiplier, getRebirthOfflineCapHours, normalizePrestigeState } from './prestige';
+import { xpToNext } from './progression';
 import { getTraitOfflineMultiplier } from './traits';
 import { checkRequirement } from './requirements';
 import { TICK_INTERVAL_MS } from './timing';
@@ -305,6 +306,35 @@ function formatOfflineElapsed(ms: number): string {
   return minutes > 0 ? `${minutes}分${seconds}秒` : `${seconds}秒`;
 }
 
+// 仕事の通算XP（レベルアップで消費された分も含む）。不在前後で比べると
+// 「不在中に積もった XP」と「上がったレベル」がそのまま出る。
+export function totalJobXp(state: GameState): number {
+  return Object.values(state.jobData || {}).reduce((sum, data) => {
+    const level = data.level || 1;
+    let spent = 0;
+    for (let lv = 1; lv < level; lv += 1) spent += xpToNext(lv);
+    return sum + spent + (data.xp || 0);
+  }, 0);
+}
+
+// 帰還サマリの詳細化（ロードマップ11「オフライン深化」）。
+// 不在前後の state を比べ、不在中に積もった XP・レベルアップ・討伐・新発見を返す。
+// 純粋関数なので selfTests から直接検証できる。
+export function computeOfflineGains(before: GameState, after: GameState): {
+  xpGain: number;
+  levelUps: string[];
+  killsGain: number;
+  discoveredGain: number;
+} {
+  const xpGain = Math.max(0, totalJobXp(after) - totalJobXp(before));
+  const levelUps = Object.entries(after.jobData || {})
+    .filter(([key, data]) => (data.level || 1) > ((before.jobData?.[key]?.level) || 1))
+    .map(([key, data]) => `${gameJobs[key]?.name || key}Lv${data.level}`);
+  const killsGain = Math.max(0, (after.lifetime?.kills || 0) - (before.lifetime?.kills || 0));
+  const discoveredGain = Math.max(0, (after.lifetime?.discovered?.length || 0) - (before.lifetime?.discovered?.length || 0));
+  return { xpGain, levelUps, killsGain, discoveredGain };
+}
+
 function applyOfflineProgress(state: GameState): GameState {
   const now = Date.now();
   const savedAt = state.lastSavedAt || now;
@@ -319,6 +349,7 @@ function applyOfflineProgress(state: GameState): GameState {
 
   const next = runOfflineTicks(state, offlineTicks);
   const capped = boostedTicks > offlineMaxTicks;
+  const gains = computeOfflineGains(state, next);
 
   // 表示する経過時間は、実際に進行へ反映した（計算対象の）時間に合わせる
   const elapsedText = formatOfflineElapsed(offlineTicks * TICK_INTERVAL_MS);
@@ -340,6 +371,10 @@ function applyOfflineProgress(state: GameState): GameState {
       cycles: offlineTicks,
       tier: getOfflineTier(elapsedMs),
       capped,
+      xpGain: gains.xpGain,
+      levelUps: gains.levelUps,
+      killsGain: gains.killsGain,
+      discoveredGain: gains.discoveredGain,
     },
     feedbackEvents: [],
     eventLog: [

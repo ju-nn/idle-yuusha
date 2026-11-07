@@ -200,7 +200,11 @@ function OfflineReturnCard({ state, onClose }: { state: GameState; onClose: () =
   const resources = Object.entries(summary.resourceGains || {}).filter(([, value]) => value > 0);
   const items = Object.entries(summary.itemGains || {}).filter(([, value]) => value > 0).slice(0, 5);
   const chestGain = summary.chestGain || 0;
-  const hasGain = summary.goldGain > 0 || resources.length > 0 || items.length > 0 || chestGain > 0;
+  const xpGain = summary.xpGain || 0;
+  const levelUps = summary.levelUps || [];
+  const killsGain = summary.killsGain || 0;
+  const discoveredGain = summary.discoveredGain || 0;
+  const hasGain = summary.goldGain > 0 || resources.length > 0 || items.length > 0 || chestGain > 0 || xpGain > 0 || levelUps.length > 0 || killsGain > 0 || discoveredGain > 0;
   const tier = summary.tier || 'short';
   const capHours = getRebirthOfflineCapHours(state);
   const capText = capHours % 24 === 0 ? `${capHours / 24}日ぶん` : `${capHours}時間ぶん`;
@@ -216,7 +220,7 @@ function OfflineReturnCard({ state, onClose }: { state: GameState; onClose: () =
     overnight: hasGain ? '一晩ぶん、勇者の生活は静かに進んでいました。起きたら成果が待っている、悪くない朝です。' : '一晩ぶん、大きな収穫はないけれど、時間は静かに味方に回っていました。',
     days: hasGain ? '数日ぶんの時間が、ちゃんと成果になって残っています。焦らなくても進む。それが形になった帰還です。' : '数日ぶん、大きな収穫はないけれど、時間はちゃんと味方に回っていました。',
   }[tier];
-  return <div className={`returnBanner tier-${tier}`}><div><small>{tierLabel}</small><b>{summary.elapsedText}ぶん生活が進みました</b><p>{tierMessage}</p><div className="returnGains">{summary.goldGain > 0 && <span>+{summary.goldGain}G</span>}{resources.map(([key, value]) => <span key={key}>+{value}{formatResourceName(key)}</span>)}{items.map(([key, value]) => <span key={key}>+{value}{itemName(key)}</span>)}{chestGain > 0 && <span>宝箱+{chestGain}</span>}</div>{summary.capped && <p className="returnCapped">進行の計算は{capText}までです。それより前の時間は、勇者の記憶の中にだけ残っています。</p>}</div><button onClick={onClose}>確認</button></div>;
+  return <div className={`returnBanner tier-${tier}`}><div><small>{tierLabel}</small><b>{summary.elapsedText}ぶん生活が進みました</b><p>{tierMessage}</p><div className="returnGains">{summary.goldGain > 0 && <span>+{summary.goldGain}G</span>}{resources.map(([key, value]) => <span key={key}>+{value}{formatResourceName(key)}</span>)}{items.map(([key, value]) => <span key={key}>+{value}{itemName(key)}</span>)}{chestGain > 0 && <span>宝箱+{chestGain}</span>}{xpGain > 0 && <span>XP+{xpGain}</span>}{killsGain > 0 && <span>討伐+{killsGain}</span>}{discoveredGain > 0 && <span>新発見+{discoveredGain}種</span>}</div>{levelUps.length > 0 && <p className="returnLevelUps">レベルアップ：{levelUps.join('・')}</p>}{summary.capped && <p className="returnCapped">進行の計算は{capText}までです。それより前の時間は、勇者の記憶の中にだけ残っています。</p>}</div><button onClick={onClose}>確認</button></div>;
 }
 
 export default function App() {

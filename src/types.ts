@@ -209,6 +209,12 @@ export type GameState = {
     cycles: number;
     tier?: OfflineTier;
     capped?: boolean;
+    // 帰還サマリの詳細化（ロードマップ11「オフライン深化」）：
+    // 不在中に積もった XP・レベルアップ・討伐・新発見も帰還カードに載せる。
+    xpGain?: number;
+    levelUps?: string[];
+    killsGain?: number;
+    discoveredGain?: number;
   } | null;
   combo?: {
     lastJob?: string;

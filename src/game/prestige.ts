@@ -33,7 +33,7 @@ export const PRESTIGE_UPGRADES: PrestigeUpgradeDef[] = [
   { id: 'memory_gold', name: '小銭の勘', description: '稼ぎ方の勘が残っている。同じ作業でも取りこぼしが減る。', maxStage: 5, costs: [4, 7, 11, 16, 22], effectLabel: '収入（G）', perStage: 10 },
   { id: 'memory_xp', name: '身体の記憶', description: '一度覚えた動きは忘れない。仕事の飲み込みが早い。', maxStage: 5, costs: [3, 6, 10, 15, 21], effectLabel: '仕事XP', perStage: 10 },
   { id: 'memory_vitality', name: '基礎体力の記憶', description: '前の人生で鍛えた分、最初から少し頑丈。', maxStage: 5, costs: [3, 5, 8, 12, 17], effectLabel: '最大HP・最大MP', perStage: 10 },
-  { id: 'memory_offline', name: '寝ている間の勘', description: '離れている間も、生活の回し方だけは身体が覚えている。', maxStage: 4, costs: [5, 9, 14, 20], effectLabel: 'オフライン効率', perStage: 15 },
+  { id: 'memory_offline', name: '寝ている間の勘', description: '離れている間も、生活の回し方だけは身体が覚えている。', maxStage: 6, costs: [5, 9, 14, 20, 27, 35], effectLabel: 'オフライン効率', perStage: 15 },
   { id: 'memory_musing', name: 'ぼやきの余韻', description: '前の人生のぼやきが、今の勇者を少しだけ助ける。', maxStage: 4, costs: [3, 6, 10, 15], effectLabel: 'ぼやき報酬', perStage: 25 },
   { id: 'memory_chest', name: '宝箱の嗅覚', description: '宝箱がありそうな場所に、なんとなく足が向く。', maxStage: 5, costs: [4, 7, 11, 16, 22], effectLabel: '宝箱ドロップ率', perStage: 10 },
   { id: 'memory_start_gold', name: 'へそくりの記憶', description: '隠し場所だけは忘れない。次の人生の元手になる。', maxStage: 5, costs: [2, 4, 6, 9, 12], effectLabel: '引退後の初期所持金', perStage: 100 },
@@ -48,7 +48,7 @@ export const REBIRTH_UPGRADES: PrestigeUpgradeDef[] = [
   { id: 'rebirth_gold', name: '転生の金運', description: '稼ぎ方の勘が、人生を越えて残っている。同じ作業でも取りこぼしがさらに減る。', maxStage: 5, costs: [3, 6, 9, 13, 18], effectLabel: '収入（G）', perStage: 12 },
   { id: 'rebirth_memory', name: '転生の記憶力', description: '歩みを思い出に変える手際まで覚えている。引退でもらえる思い出ポイントが増える。', maxStage: 4, costs: [4, 7, 11, 16], effectLabel: '思い出ポイント獲得', perStage: 25 },
   { id: 'rebirth_chest', name: '転生の宝箱運', description: '宝箱がありそうな場所への嗅覚が、人生を越えて鋭くなる。宝箱が増えて、見つけやすくなる。', maxStage: 4, costs: [3, 6, 10, 15], effectLabel: '宝箱上限・ドロップ率', perStage: 10 },
-  { id: 'rebirth_offline', name: '転生の余裕', description: '離れている間も生活が回る感覚を、身体が覚えている。不在中の進行の上限が延びる。', maxStage: 3, costs: [5, 9, 14], effectLabel: 'オフライン上限', perStage: 12 },
+  { id: 'rebirth_offline', name: '転生の余裕', description: '離れている間も生活が回る感覚を、身体が覚えている。不在中の進行の上限が延びる。', maxStage: 4, costs: [5, 9, 14, 20], effectLabel: 'オフライン上限', perStage: 12 },
 ];
 
 export function createPrestigeState(): PrestigeState {
@@ -184,6 +184,7 @@ export function getRebirthChestLimitBonus(state: GameState): number {
 }
 
 // オフライン進行の上限（時間）。基本は72時間（3日）で、転生の余裕が +12時間/段階。
+// 最大は 72 + 12×4 = 120時間（5日）。
 export function getRebirthOfflineCapHours(state: GameState): number {
   return 72 + getRebirthStage(state, 'rebirth_offline') * 12;
 }

@@ -82,6 +82,48 @@ export function getCurrentSeason(now: Date | number = new Date()): SeasonInfo {
   return { id, ...def, endDate, daysLeft, year, month, seasonYear };
 }
 
+// 季節カレンダー（ロードマップ7の残り「長期の季節カレンダー表示」）。
+// 1年を4季節に分け、それぞれの期間・イベント・限定の品とお守りを一覧にする。
+// 今の季節だけ isCurrent と残り日数が付く。月は重なりなく1〜12月を覆う。
+export type SeasonCalendarEntry = {
+  id: SeasonId;
+  name: string;
+  eventName: string;
+  description: string;
+  monthsLabel: string;
+  itemId: string;
+  charmBaseId: string;
+  isCurrent: boolean;
+  daysLeft: number;
+};
+
+const SEASON_MONTH_LABELS: Record<SeasonId, string> = {
+  spring: '3〜5月',
+  summer: '6〜8月',
+  autumn: '9〜11月',
+  winter: '12〜2月',
+};
+
+const SEASON_ORDER: SeasonId[] = ['spring', 'summer', 'autumn', 'winter'];
+
+export function getSeasonCalendar(now: Date | number = new Date()): SeasonCalendarEntry[] {
+  const current = getCurrentSeason(now);
+  return SEASON_ORDER.map((id) => {
+    const def = SEASON_DEFS[id];
+    return {
+      id,
+      name: def.name,
+      eventName: def.eventName,
+      description: def.description,
+      monthsLabel: SEASON_MONTH_LABELS[id],
+      itemId: def.itemId,
+      charmBaseId: def.charmBaseId,
+      isCurrent: current.id === id,
+      daysLeft: current.id === id ? current.daysLeft : 0,
+    };
+  });
+}
+
 export const SEASONAL_ITEM_IDS = Object.values(SEASON_DEFS).map((def) => def.itemId);
 
 export const SEASONAL_CHARM_BASE_IDS = Object.values(SEASON_DEFS).map((def) => def.charmBaseId);

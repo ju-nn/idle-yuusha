@@ -10,7 +10,7 @@ import { addAchievement, addItems, applyMilestoneAchievements, checkMilestoneAch
 import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } from './requirements';
 import { xpToNext } from './progression';
 import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
-import { buyPrestigeUpgrade, buyRebirthUpgrade, canRebirth, canRetire, createPrestigeState, getPrestigeScore, getRebirthChestLimitBonus, getRebirthOfflineCapHours, getRebirthPoints, getRebirthSpeedMultiplier, getRetirementPoints, rebirth, retire } from './prestige';
+import { buyPrestigeUpgrade, buyRebirthUpgrade, canRebirth, canRetire, createPrestigeState, getPrestigeOfflineMultiplier, getPrestigeScore, getPrestigeStage, getRebirthChestLimitBonus, getRebirthOfflineCapHours, getRebirthPoints, getRebirthSpeedMultiplier, getRebirthStage, getRetirementPoints, rebirth, retire } from './prestige';
 import { defaultSettings } from './settings';
 import { runTick } from './tick';
 import { autoSellGainedItems, isAutoSellTarget } from './automation';
@@ -18,13 +18,13 @@ import { getEquipmentPower, getChestLimit, isEquipmentBaseInSeason } from './equ
 import { getSynergyAdventureFailReduction, getSynergyAttackBonus, getSynergyChains, getSynergyDropChanceMultiplier, getSynergyEntryCostReductionPct, getSynergyHarvestBonus, getSynergySellBonusPct, getSynergyUpgradeDiscountPct, getChainHintForJob, getUpgradeGoldCost } from './synergy';
 import { getTraitAttackBonus, getTraitChangeCost, getTraitFailReduction, getTraitHarvestBonus, getTraitJobGoldBonusPct, getTraitOfflineMultiplier, getTraitRestXpMultiplier, getTraitSellBonusPct, selectTrait } from './traits';
 import { getCropRewards } from './farming';
-import { getCurrentSeason, SEASONAL_ITEM_IDS, seasonStartMusingId } from './seasons';
+import { getCurrentSeason, getSeasonCalendar, SEASONAL_ITEM_IDS, seasonStartMusingId } from './seasons';
 import { claimWeeklyGoal, ensureWeeklyState, getWeekKey, getWeeklyGoals } from './weekly';
 import { getHeroAttack } from './combat';
 import { bossStreakBonusPct, nextBossStreak } from './combat';
 import { getFailChance } from './progression';
 import { getSellPriceMultiplier } from './equipment';
-import { createInitialState, getOfflineMaxTicks, migrateState, SAVE_VERSION } from './state';
+import { computeOfflineGains, createInitialState, getOfflineMaxTicks, migrateState, SAVE_VERSION, totalJobXp } from './state';
 
 const initialState = createInitialState(jobs);
 
@@ -426,5 +426,39 @@ export function runSelfTests() {
   console.assert(retiredWeekly.weekly?.weekKey === weekState.weekly?.weekKey, 'retire should keep weekly progress');
   const rebirthedWeekly = rebirth({ ...rebirthReady, lifetime: { ...emptyLifetime(), cycles: 100 }, weekly: weekState.weekly }, initialState);
   console.assert(rebirthedWeekly.weekly?.weekKey === weekState.weekly?.weekKey, 'rebirth should keep weekly progress');
+  // オフライン深化（ロードマップ11）：効率の伸びしろと上限の拡張。
+  // 寝ている間の勘は6段階まで（最大 +90%）、転生の余裕は4段階まで（上限 5日ぶん）。
+  const offlineMaxed = { ...initialState, prestige: { ...createInitialState(jobs).prestige!, upgrades: { memory_offline: 6 }, rebirthUpgrades: { rebirth_offline: 4 } } };
+  console.assert(getPrestigeStage(offlineMaxed, 'memory_offline') === 6 && getPrestigeOfflineMultiplier(offlineMaxed) === 1.9, 'memory offline 6 should give +90% offline efficiency');
+  console.assert(getRebirthStage(offlineMaxed, 'rebirth_offline') === 4 && getRebirthOfflineCapHours(offlineMaxed) === 120 && getOfflineMaxTicks(offlineMaxed) === 120 * 60 * 60, 'rebirth offline 4 should extend the offline cap to 120 hours');
+  const offlineOverflow = { ...initialState, prestige: { ...createInitialState(jobs).prestige!, upgrades: { memory_offline: 9 }, rebirthUpgrades: { rebirth_offline: 9 } } };
+  console.assert(getPrestigeStage(offlineOverflow, 'memory_offline') === 6 && getRebirthStage(offlineOverflow, 'rebirth_offline') === 4, 'offline stages should clamp to their new maxima');
+  console.assert(buyPrestigeUpgrade(offlineMaxed, 'memory_offline') === offlineMaxed, 'buying memory offline past max should be a no-op');
+  const offlineLegacy = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {}, prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: { memory_offline: 4 }, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: { rebirth_offline: 3 } } } as Partial<typeof initialState>, initialState);
+  console.assert(getPrestigeStage(offlineLegacy, 'memory_offline') === 4 && getRebirthStage(offlineLegacy, 'rebirth_offline') === 3, 'old saves should keep their offline stages under the new maxima');
+  // 帰還サマリの詳細化：不在前後の差分から XP・レベルアップ・討伐・新発見を出すこと。
+  const offlineBefore = {
+    ...initialState,
+    jobData: { ...initialState.jobData, fishing: { level: 1, xp: 0, seenMusings: [] }, mining: { level: 1, xp: 0, seenMusings: [] } },
+    lifetime: { ...emptyLifetime(), kills: 0, discovered: [] },
+  };
+  const offlineAfter = {
+    ...offlineBefore,
+    jobData: { ...offlineBefore.jobData, fishing: { level: 2, xp: 5, seenMusings: [] }, mining: { level: 1, xp: 3, seenMusings: [] } },
+    lifetime: { ...emptyLifetime(), kills: 7, discovered: ['small_fish', 'twig', 'acorn'] },
+  };
+  console.assert(totalJobXp(offlineBefore) === 0 && totalJobXp(offlineAfter) === 48, 'total job xp should include xp spent on level ups');
+  const offlineGains = computeOfflineGains(offlineBefore, offlineAfter);
+  console.assert(offlineGains.xpGain === 48 && offlineGains.levelUps.join('・') === '釣りLv2' && offlineGains.killsGain === 7 && offlineGains.discoveredGain === 3, 'offline gains should report xp, level ups, kills and new discoveries');
+  const offlineSame = computeOfflineGains(offlineBefore, offlineBefore);
+  console.assert(offlineSame.xpGain === 0 && offlineSame.levelUps.length === 0 && offlineSame.killsGain === 0 && offlineSame.discoveredGain === 0, 'no offline change should report zero gains');
+  // 季節カレンダー（ロードマップ7の残り）：4季節が月を重なりなく覆い、今の季節が1つだけ。
+  const autumnCalendar = getSeasonCalendar(new Date(2026, 10, 7));
+  console.assert(autumnCalendar.length === 4 && autumnCalendar.filter((entry) => entry.isCurrent).length === 1, 'season calendar should have four seasons with exactly one current');
+  console.assert(autumnCalendar.find((entry) => entry.isCurrent)?.id === 'autumn' && (autumnCalendar.find((entry) => entry.isCurrent)?.daysLeft || 0) > 0, 'november calendar should mark autumn as current with days left');
+  console.assert(autumnCalendar.filter((entry) => !entry.isCurrent).every((entry) => entry.daysLeft === 0), 'non-current seasons should have zero days left');
+  console.assert(autumnCalendar.map((entry) => entry.monthsLabel).join('/') === '3〜5月/6〜8月/9〜11月/12〜2月', 'season calendar should cover the year without overlap');
+  console.assert(new Set(autumnCalendar.map((entry) => entry.itemId)).size === 4 && autumnCalendar.every((entry) => SEASONAL_ITEM_IDS.includes(entry.itemId)), 'season calendar should list all four seasonal items');
+  console.assert(getSeasonCalendar(new Date(2026, 2, 15)).find((entry) => entry.isCurrent)?.id === 'spring', 'march calendar should mark spring as current');
 }
 

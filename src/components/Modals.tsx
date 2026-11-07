@@ -8,7 +8,7 @@ import { formatResourceName } from '../game/formatters';
 import { MUSING_LABELS } from '../game/musings';
 import { canRebirth, canRetire, getNextPrestigeCost, getNextRebirthCost, getPrestigeScore, getPrestigeSpeedMultiplier, getPrestigeStage, getRebirthPoints, getRebirthStage, getRetirementPoints, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, REBIRTH_POINT_NAME, REBIRTH_REQUIRED_RETIREMENTS, REBIRTH_UPGRADES, RETIRE_REQUIRED_SCORE } from '../game/prestige';
 import { getAchievementBonusLines, getAchievementProgress, getCollectionBonusLines, getFailChance, xpToNext } from '../game/progression';
-import { getCurrentSeason } from '../game/seasons';
+import { getCurrentSeason, getSeasonCalendar } from '../game/seasons';
 import { getWeeklyGoalProgresses, getWeeklySummary } from '../game/weekly';
 import { getSynergyChains } from '../game/synergy';
 import { isJobUnlocked, getActiveArea } from '../game/requirements';
@@ -57,6 +57,16 @@ function WeeklyGoalsSection({ state, onClaimWeeklyGoal }: { state: GameState; on
       </div>;
     })}
     <p className="sub">週間目標は月曜始まりで切り替わる。進捗は今週の始まりからの歩みで測るので、週が変わればまた最初から。報酬は金だけ。無理のない範囲で。</p>
+    <p className="sub">季節カレンダー：1年は4つの季節に分かれ、それぞれ限定の品とお守りがある。今の季節には「今ここ」が付く。期間外の品は手に入らないので、欲しい季節を逃さないように。</p>
+    <div className="statsRows">
+      {getSeasonCalendar().map((entry) => {
+        const calendarItemOwned = (state.items?.[entry.itemId] || 0) > 0;
+        return <div className="statsRow" key={entry.id}>
+          <span>{entry.name}（{entry.monthsLabel}）{entry.isCurrent ? '・今ここ' : ''}</span>
+          <b>{entry.eventName}／{itemName(entry.itemId)}{calendarItemOwned ? '（入手済み）' : '（未入手）'}・{equipmentBaseName(entry.charmBaseId)}{entry.isCurrent ? `（残り${entry.daysLeft}日）` : ''}</b>
+        </div>;
+      })}
+    </div>
   </>;
 }
 

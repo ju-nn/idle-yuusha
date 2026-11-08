@@ -76,7 +76,9 @@ export type Requirement =
   | { type: 'item'; item: string; amount: number }
   | { type: 'jobLevel'; job: string; level: number }
   // 転生専用（2026-11-07 / ロードマップ5の残り）: 転生回数が条件。転生した勇者だけが開く。
-  | { type: 'rebirth'; count: number };
+  | { type: 'rebirth'; count: number }
+  // 輪廻専用（2026-11-09 / プレステージ第3層）: 輪廻回数が条件。輪廻した勇者だけが開く。
+  | { type: 'samsara'; count: number };
 
 export type Musing = {
   id?: string;
@@ -165,6 +167,12 @@ export type PrestigeState = {
   totalRebirthEarned: number;
   rebirthCount: number;
   rebirthUpgrades: Record<string, number>;
+  // 輪廻（第3層）: 転生を3回重ねた先の区切り。思い出ポイントと転生の証、
+  // 第1・第2層の強化まで置いていく代わりに「輪廻の証」を得て、さらに強い永続強化を買う。
+  samsaraPoints: number;
+  totalSamsaraEarned: number;
+  samsaraCount: number;
+  samsaraUpgrades: Record<string, number>;
 };
 
 export type OfflineTier = 'short' | 'hours' | 'overnight' | 'days';

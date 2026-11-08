@@ -1,5 +1,5 @@
 // 冒険エリア専用のシーンイラストを base64 データURIとして src/assets/areaArt.ts に埋め込む生成スクリプト。
-// 2026-11-07 の方針「エリア専用イラストの新規生成」による。冒険の7エリアは従来、冒険の仕事絵1枚を
+// 2026-11-07 の方針「エリア専用イラストの新規生成」による。冒険の8エリアは従来、冒険の仕事絵1枚を
 // 色調バリエーション（artVar）で使い回していた。専用絵があるエリアはその絵を使い、無いエリアは従来通り仕事絵＋色調変化にフォールバックする。
 // 入力はローカルの scene-web-480/<area>.webp（480x320・quality 75。生成物 1920x1280 を PIL で変換）。
 // scene-web-480/ と scene-new/ はローカルのみに置き、リポジトリには含めない。
@@ -10,8 +10,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// 冒険エリア7種すべてに専用絵がある（2026-11-08 時点で7種。古い城門・静かな中庭・転生の回廊を本コミットで追加し、フォールバックは残っていない）。
-const AREAS = ['forest', 'mountain', 'cave', 'throne_room', 'old_castle_gate', 'inner_courtyard', 'rebirth_corridor'];
+// 冒険エリア8種すべてに専用絵がある（2026-11-09 時点で8種。輪廻の庭を本コミットで追加し、フォールバックは残っていない）。
+const AREAS = ['forest', 'mountain', 'cave', 'throne_room', 'old_castle_gate', 'inner_courtyard', 'rebirth_corridor', 'samsara_garden'];
 
 const entries = [];
 for (const area of AREAS) {
@@ -26,7 +26,7 @@ for (const area of AREAS) {
 
 const out = `// このファイルは scripts/generate-area-art.mjs による自動生成です。直接編集しないでください。
 // 冒険エリア専用のシーンイラスト（ドット絵風・静止画）を base64 データURIで保持します。
-// 従来は冒険の7エリアすべてが冒険の仕事絵1枚を色調バリエーションで使い回していたが、
+// 従来は冒険の8エリアすべてが冒険の仕事絵1枚を色調バリエーションで使い回していたが、
 // 専用絵のあるエリアは HeroScene とエリアボタンでこの絵を使う（色調フィルターは付けない）。
 // 専用絵のないエリアは従来通り SCENE_ART.adventure ＋ artVar のフォールバック。
 // 480x320・quality 75 の WebP。元画像（1920x1280 生成物）はローカルの scene-new/ のみに置き、リポジトリには含めません。

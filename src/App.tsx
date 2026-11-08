@@ -23,7 +23,7 @@ import { loadUserSettings } from './game/settings';
 import { clearSave, createInitialState, loadState, SAVE_KEY, saveState } from './game/state';
 import { callCat, claimCatVisit, getCatBuffDef, getCatCallRemainingMs } from './game/companion';
 import { getLifePlan, applyMilestoneAchievements } from './game/progression';
-import { buyPrestigeUpgrade, buyRebirthUpgrade, getRebirthOfflineCapHours, rebirth, retire } from './game/prestige';
+import { buyPrestigeUpgrade, buyRebirthUpgrade, buySamsaraUpgrade, getRebirthOfflineCapHours, rebirth, retire, samsara } from './game/prestige';
 import { getActiveArea, isJobUnlocked } from './game/requirements';
 import { runTick } from './game/tick';
 import { getCurrentSeason } from './game/seasons';
@@ -375,6 +375,8 @@ export default function App() {
   const handleRetire = () => setState((prev) => retire(prev, initialState));
   const handleBuyRebirthUpgrade = (id: string) => setState((prev) => buyRebirthUpgrade(prev, id));
   const handleRebirth = () => setState((prev) => rebirth(prev, initialState));
+  const handleBuySamsaraUpgrade = (id: string) => setState((prev) => buySamsaraUpgrade(prev, id));
+  const handleSamsara = () => setState((prev) => samsara(prev, initialState));
   const handleEquipItem = (uid: string) => setState((prev) => equipItem(prev, uid));
   const handleSellEquipment = (uid: string) => setState((prev) => sellEquipment(prev, uid));
   const handleSelectTrait = (id: TraitId) => { playUiSound('click'); setState((prev) => applyMilestoneAchievements(selectTrait(prev, id))); };
@@ -439,7 +441,7 @@ export default function App() {
       {chestOpen && <ChestModal state={state} openChest={handleOpenChest} openAllChests={handleOpenAllChests} openEquipmentScreen={() => { setChestOpen(false); playUiSound('open'); setEquipmentOpen(true); }} onClose={() => setChestOpen(false)} />}
       {equipmentOpen && <EquipmentModal state={state} equipItem={handleEquipItem} sellEquipment={handleSellEquipment} toggleLock={handleToggleEquipmentLock} onClose={() => setEquipmentOpen(false)} />}
       {collectionOpen && <CollectionModal state={state} musings={readMusings} achievements={state.achievements} onClose={() => setCollectionOpen(false)} />}
-      {prestigeOpen && <PrestigeModal state={state} buyPrestigeUpgrade={handleBuyPrestigeUpgrade} retire={() => { handleRetire(); setPrestigeOpen(false); }} buyRebirthUpgrade={handleBuyRebirthUpgrade} rebirth={() => { handleRebirth(); setPrestigeOpen(false); }} onClose={() => setPrestigeOpen(false)} />}
+      {prestigeOpen && <PrestigeModal state={state} buyPrestigeUpgrade={handleBuyPrestigeUpgrade} retire={() => { handleRetire(); setPrestigeOpen(false); }} buyRebirthUpgrade={handleBuyRebirthUpgrade} rebirth={() => { handleRebirth(); setPrestigeOpen(false); }} buySamsaraUpgrade={handleBuySamsaraUpgrade} samsara={() => { handleSamsara(); setPrestigeOpen(false); }} onClose={() => setPrestigeOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} reset={() => { reset(); setSettingsOpen(false); }} />}
       {statsOpen && <StatsModal state={state} onClose={() => setStatsOpen(false)} onSelectTrait={handleSelectTrait} onClaimWeeklyGoal={handleClaimWeeklyGoal} />}
       {!titleDone && bootInfo.showTitle && <TitleScreen hasSave={bootInfo.hasSave} onFinish={() => setTitleDone(true)} onOpenSettings={() => { setTitleDone(true); playUiSound('open'); setSettingsOpen(true); }} />}

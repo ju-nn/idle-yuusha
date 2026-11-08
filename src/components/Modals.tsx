@@ -7,7 +7,7 @@ import { getPeople, getPersonBonusLines } from '../game/companion';
 import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipmentBaseName, equipmentOptionText, getChestLimit, getEquipmentBonus, getEquipmentLimit, getEquipmentSellValue } from '../game/equipment';
 import { formatResourceName } from '../game/formatters';
 import { MUSING_LABELS } from '../game/musings';
-import { canRebirth, canRetire, getNextPrestigeCost, getNextRebirthCost, getPrestigeScore, getPrestigeSpeedMultiplier, getPrestigeStage, getRebirthPoints, getRebirthStage, getRetirementPoints, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, REBIRTH_POINT_NAME, REBIRTH_REQUIRED_RETIREMENTS, REBIRTH_UPGRADES, RETIRE_REQUIRED_SCORE } from '../game/prestige';
+import { canRebirth, canRetire, canSamsara, getNextPrestigeCost, getNextRebirthCost, getNextSamsaraCost, getPrestigeScore, getPrestigeSpeedMultiplier, getPrestigeStage, getRebirthPoints, getRebirthStage, getRetirementPoints, getSamsaraPoints, getSamsaraStage, MEMORY_POINT_NAME, PRESTIGE_UPGRADES, REBIRTH_POINT_NAME, REBIRTH_REQUIRED_RETIREMENTS, REBIRTH_UPGRADES, RETIRE_REQUIRED_SCORE, SAMSARA_POINT_NAME, SAMSARA_REQUIRED_REBIRTHS, SAMSARA_UPGRADES } from '../game/prestige';
 import { getAchievementBonusLines, getAchievementProgress, getCollectionBonusLines, getFailChance, xpToNext } from '../game/progression';
 import { getCurrentSeason, getSeasonCalendar } from '../game/seasons';
 import { getWeeklyGoalProgresses, getWeeklySummary } from '../game/weekly';
@@ -97,7 +97,7 @@ export function StatsModal({ state, onClose, onSelectTrait, onClaimWeeklyGoal }:
   const monsters = getAllMonsters();
   const defeated = monsters.filter((monster) => (state.defeatedMonsters || []).includes(monster.id)).length;
   const totalAreas = Object.values(jobs).reduce((sum, job) => sum + job.areas.length, 0);
-  const prestige = state.prestige || { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {} };
+  const prestige = state.prestige || { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {}, samsaraPoints: 0, totalSamsaraEarned: 0, samsaraCount: 0, samsaraUpgrades: {} };
 
   return <Modal title="統計" description="現在の仕事の効率と、全体の進み具合。数字は今の状態からの期待値で、セーブには何も書きません。" onClose={onClose} wide><div className="settingsPanel statsPanel">
     <div>
@@ -209,6 +209,8 @@ export function StatsModal({ state, onClose, onSelectTrait, onClaimWeeklyGoal }:
         <SummaryPill label="思い出ポイント" value={`${prestige.memoryPoints}`} />
         <SummaryPill label="転生" value={`${prestige.rebirthCount || 0}回`} />
         <SummaryPill label={REBIRTH_POINT_NAME} value={`${prestige.rebirthPoints || 0}`} />
+        <SummaryPill label="輪廻" value={`${prestige.samsaraCount || 0}回`} />
+        <SummaryPill label={SAMSARA_POINT_NAME} value={`${prestige.samsaraPoints || 0}`} />
       </div>
       <p className="sub">宝箱と装備の上限はここで見えます。上限に近づいたら、宝箱を開けるか装備を売る・保護する判断の目安にしてください。</p>
     </div>
@@ -279,10 +281,19 @@ function rebirthEffectText(upgradeId: string, stage: number): string {
   return `全仕事速度：+${stage * 10}%`;
 }
 
-export function PrestigeModal({ state, buyPrestigeUpgrade, retire, buyRebirthUpgrade, rebirth, onClose }: { state: GameState; buyPrestigeUpgrade: (id: string) => void; retire: () => void; buyRebirthUpgrade: (id: string) => void; rebirth: () => void; onClose: () => void }) {
+function samsaraEffectText(upgradeId: string, stage: number): string {
+  if (upgradeId === 'samsara_rebirth') return `転生の証獲得：+${stage * 30}%`;
+  if (upgradeId === 'samsara_gold') return `収入（G）：+${stage * 15}%`;
+  if (upgradeId === 'samsara_xp') return `仕事XP：+${stage * 15}%`;
+  if (upgradeId === 'samsara_musing') return `ぼやき報酬：+${stage * 30}%`;
+  return `全仕事速度：+${stage * 12}%`;
+}
+
+export function PrestigeModal({ state, buyPrestigeUpgrade, retire, buyRebirthUpgrade, rebirth, buySamsaraUpgrade, samsara, onClose }: { state: GameState; buyPrestigeUpgrade: (id: string) => void; retire: () => void; buyRebirthUpgrade: (id: string) => void; rebirth: () => void; buySamsaraUpgrade: (id: string) => void; samsara: () => void; onClose: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const [confirmingRebirth, setConfirmingRebirth] = useState(false);
-  const prestige = state.prestige || { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {} };
+  const [confirmingSamsara, setConfirmingSamsara] = useState(false);
+  const prestige = state.prestige || { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {}, samsaraPoints: 0, totalSamsaraEarned: 0, samsaraCount: 0, samsaraUpgrades: {} };
   const score = getPrestigeScore(state);
   const gain = getRetirementPoints(state);
   const eligible = canRetire(state);
@@ -292,6 +303,10 @@ export function PrestigeModal({ state, buyPrestigeUpgrade, retire, buyRebirthUpg
   const rebirthEligible = canRebirth(state);
   const rebirthRemaining = Math.max(0, REBIRTH_REQUIRED_RETIREMENTS - prestige.retireCount);
   const rebirthProgressPercent = Math.min(100, Math.floor((prestige.retireCount / REBIRTH_REQUIRED_RETIREMENTS) * 100));
+  const samsaraGain = getSamsaraPoints(state);
+  const samsaraEligible = canSamsara(state);
+  const samsaraRemaining = Math.max(0, SAMSARA_REQUIRED_REBIRTHS - (prestige.rebirthCount || 0));
+  const samsaraProgressPercent = Math.min(100, Math.floor(((prestige.rebirthCount || 0) / SAMSARA_REQUIRED_REBIRTHS) * 100));
   return <Modal title="引退と思い出" description="区切りを付けて、歩みを思い出ポイントに変える。思い出は次の人生でも消えない。" onClose={onClose} wide><div className="settingsPanel">
     <div className="collectionSummary">
       <SummaryPill label={MEMORY_POINT_NAME} value={`${prestige.memoryPoints}`} />
@@ -329,6 +344,26 @@ export function PrestigeModal({ state, buyPrestigeUpgrade, retire, buyRebirthUpg
       const stage = getRebirthStage(state, def.id);
       const cost = getNextRebirthCost(state, def.id);
       return <div className="settingRow" key={def.id}><div><b>{def.name} <span className="stagePips" role="img" aria-label={`段階 ${stage}/${def.maxStage}`}>{Array.from({ length: def.maxStage }, (_, i) => <i key={i} className={i < stage ? 'on' : ''} />)}</span></b><p>{def.description}</p><p>{rebirthEffectText(def.id, stage)}</p></div>{cost === null ? <span className="sub">最大段階</span> : <button className="primary" onClick={() => buyRebirthUpgrade(def.id)} disabled={(prestige.rebirthPoints || 0) < cost}>{cost} で強化</button>}</div>;
+    })}
+    <div>
+      <div className="sectionHead"><h3>輪廻（第3層）</h3></div>
+      <p className="sub">転生を3回重ねた先の区切り。思い出ポイントと転生の証、第1・第2層の永続強化まで置いていく代わりに、輪廻の証が手に入る。輪廻の強化は輪廻しても消えない。</p>
+    </div>
+    <div className="collectionSummary">
+      <SummaryPill label={SAMSARA_POINT_NAME} value={`${prestige.samsaraPoints || 0}`} />
+      <SummaryPill label="累計獲得" value={`${prestige.totalSamsaraEarned || 0}`} />
+      <SummaryPill label="輪廻回数" value={`${prestige.samsaraCount || 0}回`} />
+      <SummaryPill label="いま輪廻すると" value={samsaraEligible ? `+${samsaraGain}` : 'まだ'} />
+    </div>
+    <div className="settingRow"><div><b>転生回数：{prestige.rebirthCount || 0} / {SAMSARA_REQUIRED_REBIRTHS}</b><p>{samsaraEligible ? `輪廻で輪廻の証+${samsaraGain}が手に入ります。` : `輪廻まであと${samsaraRemaining}回の転生。転生を重ねると、輪廻の証が増えます。`}</p><div className="targetBar"><i style={{ width: `${samsaraProgressPercent}%` }} /></div></div></div>
+    <div className="dangerZone"><div><b>輪廻する</b><p>レベル・G・素材・所持品・装備・宝箱・拠点整備に加え、思い出ポイントと転生の証、第1・第2層の永続強化もリセットされます。実績・ぼやき図鑑・討伐と訪問の記録・輪廻の証と輪廻の強化は残ります。</p></div>{confirmingSamsara
+      ? <span className="prestigeConfirm"><button className="primary" onClick={samsara}>本当に輪廻する</button><button onClick={() => setConfirmingSamsara(false)}>やめておく</button></span>
+      : <button onClick={() => setConfirmingSamsara(true)} disabled={!samsaraEligible}>{samsaraEligible ? `輪廻して +${samsaraGain} を受け取る` : `あと${samsaraRemaining}回の転生で輪廻可能`}</button>}</div>
+    <div><b>輪廻の永続強化（輪廻の証で買う）</b><p className="sub">輪廻しても消えません。次の人生の立ち上がりが、転生の強化より大きく楽になります。</p></div>
+    {SAMSARA_UPGRADES.map((def) => {
+      const stage = getSamsaraStage(state, def.id);
+      const cost = getNextSamsaraCost(state, def.id);
+      return <div className="settingRow" key={def.id}><div><b>{def.name} <span className="stagePips" role="img" aria-label={`段階 ${stage}/${def.maxStage}`}>{Array.from({ length: def.maxStage }, (_, i) => <i key={i} className={i < stage ? 'on' : ''} />)}</span></b><p>{def.description}</p><p>{samsaraEffectText(def.id, stage)}</p></div>{cost === null ? <span className="sub">最大段階</span> : <button className="primary" onClick={() => buySamsaraUpgrade(def.id)} disabled={(prestige.samsaraPoints || 0) < cost}>{cost} で強化</button>}</div>;
     })}
   </div></Modal>;
 }

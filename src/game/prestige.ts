@@ -21,6 +21,12 @@ export const MEMORY_POINT_NAME = '思い出ポイント';
 export const REBIRTH_REQUIRED_RETIREMENTS = 3;
 export const REBIRTH_POINT_NAME = '転生の証';
 
+// 輪廻（第3層）に必要な転生回数。転生を3回回した先の区切りで、
+// 「周回を重ねた先の、さらに先の層」として、輪廻の証とより強い永続強化が開く。
+// 転生1回には引退3回が要るため、輪廻の解禁は引退9回ぶんの長期目標になる。
+export const SAMSARA_REQUIRED_REBIRTHS = 3;
+export const SAMSARA_POINT_NAME = '輪廻の証';
+
 // 引退に必要な進行度スコア。初回は数時間〜1日程度の放置・作業で届く範囲に置く。
 export const RETIRE_REQUIRED_SCORE = 35;
 
@@ -57,8 +63,20 @@ export const REBIRTH_UPGRADES: PrestigeUpgradeDef[] = [
   { id: 'rebirth_offline', name: '転生の余裕', description: '離れている間も生活が回る感覚を、身体が覚えている。不在中の進行の上限が延びる。', maxStage: 4, costs: prestigeCostCurve(5, 4), effectLabel: 'オフライン上限', perStage: 12 },
 ];
 
+// 輪廻の永続強化（第3層）。輪廻の証で買う。第2層より一段強い効果で、
+// 輪廻するたびに次の人生の立ち上がりがさらに楽になる。
+// samsara_rebirth は「次の人生での転生の見返り」を増やし、
+// samsara_musing は「ぼやきの余韻」を上書きしない別枠の加算として効く。
+export const SAMSARA_UPGRADES: PrestigeUpgradeDef[] = [
+  { id: 'samsara_efficiency', name: '輪廻の段取り', description: '何度も巡った身体は、段取りを忘れない。どの仕事も目に見えて手際がいい。', maxStage: 5, costs: prestigeCostCurve(3, 5), effectLabel: '全仕事速度', perStage: 12 },
+  { id: 'samsara_gold', name: '輪廻の金運', description: '稼ぎ方の勘が、何周も巡って残っている。同じ作業でも取りこぼしがさらに減る。', maxStage: 5, costs: prestigeCostCurve(3, 5), effectLabel: '収入（G）', perStage: 15 },
+  { id: 'samsara_rebirth', name: '輪廻の記憶力', description: '歩みを転生の証に変える手際まで覚えている。転生でもらえる転生の証が増える。', maxStage: 4, costs: prestigeCostCurve(4, 4), effectLabel: '転生の証獲得', perStage: 30 },
+  { id: 'samsara_xp', name: '輪廻の飲み込み', description: '何度も巡った分、仕事の飲み込みが早い。初めての仕事でも、身体がなんとなく覚えている。', maxStage: 5, costs: prestigeCostCurve(3, 5), effectLabel: '仕事XP', perStage: 15 },
+  { id: 'samsara_musing', name: '輪廻の余韻', description: '何周も巡ったぼやきが、今の勇者を少しだけ助ける。余韻の層が、もう一段厚くなった。', maxStage: 4, costs: prestigeCostCurve(3, 4), effectLabel: 'ぼやき報酬', perStage: 30 },
+];
+
 export function createPrestigeState(): PrestigeState {
-  return { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {} };
+  return { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {}, samsaraPoints: 0, totalSamsaraEarned: 0, samsaraCount: 0, samsaraUpgrades: {} };
 }
 
 export function normalizePrestigeState(raw: Partial<PrestigeState> | undefined): PrestigeState {
@@ -73,6 +91,11 @@ export function normalizePrestigeState(raw: Partial<PrestigeState> | undefined):
     const stage = Math.floor(Number(raw.rebirthUpgrades?.[def.id]) || 0);
     if (stage > 0) rebirthUpgrades[def.id] = Math.min(def.maxStage, stage);
   }
+  const samsaraUpgrades: Record<string, number> = {};
+  for (const def of SAMSARA_UPGRADES) {
+    const stage = Math.floor(Number(raw.samsaraUpgrades?.[def.id]) || 0);
+    if (stage > 0) samsaraUpgrades[def.id] = Math.min(def.maxStage, stage);
+  }
   return {
     memoryPoints: Math.max(0, Math.floor(Number(raw.memoryPoints) || 0)),
     totalEarned: Math.max(0, Math.floor(Number(raw.totalEarned) || 0)),
@@ -82,6 +105,10 @@ export function normalizePrestigeState(raw: Partial<PrestigeState> | undefined):
     totalRebirthEarned: Math.max(0, Math.floor(Number(raw.totalRebirthEarned) || 0)),
     rebirthCount: Math.max(0, Math.floor(Number(raw.rebirthCount) || 0)),
     rebirthUpgrades,
+    samsaraPoints: Math.max(0, Math.floor(Number(raw.samsaraPoints) || 0)),
+    totalSamsaraEarned: Math.max(0, Math.floor(Number(raw.totalSamsaraEarned) || 0)),
+    samsaraCount: Math.max(0, Math.floor(Number(raw.samsaraCount) || 0)),
+    samsaraUpgrades,
   };
 }
 
@@ -110,6 +137,20 @@ export function getNextRebirthCost(state: GameState, upgradeId: string): number 
   const def = REBIRTH_UPGRADES.find((candidate) => candidate.id === upgradeId);
   if (!def) return null;
   const stage = getRebirthStage(state, upgradeId);
+  return stage >= def.maxStage ? null : def.costs[stage];
+}
+
+export function getSamsaraStage(state: GameState, upgradeId: string): number {
+  const def = SAMSARA_UPGRADES.find((candidate) => candidate.id === upgradeId);
+  if (!def) return 0;
+  const stage = Math.floor(Number(state.prestige?.samsaraUpgrades?.[upgradeId]) || 0);
+  return Math.max(0, Math.min(def.maxStage, stage));
+}
+
+export function getNextSamsaraCost(state: GameState, upgradeId: string): number | null {
+  const def = SAMSARA_UPGRADES.find((candidate) => candidate.id === upgradeId);
+  if (!def) return null;
+  const stage = getSamsaraStage(state, upgradeId);
   return stage >= def.maxStage ? null : def.costs[stage];
 }
 
@@ -146,9 +187,10 @@ export function canRetire(state: GameState): boolean {
 
 // 転生の獲得も平方根型。引退で貯めた思い出の累計が、そのまま転生の証になる。
 // 累計36ptで12証、累計100ptで20証。転生強化の初段（3〜5証）を1〜2個買える重さ。
+// 輪廻の記憶力があると、転生でもらえる転生の証が増える（次の人生の見返りが太くなる）。
 export function getRebirthPoints(state: GameState): number {
   const prestige = normalizePrestigeState(state.prestige);
-  return Math.floor(Math.sqrt(Math.max(0, prestige.totalEarned)) * 2);
+  return Math.floor(Math.sqrt(Math.max(0, prestige.totalEarned)) * 2 * getSamsaraRebirthMultiplier(state));
 }
 
 export function canRebirth(state: GameState): boolean {
@@ -156,14 +198,29 @@ export function canRebirth(state: GameState): boolean {
   return prestige.retireCount >= REBIRTH_REQUIRED_RETIREMENTS && getRebirthPoints(state) > 0;
 }
 
+// ---- 輪廻（第3層）の条件と獲得 ----
+
+// 輪廻の獲得も平方根型。転生で貯めた転生の証の累計が、そのまま輪廻の証になる。
+// 累計36証で12証、累計100証で20証。輪廻強化の初段（3〜5証）を1〜2個買える重さ。
+// 転生3回には引退9回ぶんの歩みが要るため、解禁そのものが長期目標になる。
+export function getSamsaraPoints(state: GameState): number {
+  const prestige = normalizePrestigeState(state.prestige);
+  return Math.floor(Math.sqrt(Math.max(0, prestige.totalRebirthEarned)) * 2);
+}
+
+export function canSamsara(state: GameState): boolean {
+  const prestige = normalizePrestigeState(state.prestige);
+  return prestige.rebirthCount >= SAMSARA_REQUIRED_REBIRTHS && getSamsaraPoints(state) > 0;
+}
+
 // ---- 永続ボーナス（倍率・加算） ----
 
 export function getPrestigeSpeedMultiplier(state: GameState): number {
-  return (1 + (getPrestigeStage(state, 'memory_efficiency') * 8) / 100) * getRebirthSpeedMultiplier(state);
+  return (1 + (getPrestigeStage(state, 'memory_efficiency') * 8) / 100) * getRebirthSpeedMultiplier(state) * getSamsaraSpeedMultiplier(state);
 }
 
 export function getPrestigeGoldMultiplier(state: GameState): number {
-  return (1 + (getPrestigeStage(state, 'memory_gold') * 10) / 100) * getRebirthGoldMultiplier(state);
+  return (1 + (getPrestigeStage(state, 'memory_gold') * 10) / 100) * getRebirthGoldMultiplier(state) * getSamsaraGoldMultiplier(state);
 }
 
 // ---- 転生の永続ボーナス（第1層の倍率と掛け合わせ） ----
@@ -195,8 +252,30 @@ export function getRebirthOfflineCapHours(state: GameState): number {
   return 72 + getRebirthStage(state, 'rebirth_offline') * 12;
 }
 
+// ---- 輪廻の永続ボーナス（第1・第2層の倍率と掛け合わせ） ----
+
+export function getSamsaraSpeedMultiplier(state: GameState): number {
+  return 1 + (getSamsaraStage(state, 'samsara_efficiency') * 12) / 100;
+}
+
+export function getSamsaraGoldMultiplier(state: GameState): number {
+  return 1 + (getSamsaraStage(state, 'samsara_gold') * 15) / 100;
+}
+
+export function getSamsaraRebirthMultiplier(state: GameState): number {
+  return 1 + (getSamsaraStage(state, 'samsara_rebirth') * 30) / 100;
+}
+
+export function getSamsaraXpMultiplier(state: GameState): number {
+  return 1 + (getSamsaraStage(state, 'samsara_xp') * 15) / 100;
+}
+
+export function getSamsaraMusingMultiplier(state: GameState): number {
+  return 1 + (getSamsaraStage(state, 'samsara_musing') * 30) / 100;
+}
+
 export function getPrestigeXpMultiplier(state: GameState): number {
-  return 1 + (getPrestigeStage(state, 'memory_xp') * 10) / 100;
+  return (1 + (getPrestigeStage(state, 'memory_xp') * 10) / 100) * getSamsaraXpMultiplier(state);
 }
 
 // 寝ている間の勘：オフライン効率への加算（+5%/段階、最大+30%）。
@@ -213,7 +292,7 @@ export function getPrestigeChestMultiplier(state: GameState): number {
 }
 
 export function getPrestigeMusingRewardMultiplier(state: GameState): number {
-  return 1 + (getPrestigeStage(state, 'memory_musing') * 25) / 100;
+  return (1 + (getPrestigeStage(state, 'memory_musing') * 25) / 100) * getSamsaraMusingMultiplier(state);
 }
 
 export function getPrestigeStartGold(state: GameState): number {
@@ -299,6 +378,11 @@ export function retire(prev: GameState, initialState: GameState): GameState {
     totalRebirthEarned: before.totalRebirthEarned,
     rebirthCount: before.rebirthCount,
     rebirthUpgrades: { ...before.rebirthUpgrades },
+    // 輪廻の進行も引退ではリセットしない（輪廻だけが第1・第2層を置いていく）。
+    samsaraPoints: before.samsaraPoints,
+    totalSamsaraEarned: before.totalSamsaraEarned,
+    samsaraCount: before.samsaraCount,
+    samsaraUpgrades: { ...before.samsaraUpgrades },
   };
   const withPrestige: GameState = { ...prev, prestige };
   const startGold = initialState.gold + getPrestigeStartGold(withPrestige);
@@ -421,6 +505,11 @@ export function rebirth(prev: GameState, initialState: GameState): GameState {
     totalRebirthEarned: before.totalRebirthEarned + gained,
     rebirthCount,
     rebirthUpgrades: { ...before.rebirthUpgrades },
+    // 輪廻の進行は転生ではリセットしない（輪廻だけが第1・第2層を置いていく）。
+    samsaraPoints: before.samsaraPoints,
+    totalSamsaraEarned: before.totalSamsaraEarned,
+    samsaraCount: before.samsaraCount,
+    samsaraUpgrades: { ...before.samsaraUpgrades },
   };
   const withPrestige: GameState = { ...prev, prestige };
   const startGold = initialState.gold + getPrestigeStartGold(withPrestige);
@@ -469,6 +558,132 @@ export function rebirth(prev: GameState, initialState: GameState): GameState {
     tutorialStep: 'done',
     feedbackEvents: [{ id: `rebirth-${Date.now()}`, type: 'retire' as const, label: `転生の証+${gained}` }],
     currentMusing: rebirthMusing,
+    musingQueue: [],
+    eventLog,
+    lastSavedAt: Date.now(),
+    lastCertainMusingAt: Date.now(),
+  };
+  return applyMilestoneAchievements(next);
+}
+
+// ---- 輪廻（第3層）のアクション ----
+
+export function buySamsaraUpgrade(prev: GameState, upgradeId: string): GameState {
+  const def = SAMSARA_UPGRADES.find((candidate) => candidate.id === upgradeId);
+  if (!def) return prev;
+  const prestige = normalizePrestigeState(prev.prestige);
+  const stage = getSamsaraStage(prev, upgradeId);
+  if (stage >= def.maxStage) return prev;
+  const cost = def.costs[stage];
+  if (prestige.samsaraPoints < cost) return prev;
+  const eventLog = [`輪廻強化：${def.name}を段階${stage + 1}にした。${def.effectLabel}が少し上がった。何度巡っても、段取りだけは置いていけない。`, ...prev.eventLog].slice(0, 24);
+  const achievements = addAchievement(prev, 'first_samsara_upgrade', eventLog);
+  const next: GameState = {
+    ...prev,
+    prestige: {
+      ...prestige,
+      samsaraPoints: prestige.samsaraPoints - cost,
+      samsaraUpgrades: { ...prestige.samsaraUpgrades, [upgradeId]: stage + 1 },
+    },
+    achievements,
+    eventLog,
+  };
+  return enqueueMusing(applyMilestoneAchievements(next), {
+    id: 'samsara-first-upgrade',
+    job: '勇者',
+    area: '輪廻',
+    text: `勇者は輪廻の証を強化に変えた。\n\n勇者「前の前の前の人生まで助けてくれるなら、もう何周目か数えるのをやめた」`,
+    category: 'firstTime',
+    eventType: 'firstTime',
+    eventSubType: 'samsara_upgrade',
+    once: true,
+  }).state;
+}
+
+const SAMSARA_MUSINGS: Array<{ id: string; text: string }> = [
+  {
+    id: 'samsara-first',
+    text: `勇者は輪廻した。\n\n勇者「転生を3回もしたら、もう輪廻しか残ってなかった。転生の証まで置いていくのか。荷物、軽すぎて逆に不安だ」\n\nでも、輪廻の証だけはポケットに残った。次の人生は、最初からかなりベテランだ。`,
+  },
+  {
+    id: 'samsara-repeat-a',
+    text: `勇者はまた輪廻した。\n\n勇者「何度目かの人生。もう最初の池の魚の顔まで覚えている。魚のほうは俺を覚えてないと思うけど」`,
+  },
+  {
+    id: 'samsara-repeat-b',
+    text: `勇者は区切りを付けて、また最初から始めた。\n\n勇者「輪廻するたび、生活の立ち上がりが速くなる。転生の証を置いていっても、段取りだけは連れて行ける」`,
+  },
+];
+
+// 輪廻: 第1層（思い出ポイントとその永続強化）と第2層（転生の証とその永続強化）まで
+// 置いていき、歩みを「輪廻の証」に変える。第3層の強化と輪廻回数だけが残る。
+// 実績・ぼやき図鑑・討伐/訪問の記録・生活スタンプの継続は、引退・転生と同じく「思い出」として残す。
+export function samsara(prev: GameState, initialState: GameState): GameState {
+  if (!canSamsara(prev)) return prev;
+  const gained = getSamsaraPoints(prev);
+  const before = normalizePrestigeState(prev.prestige);
+  const samsaraCount = before.samsaraCount + 1;
+  const prestige: PrestigeState = {
+    memoryPoints: 0,
+    totalEarned: 0,
+    retireCount: 0,
+    upgrades: {},
+    rebirthPoints: 0,
+    totalRebirthEarned: 0,
+    rebirthCount: 0,
+    rebirthUpgrades: {},
+    samsaraPoints: before.samsaraPoints + gained,
+    totalSamsaraEarned: before.totalSamsaraEarned + gained,
+    samsaraCount,
+    samsaraUpgrades: { ...before.samsaraUpgrades },
+  };
+  const withPrestige: GameState = { ...prev, prestige };
+  const startGold = initialState.gold + getPrestigeStartGold(withPrestige);
+  const maxHp = initialState.maxHp + getPrestigeMaxHpBonus(withPrestige);
+  const maxMp = initialState.maxMp + getPrestigeMaxMpBonus(withPrestige);
+  const musingTemplate = before.samsaraCount === 0
+    ? SAMSARA_MUSINGS[0]
+    : SAMSARA_MUSINGS[1 + ((samsaraCount - 2) % (SAMSARA_MUSINGS.length - 1))];
+  const samsaraMusing = {
+    id: `${musingTemplate.id}-${samsaraCount}`,
+    job: '勇者',
+    area: '輪廻',
+    text: musingTemplate.text,
+    category: 'event' as const,
+    eventType: 'event' as const,
+    eventSubType: 'samsara',
+    once: true,
+  };
+  const eventLog = [
+    `輪廻：${samsaraCount}回目の人生。輪廻の証+${gained}（累計${prestige.totalSamsaraEarned}）。思い出ポイントと転生の証、第1・第2層の永続強化は置いていったが、輪廻の強化はそのまま。`,
+    '新しい人生が始まった。池のほとりから、でも前よりずっと手際がいい。',
+  ];
+  let achievements = addAchievement(withPrestige, 'first_samsara', eventLog);
+  if (samsaraCount >= 3) achievements = addAchievement({ ...withPrestige, achievements }, 'samsara_3', eventLog);
+  const next: GameState = {
+    ...initialState,
+    prestige,
+    gold: startGold,
+    hp: maxHp,
+    maxHp,
+    mp: maxMp,
+    maxMp,
+    achievements,
+    lifetime: prev.lifetime || emptyLifetime(),
+    weekly: prev.weekly,
+    readMusings: prev.readMusings || [],
+    seenMusingIds: Array.from(new Set([...(prev.seenMusingIds || []), 'intro_001', samsaraMusing.id])),
+    recentMusingIds: [samsaraMusing.id, ...(prev.recentMusingIds || [])].slice(0, 10),
+    musingCooldowns: prev.musingCooldowns || {},
+    defeatedMonsters: prev.defeatedMonsters || [],
+    visitedAreas: prev.visitedAreas || [],
+    seenEquipmentBaseIds: prev.seenEquipmentBaseIds || [],
+    equipmentDropLog: prev.equipmentDropLog || [],
+    openedChestLog: prev.openedChestLog || [],
+    dailyBonus: prev.dailyBonus || { streak: 0 },
+    tutorialStep: 'done',
+    feedbackEvents: [{ id: `samsara-${Date.now()}`, type: 'retire' as const, label: `輪廻の証+${gained}` }],
+    currentMusing: samsaraMusing,
     musingQueue: [],
     eventLog,
     lastSavedAt: Date.now(),

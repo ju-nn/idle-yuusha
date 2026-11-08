@@ -119,6 +119,15 @@ function requirementProgress(requirement: Requirement, state: GameState) {
       label: `${itemName(requirement.item)} ${current}/${requirement.amount}`,
     };
   }
+  if (requirement.type === 'samsara') {
+    const current = state.prestige?.samsaraCount || 0;
+    return {
+      percent: Math.min(100, Math.floor((current / requirement.count) * 100)),
+      current,
+      target: requirement.count,
+      label: `輪廻${current}/${requirement.count}回`,
+    };
+  }
   const current = state.jobData?.[requirement.job]?.level || 0;
   return {
     percent: Math.min(100, Math.floor((current / requirement.level) * 100)),
@@ -312,15 +321,15 @@ export function addAchievement(prev: GameState, id: string, logs: string[]) {
 }
 
 // 実績の節目（コンプリート報酬の区切り）。実績数が区切りに届いたら、その場で
-// 節目実績も付与する。120 は全120個の到達点で、114個の通常実績＋節目5個＝119
-// の状態で最後の1個が入ると、節目が付与されてちょうど120になる。
+// 節目実績も付与する。123 は全123個の到達点で、117個の通常実績＋節目5個＝122
+// の状態で最後の1個が入ると、節目が付与されてちょうど123になる。
 const ACHIEVEMENT_MILESTONES = [
   { at: 10, id: 'ten_achievements' },
   { at: 25, id: 'achievements_25' },
   { at: 50, id: 'achievements_50' },
   { at: 75, id: 'achievements_75' },
   { at: 100, id: 'achievements_100' },
-  { at: 119, id: 'achievements_120' },
+  { at: 122, id: 'achievements_120' },
 ];
 
 function grantAchievementMilestones(next: string[], logs: string[]): string[] {
@@ -409,8 +418,8 @@ export function getCollectionBonusLines(state: GameState): string[] {
 }
 
 // ---- 実績ボーナス（コンプリート報酬連動） ----
-// 実績10個ごとに金報酬・XPが +2%（120個で +24%）、25個ごとにドロップ確率が +2%
-// （120個で +8%）。派生計算のみで、セーブ形式は変えない。
+// 実績10個ごとに金報酬・XPが +2%（123個で +24%）、25個ごとにドロップ確率が +2%
+// （123個で +8%）。派生計算のみで、セーブ形式は変えない。
 export function getAchievementBonusPct(state: GameState): number {
   return Math.floor((state.achievements || []).length / 10) * 2;
 }
@@ -438,9 +447,9 @@ export function getAchievementBonusLines(state: GameState): string[] {
   lines.push(dropPct > 0
     ? `実績 ${count}個：ドロップ確率 +${dropPct}%`
     : `実績 ${count}個：ドロップ確率のボーナスは実績25個から（次は25個で+2%）`);
-  const nextMilestone = [10, 25, 50, 75, 100, 120].find((at) => count < at);
+  const nextMilestone = [10, 25, 50, 75, 100, 123].find((at) => count < at);
   if (nextMilestone) lines.push(`次の節目：実績${nextMilestone}個（あと${nextMilestone - count}個）`);
-  else lines.push('実績コンプリート：120個すべて集めた。');
+  else lines.push('実績コンプリート：123個すべて集めた。');
   return lines;
 }
 
@@ -578,7 +587,7 @@ export function getAchievementProgress(state: GameState, id: string): { current:
     achievements_50: { current: (state.achievements || []).length, target: 50 },
     achievements_75: { current: (state.achievements || []).length, target: 75 },
     achievements_100: { current: (state.achievements || []).length, target: 100 },
-    achievements_120: { current: (state.achievements || []).length, target: 120 },
+    achievements_120: { current: (state.achievements || []).length, target: 123 },
     synergy_all_7: { current: getSynergyChains(state).filter((chain) => chain.active !== '').length, target: 7 },
   };
   return table[id] || null;

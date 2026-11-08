@@ -21,7 +21,7 @@ const jobs: Record<string, Job> = {
   fishing: {
     name: '釣り', type: 'idle', description: '無料で食料と小銭を得る。低リスク。ただし、暇。', unlock: { type: 'start' },
     areas: [
-      { id: 'pond', name: 'しょぼい池', summary: '安全。無料。釣れるものもしょぼい。', seconds: 5, rewards: { gold: [3, 6], fish: [1, 2], xp: 10 }, drops: [D('small_fish', 0.65, [1, 2]), D('quiet_scale', 0.06), D('field_note', 0.04), D('rusty_hook', 0.05), D('sunken_bottle_cap', 0.06), D('chipped_float', 0.05), D('tangled_fishing_line', 0.05), D('wet_glove', 0.05), D('lost_lure', 0.05)], failChance: 0.10, failMusings: ['魚に逃げられた。やっぱり釣りは魚が主役だ', '糸がちぎれた。ツルハシより繊細なものは扱えない', '浮きが沈んだと思ったら根掛かりだった。魚じゃなかった', '竿を上げたら何もついていなかった。えさだけが無料だった', '魚がえさを食べた。逃げた。俺の時間も逃げた', '風が吹いて糸が絡まった。自然は釣りを応援してない'], musings: [
+      { id: 'pond', name: 'しょぼい池', summary: '安全。無料。釣れるものもしょぼい。', seconds: 5, rewards: { gold: [3, 6], fish: [1, 2], xp: 10 }, drops: [D('small_fish', 0.65, [1, 2]), D('quiet_scale', 0.06), D('field_note', 0.04), D('rusty_hook', 0.05), D('sunken_bottle_cap', 0.06), D('chipped_float', 0.05), D('tangled_fishing_line', 0.05), D('wet_glove', 0.05), D('lost_lure', 0.05), D('lost_pass', 0.05)], failChance: 0.10, failMusings: ['魚に逃げられた。やっぱり釣りは魚が主役だ', '糸がちぎれた。ツルハシより繊細なものは扱えない', '浮きが沈んだと思ったら根掛かりだった。魚じゃなかった', '竿を上げたら何もついていなかった。えさだけが無料だった', '魚がえさを食べた。逃げた。俺の時間も逃げた', '風が吹いて糸が絡まった。自然は釣りを応援してない'], musings: [
         M('勇者はしょぼい池に糸を垂らした。\n\n勇者「無料で食料が手に入るって聞くと最高だけど時間の溶け方も無料じゃない」', [{ item: 'small_fish', amount: 1 }]),
         M('水面は静かだった。魚も静かだった。つまり釣れていない。\n\n勇者「何もしてないよりは釣り糸が働いてる。たぶん」\n\n勇者は池の畔に座り込んだ。糸を垂らして何もしない。それが仕事だと言われてもまだ実感がない。\n\n勇者「休憩の許可証を手に入れた。これで休めるのか。いや休むための許可が必要な時点でもう休めてない」\n\n勇者は立ち上がった。休憩の準備をする。それは休むことへの準備でもあり休めないことへの準備でもあった。', [{ item: 'permission_to_rest', amount: 1 }], 'unlock', 'unlock'),
         M('勇者「小魚一匹でも、今日の食費が少し減る。大きな成功じゃなくても、生活はこういうので耐えるんだよな」', [{ item: 'small_fish', amount: 1 }]),
@@ -165,7 +165,7 @@ const jobs: Record<string, Job> = {
     ],
   },
 },
-  mining: { name: '採掘', type: 'idle', description: '一発当てたい気持ちで掘る。素材は強いが体力消耗も強い。', unlock: { type: 'jobLevel', job: 'woodcutting', level: 3 }, areas: [{ id: 'loose_rocks', name: '崩れかけの岩場', summary: '初歩の採掘場。腰に来る。', seconds: 7, rewards: { gold: [3, 9], ore: [1, 3], xp: 11 }, drops: [D('pebble_ore', 0.75, [1, 3]), D('glimmer_pebble', 0.08), D('chipped_gear', 0.06), D('rusty_screw', 0.06), D('cracked_lantern', 0.06), D('dusty_gloves', 0.05), D('frayed_rope', 0.05), D('chipped_chisel', 0.05)], failChance: 0.20, failMusings: ['岩が崩れた。採掘というより逃走だった', '鉱脈を外した。勘は信頼できない', 'ツルハシが跳ね返った。岩が思ったより硬かった', '掘った穴が埋まった。自然は仕事を戻してくる', '岩粉が目に入った。採掘は目も掘る', '腰が悲鳴を上げた。岩は無言だ'], musings: [M('崩れかけの岩場で鉱石を掘った。\n\n勇者「一発当てたい気持ちが、ツルハシに出てるな」', [{ item: 'pebble_ore', amount: 1 }]), M('勇者は崩れかけの岩場に立った。\n\n勇者「採掘だ。岩を掘って鉱石を手に入れる。木こりより体力が要りそうだけど、報酬もいいらしい」\n\n勇者はツルハシを構えた。岩に向かって振り下ろす。岩が砕ける音が響く。\n\n勇者「新しい仕事は、新しい疲れを連れてくる。報酬がいいぶん、腰への説明が難しい」\n\n勇者は鉱石を拾い上げた。重い。でも、この重さは少しだけ生活費に近い。', [{ item: 'pebble_ore', amount: 1 }], 'unlock', 'unlock')] }], upgrades: [
+  mining: { name: '採掘', type: 'idle', description: '一発当てたい気持ちで掘る。素材は強いが体力消耗も強い。', unlock: { type: 'jobLevel', job: 'woodcutting', level: 3 }, areas: [{ id: 'loose_rocks', name: '崩れかけの岩場', summary: '初歩の採掘場。腰に来る。', seconds: 7, rewards: { gold: [3, 9], ore: [1, 3], xp: 11 }, drops: [D('pebble_ore', 0.75, [1, 3]), D('glimmer_pebble', 0.08), D('chipped_gear', 0.06), D('rusty_screw', 0.06), D('cracked_lantern', 0.06), D('dusty_gloves', 0.05), D('frayed_rope', 0.05), D('chipped_chisel', 0.05), D('chipped_spoon', 0.05)], failChance: 0.20, failMusings: ['岩が崩れた。採掘というより逃走だった', '鉱脈を外した。勘は信頼できない', 'ツルハシが跳ね返った。岩が思ったより硬かった', '掘った穴が埋まった。自然は仕事を戻してくる', '岩粉が目に入った。採掘は目も掘る', '腰が悲鳴を上げた。岩は無言だ'], musings: [M('崩れかけの岩場で鉱石を掘った。\n\n勇者「一発当てたい気持ちが、ツルハシに出てるな」', [{ item: 'pebble_ore', amount: 1 }]), M('勇者は崩れかけの岩場に立った。\n\n勇者「採掘だ。岩を掘って鉱石を手に入れる。木こりより体力が要りそうだけど、報酬もいいらしい」\n\n勇者はツルハシを構えた。岩に向かって振り下ろす。岩が砕ける音が響く。\n\n勇者「新しい仕事は、新しい疲れを連れてくる。報酬がいいぶん、腰への説明が難しい」\n\n勇者は鉱石を拾い上げた。重い。でも、この重さは少しだけ生活費に近い。', [{ item: 'pebble_ore', amount: 1 }], 'unlock', 'unlock')] }], upgrades: [
     { id: 'mining_helmet', name: '採掘用ヘルメット', description: '頭を守る。思考は守らない。', cost: { gold: 65, resources: { ore: 10 } }, effects: { maxHp: 15, failReduction: 0.10 }, log: '頭の安全が確保された。崩れた岩にも少し対応できるようになった。', level: 2 },
     { id: 'mining_pickaxe', name: '新しいツルハシ', description: '掘る効率が上がる。腰の悲鳴も上がる。', cost: { gold: 90, resources: { wood: 20, ore: 15 } }, effects: { maxHp: 20, failReduction: 0.10 }, log: '道具が進化した。鉱脈を外す回数が少し減った。', level: 4 },
     { id: 'mining_headlamp', name: '坑道ヘッドライト', description: '頭に付ける明かり。暗い岩場でも手元が見える。', cost: { gold: 300, resources: { ore: 25, wood: 10 } }, effects: { maxHp: 16, failReduction: 0.06 }, log: 'ヘッドライトを付けた。採掘の失敗が少し減った。', level: 6 },
@@ -189,7 +189,7 @@ const jobs: Record<string, Job> = {
   },
 },
   adventure: { name: '冒険', type: 'adventure', description: 'エリアを探索して、たまにモンスターと出会う。自動戦闘で勝利を目指す。', unlock: { type: 'jobLevel', job: 'mining', level: 2 }, areas: [
-    { id: 'forest', name: '薄暗い森', summary: '安全な探索場所。スライムやキノコ、ため息ゴケ、ささやきツタ、寝坊キノコ、迷子の傘、置き忘れのピクニックかご、苔ガメ、迷子の長靴、置き去りの帽子が出る。', seconds: 6, adventureCost: 8, rewards: { xp: 10 }, drops: [D('field_note', 0.08), D('twig', 0.15, [1, 2]), D('mossy_coin', 0.05), D('wilted_clover', 0.06), D('wet_leaf', 0.06), D('mossy_pinecone', 0.05), D('loose_shoelace', 0.05), D('mossy_button', 0.05)], failChance: 0.10, failMusings: ['道に迷った。森は方向音痴の敵だ', '足元の木の根に躓いた。自然は意地悪だ', 'スライムに逃げられた。スライムは速い', '木の枝に引っかかった。森は俺を捕まえてる'], encounterChance: 0.25, monsters: [
+    { id: 'forest', name: '薄暗い森', summary: '安全な探索場所。スライムやキノコ、ため息ゴケ、ささやきツタ、寝坊キノコ、迷子の傘、置き忘れのピクニックかご、苔ガメ、迷子の長靴、置き去りの帽子、置き去りのハンカチが出る。', seconds: 6, adventureCost: 8, rewards: { xp: 10 }, drops: [D('field_note', 0.08), D('twig', 0.15, [1, 2]), D('mossy_coin', 0.05), D('wilted_clover', 0.06), D('wet_leaf', 0.06), D('mossy_pinecone', 0.05), D('loose_shoelace', 0.05), D('mossy_button', 0.05), D('frayed_handkerchief', 0.05)], failChance: 0.10, failMusings: ['道に迷った。森は方向音痴の敵だ', '足元の木の根に躓いた。自然は意地悪だ', 'スライムに逃げられた。スライムは速い', '木の枝に引っかかった。森は俺を捕まえてる'], encounterChance: 0.25, monsters: [
       { id: 'slime', name: 'スライム', hp: 15, attack: 3, rewards: { gold: [5, 12], xp: 14 }, drops: [D('slime_jelly', 0.85, [1, 2])] },
       { id: 'forest_mushroom', name: 'おすましキノコ', hp: 12, attack: 2, rewards: { gold: [4, 10], xp: 12 }, drops: [D('twig', 0.8, [1, 2])] },
       { id: 'sigh_moss', name: 'ため息ゴケ', hp: 18, attack: 4, rewards: { gold: [6, 14], xp: 15 }, drops: [D('mossy_coin', 0.5, [1, 1]), D('twig', 0.5, [1, 2])] },
@@ -200,8 +200,9 @@ const jobs: Record<string, Job> = {
       { id: 'moss_turtle', name: '苔ガメ', hp: 28, attack: 6, rewards: { gold: [11, 19], xp: 20 }, drops: [D('mossy_coin', 0.5, [1, 1]), D('twig', 0.5, [1, 2])] },
       { id: 'lost_boot', name: '迷子の長靴', hp: 30, attack: 6, rewards: { gold: [12, 20], xp: 21 }, drops: [D('twig', 0.7, [1, 2]), D('mossy_coin', 0.3, [1, 1])] },
       { id: 'left_hat', name: '置き去りの帽子', hp: 32, attack: 6, rewards: { gold: [12, 20], xp: 21 }, drops: [D('twig', 0.7, [1, 2]), D('mossy_coin', 0.3, [1, 1])] },
+      { id: 'left_handkerchief', name: '置き去りのハンカチ', hp: 34, attack: 6, rewards: { gold: [13, 21], xp: 22 }, drops: [D('twig', 0.7, [1, 2]), D('frayed_handkerchief', 0.4, [1, 1])] },
     ], musings: [M('勇者は森を探索した。\n\n勇者「静かな森ほど、何か出そうで落ち着かない。静けさにも種類がある」', [{ item: 'field_note', amount: 1 }]), M('勇者は薄暗い森に足を踏み入れた。\n\n勇者「冒険だ。釣りや木こりと違って、向こうから面倒が歩いてくる」\n\n勇者は棒を握りしめた。武器だ。戦うための道具。\n\n勇者「勝てば報酬。負ければ痛い。説明は短いのに、全然楽じゃないな」\n\n勇者は森の奥を見た。暗い。帰り道の位置だけは、何度も確認した。', [{ item: 'field_note', amount: 1 }], 'unlock', 'unlock')] },
-    { id: 'mountain', name: '山道', summary: '少し危険。ゴブリンや転がる岩玉、岩ゴーレム、崖ヤギ、置き去りの登山リュック、置き去りの水筒、傾いた道しるべ、山頂のカラス、置き去りの弁当箱、忘れられた雨具が出るかもしれない。', unlock: { type: 'jobLevel', job: 'adventure', level: 2 }, seconds: 8, adventureCost: 18, rewards: { xp: 14 }, drops: [D('pebble_ore', 0.12, [1, 2]), D('old_ticket', 0.05), D('bent_compass', 0.05)], failChance: 0.15, failMusings: ['岩が滑って落ちた。山は急だ', '霧が濃くなって迷った。視界は頼りにならない', 'ゴブリンに逃げられた。ゴブリンは賢い', '岩に躓いた。山は俺を落とそうとしてる'], encounterChance: 0.35, monsters: [
+    { id: 'mountain', name: '山道', summary: '少し危険。ゴブリンや転がる岩玉、岩ゴーレム、崖ヤギ、置き去りの登山リュック、置き去りの水筒、傾いた道しるべ、山頂のカラス、置き去りの弁当箱、忘れられた雨具、置き去りの手帳が出るかもしれない。', unlock: { type: 'jobLevel', job: 'adventure', level: 2 }, seconds: 8, adventureCost: 18, rewards: { xp: 14 }, drops: [D('pebble_ore', 0.12, [1, 2]), D('old_ticket', 0.05), D('bent_compass', 0.05), D('bent_bookmark', 0.05)], failChance: 0.15, failMusings: ['岩が滑って落ちた。山は急だ', '霧が濃くなって迷った。視界は頼りにならない', 'ゴブリンに逃げられた。ゴブリンは賢い', '岩に躓いた。山は俺を落とそうとしてる'], encounterChance: 0.35, monsters: [
       { id: 'slime', name: 'スライム', hp: 15, attack: 3, rewards: { gold: [5, 12], xp: 14 }, drops: [D('slime_jelly', 0.85, [1, 2])] },
       { id: 'goblin', name: 'ゴブリン', hp: 25, attack: 5, rewards: { gold: [10, 20], xp: 18 }, drops: [D('goblin_ear', 0.7, [1, 1])] },
       { id: 'rolling_rock', name: '転がる岩玉', hp: 30, attack: 6, rewards: { gold: [11, 21], xp: 19 }, drops: [D('pebble_ore', 0.7, [1, 1])] },
@@ -213,8 +214,9 @@ const jobs: Record<string, Job> = {
       { id: 'summit_crow', name: '山頂のカラス', hp: 54, attack: 10, rewards: { gold: [17, 28], xp: 25 }, drops: [D('pebble_ore', 0.7, [1, 1])] },
       { id: 'left_lunchbox', name: '置き去りの弁当箱', hp: 56, attack: 10, rewards: { gold: [18, 29], xp: 26 }, drops: [D('pebble_ore', 0.7, [1, 1])] },
       { id: 'forgotten_raincoat', name: '忘れられた雨具', hp: 58, attack: 10, rewards: { gold: [18, 29], xp: 26 }, drops: [D('pebble_ore', 0.7, [1, 1])] },
+      { id: 'left_notebook', name: '置き去りの手帳', hp: 60, attack: 11, rewards: { gold: [19, 30], xp: 27 }, drops: [D('pebble_ore', 0.7, [1, 1]), D('bent_bookmark', 0.4, [1, 1])] },
     ], musings: [M('勇者は山道を歩いた。\n\n勇者「空気が薄い。敵も薄いといいけど」'), M('山道を登った。足元が不安定。敵も不安定。\n\n勇者「高いところに行くほど、落ちる時の痛みが増す。家賃もそう」', [{ item: 'pebble_ore', amount: 1 }])] },
-    { id: 'cave', name: '洞窟', summary: '危険。強い敵が出る。暗闇キノコやかげネズミ、忘れられたヘルメット、忘れられた懐中電灯、水晶ガニ、つららのカタツムリ、忘れられたマフラー、忘れられた地図もいる。', unlock: { type: 'jobLevel', job: 'adventure', level: 4 }, seconds: 10, adventureCost: 32, rewards: { xp: 18 }, drops: [D('pebble_ore', 0.2, [2, 4]), D('echo_stone', 0.06), D('chipped_bowl', 0.05), D('damp_torch', 0.05)], failChance: 0.20, failMusings: ['暗すぎて壁にぶつかった。光が必要だ', '足元が崩れた。洞窟は予告なしに攻撃してくる', 'オオカミに逃げられた。オオカミは速い', '暗闇で迷った。洞窟は俺を捕まえてる'], encounterChance: 0.50, monsters: [
+    { id: 'cave', name: '洞窟', summary: '危険。強い敵が出る。暗闇キノコやかげネズミ、忘れられたヘルメット、忘れられた懐中電灯、水晶ガニ、つららのカタツムリ、忘れられたマフラー、忘れられた地図、忘れられたマッチ箱もいる。', unlock: { type: 'jobLevel', job: 'adventure', level: 4 }, seconds: 10, adventureCost: 32, rewards: { xp: 18 }, drops: [D('pebble_ore', 0.2, [2, 4]), D('echo_stone', 0.06), D('chipped_bowl', 0.05), D('damp_torch', 0.05), D('damp_candle', 0.05)], failChance: 0.20, failMusings: ['暗すぎて壁にぶつかった。光が必要だ', '足元が崩れた。洞窟は予告なしに攻撃してくる', 'オオカミに逃げられた。オオカミは速い', '暗闇で迷った。洞窟は俺を捕まえてる'], encounterChance: 0.50, monsters: [
       { id: 'goblin', name: 'ゴブリン', hp: 25, attack: 5, rewards: { gold: [10, 20], xp: 18 }, drops: [D('goblin_ear', 0.7, [1, 1])] },
       { id: 'cave_bat', name: '洞窟コウモリ', hp: 28, attack: 7, rewards: { gold: [13, 22], xp: 20 }, drops: [D('sleepy_herb', 0.55, [1, 1])] },
       { id: 'dark_mushroom', name: '暗闇キノコ', hp: 32, attack: 8, rewards: { gold: [14, 24], xp: 21 }, drops: [D('sleepy_herb', 0.55, [1, 1]), D('echo_stone', 0.08, [1, 1])] },
@@ -226,6 +228,7 @@ const jobs: Record<string, Job> = {
       { id: 'icicle_snail', name: 'つららのカタツムリ', hp: 56, attack: 11, rewards: { gold: [20, 32], xp: 27 }, drops: [D('sleepy_herb', 0.5, [1, 1]), D('echo_stone', 0.08, [1, 1])] },
       { id: 'forgotten_scarf', name: '忘れられたマフラー', hp: 60, attack: 11, rewards: { gold: [21, 33], xp: 28 }, drops: [D('sleepy_herb', 0.5, [1, 1]), D('echo_stone', 0.08, [1, 1])] },
       { id: 'forgotten_map', name: '忘れられた地図', hp: 62, attack: 11, rewards: { gold: [21, 33], xp: 28 }, drops: [D('sleepy_herb', 0.5, [1, 1]), D('echo_stone', 0.08, [1, 1])] },
+      { id: 'forgotten_matches', name: '忘れられたマッチ箱', hp: 64, attack: 11, rewards: { gold: [22, 34], xp: 29 }, drops: [D('sleepy_herb', 0.5, [1, 1]), D('damp_candle', 0.4, [1, 1])] },
     ], musings: [M('勇者は洞窟に入った。\n\n勇者「暗い。まず明かりが欲しい。勇気より先に足元だ」', [{ item: 'pebble_ore', amount: 2 }]), M('洞窟を探索した。暗いせいで、自分の足音だけがやけに聞こえる。\n\n勇者「誰もいないのに気まずい。洞窟、部屋より静かすぎる」', [{ item: 'pebble_ore', amount: 2 }])] },
     { id: 'old_castle_gate', name: '古い城門', summary: '終盤の探索地。置き去りの門番と請求書の気配、錆びた伝令、古い掲示板と閉ざされた門扉、錆びた呼び鈴が同居している。', unlock: { type: 'jobLevel', job: 'adventure', level: 6 }, seconds: 12, adventureCost: 55, rewards: { xp: 24 }, drops: [D('rusty_armor_plate', 0.24, [1, 2]), D('overdue_notice', 0.05)], failChance: 0.24, failMusings: ['門が重すぎた。歴史は開閉にもコストがある', '床石が抜けた。古い建物のレビューは信用できない', '風の音にびびった。音響だけなら魔王城級だ', '古い張り紙を読んだら気分が沈んだ。文字にも攻撃力がある'], encounterChance: 0.58, monsters: [
       { id: 'rust_armor', name: '錆びた鎧', hp: 50, attack: 10, rewards: { gold: [24, 40], xp: 28 }, drops: [D('rusty_armor_plate', 0.75, [1, 2])] },
@@ -251,6 +254,10 @@ const jobs: Record<string, Job> = {
       { id: 'past_life_echo', name: '前世の残響', hp: 130, attack: 21, rewards: { gold: [80, 130], xp: 74 }, drops: [D('second_life_note', 0.5, [1, 1])] },
       { id: 'new_life_wisp', name: '新しい命の灯', hp: 145, attack: 23, rewards: { gold: [90, 145], xp: 82 }, drops: [D('rebirth_guidebook', 0.4, [1, 1]), D('second_life_note', 0.3, [1, 1])] },
     ], musings: [M('転生の回廊に入った。ここは一度死んで、もう一度始めた勇者だけが通れる。\n\n勇者「前の人生の残り香がする。残り香にまで家賃を請求されないといいけど」', [{ item: 'second_life_note', amount: 1 }], 'unlock'), M('回廊の灯が、勇者の歩みに合わせて明るくなった。\n\n勇者「新しい命の灯って、要するに俺のやる気を可視化したやつだな。切れかけの蛍光灯みたいな色をしてる」', [{ item: 'second_life_note', amount: 1 }])] },
+    { id: 'samsara_garden', name: '輪廻の庭', summary: '輪廻した勇者だけが入れる庭。四季が一度に巡り、過去の自分の影と輪廻の花が咲いている。', unlock: { type: 'samsara', count: 1 }, seconds: 15, adventureCost: 100, rewards: { xp: 38 }, drops: [D('samsara_petal', 0.15), D('samsara_seed', 0.10)], failChance: 0.29, failMusings: ['庭の季節が急に変わった。春の次が冬だった。順番、どこへ行った', '自分の影に話しかけられた。返事に困った。影のほうが慣れている', '花が咲いて、散って、また咲いた。庭の時計は早送りだ', '石灯籠の明かりが揺れた。灯りにも季節があるらしい'], encounterChance: 0.65, monsters: [
+      { id: 'past_self_shadow', name: '過去の自分の影', hp: 155, attack: 24, rewards: { gold: [95, 155], xp: 86 }, drops: [D('samsara_petal', 0.5, [1, 1])] },
+      { id: 'samsara_blossom', name: '輪廻の花', hp: 170, attack: 25, rewards: { gold: [105, 170], xp: 94 }, drops: [D('samsara_guidebook', 0.4, [1, 1]), D('samsara_seed', 0.3, [1, 1])] },
+    ], musings: [M('輪廻の庭に入った。ここは輪廻した勇者だけが入れる庭で、四季が一度に巡っている。\n\n勇者「桜と紅葉と雪が同じ庭にある。季節の渋滞だ。渋滞にまで並ぶのか、人生」', [{ item: 'samsara_petal', amount: 1 }], 'unlock'), M('庭の石畳は円を描いていた。歩いても歩いても、同じ場所に戻ってくる。\n\n勇者「円を描く道って、要するに人生の歩き方そのものだな。戻るたびに、少しだけ景色が違う」', [{ item: 'samsara_seed', amount: 1 }])] },
     { id: 'throne_room', name: '玉座の間', summary: '城の最奥。ボスしか出ない。勝つたびに連戦ボーナスが積み上がる。', unlock: { type: 'item', item: 'quiet_crown', amount: 1 }, seconds: 16, adventureCost: 120, rewards: { xp: 40 }, drops: [D('castle_key_fragment', 0.22, [1, 1]), D('quiet_crown', 0.06, [1, 1])], failChance: 0.30, failMusings: ['玉座の重圧に足が止まった。権威、実は体力勝負だ', '玉座の間の静けさに気圧された。静かすぎると心臓がうるさい', '廊下の絨毯で滑った。歴史ある床ほど滑る', '玉座を見たら座りたくなった。座る勇気と立つ勇気、両方要る'], encounterChance: 0.70, monsters: [
       { id: 'throne_mimic', name: '玉座ミミック', hp: 150, attack: 22, boss: true, rewards: { gold: [90, 150], xp: 80 }, drops: [D('castle_key_fragment', 0.6, [1, 1]), D('quiet_crown', 0.25, [1, 1])] },
       { id: 'retired_hero', name: '引退した先輩勇者', hp: 180, attack: 24, boss: true, rewards: { gold: [110, 170], xp: 95 }, drops: [D('quiet_crown', 0.3, [1, 1]), D('throne_key', 0.3, [1, 1])] },
@@ -298,7 +305,7 @@ const jobs: Record<string, Job> = {
     ],
   },
 },
-  office: { name: '王国勤務', type: 'idle', description: '安定収入。ただし拘束が重い。', unlock: { type: 'jobLevel', job: 'merchant', level: 3 }, areas: [{ id: 'clerk', name: '王国庶務係', summary: '安定。雑務。地味にMPが減る。', seconds: 8, rewards: { gold: [12, 22], xp: 10 }, drops: [D('employee_badge', 0.04), D('cold_coffee', 0.06), D('scribbled_memo', 0.05), D('faded_sticky_note', 0.05), D('cracked_mug', 0.05), D('loose_shirt_button', 0.05), D('snapped_rubber_band', 0.05), D('bent_stapler', 0.05)], failChance: 0, failMusings: [], musings: [M('勇者は王国庶務係として出勤した。\n\n勇者「決まった時間に決まった場所へ行けた。えらい。もう帰りたい」')] }], upgrades: [
+  office: { name: '王国勤務', type: 'idle', description: '安定収入。ただし拘束が重い。', unlock: { type: 'jobLevel', job: 'merchant', level: 3 }, areas: [{ id: 'clerk', name: '王国庶務係', summary: '安定。雑務。地味にMPが減る。', seconds: 8, rewards: { gold: [12, 22], xp: 10 }, drops: [D('employee_badge', 0.04), D('cold_coffee', 0.06), D('scribbled_memo', 0.05), D('faded_sticky_note', 0.05), D('cracked_mug', 0.05), D('loose_shirt_button', 0.05), D('snapped_rubber_band', 0.05), D('bent_stapler', 0.05), D('bent_clip', 0.05)], failChance: 0, failMusings: [], musings: [M('勇者は王国庶務係として出勤した。\n\n勇者「決まった時間に決まった場所へ行けた。えらい。もう帰りたい」')] }], upgrades: [
     { id: 'office_desk', name: 'まともな机', description: '作業効率が上がる。腰への負担は下がらない。', cost: { gold: 80, resources: { wood: 20 } }, effects: { maxMp: 10 }, log: '机がまともになった。仕事のまともさは、まだ。', level: 2 },
     { id: 'office_chair', name: '快適な椅子', description: '座り心地がいい。拘束感は変わらない。', cost: { gold: 100, resources: { wood: 25 } }, effects: { maxMp: 15, maxHp: 8 }, log: '椅子が快適になった。拘束感は、まだ。', level: 4 },
     { id: 'office_stamp', name: '決裁のハンコ', description: '押すだけで書類が進むハンコ。押す側の肩こりは進まない。', cost: { gold: 300, resources: { ore: 15, wood: 15 } }, effects: { maxMp: 16, maxHp: 10 }, log: 'ハンコを手に入れた。庶務の要領が少し良くなった。', level: 6 },
@@ -556,6 +563,36 @@ const jobs: Record<string, Job> = {
     ],
     5: [
       M('転生案内Lv5：転生案内の達人になった。\n\n勇者「何周目かの人生で、やっと人に教えられることが増えた。教えることは、自分の人生の棚卸しでもある」', [{ item: 'rebirth_guidebook', amount: 1 }], 'level_up'),
+    ],
+  },
+},
+  // 輪廻専用仕事（2026-11-09 / プレステージ第3層「輪廻」）。
+  // 輪廻1回で解禁。何周も巡った勇者が、生まれ変わったばかりの勇者に輪廻の歩き方を教える仕事で、
+  // 教える側に回ることで自分の人生もさらに整理される、という位置づけ。
+  // 解禁は輪廻回数だけが条件で、輪廻は周回でリセットされないため既存プレイヤーの再ロックは起きない。
+  samsara_guide: { name: '輪廻案内', type: 'idle', description: '何周も巡った勇者に、輪廻の歩き方を教える。教える側になると、自分の人生もさらに整理される。', unlock: { type: 'samsara', count: 1 }, areas: [
+    { id: 'first_cycle', name: '初めての輪廻案内', summary: '生まれたての勇者に、巡る人生の歩き方から教える。教える側も少し緊張する。', seconds: 9, rewards: { gold: [25, 45], xp: 18 }, drops: [D('samsara_petal', 0.12), D('samsara_seed', 0.08)], failChance: 0.15, failMusings: ['教えた通りにやったら花びらが散った。教えた側の責任が重い', '初心者の質問に答えられなかった。こっちも何周目か忘れた', '糸が絡まった。教えるより先にほどく作業が増えた', '「先生」と呼ばれた。先生と呼ばれるほどの人生かは、もう数えない'], musings: [M('勇者は生まれ変わったばかりの勇者に、輪廻の歩き方を教え始めた。\n\n勇者「巡る人生の歩き方から教えるのか。俺が最初に覚えたのもこれだったな。教える側になると、自分の人生もさらに整理される」', [{ item: 'samsara_guidebook', amount: 1 }], 'unlock', 'unlock'), M('初めての輪廻案内をした。相手の勇者は花びらを見て、じっと庭を見ている。\n\n勇者「あの顔、見覚えがある。何周目かの俺だ。あの頃の俺に、今の俺が教えるのか。なんだか変な気分だ」', [{ item: 'samsara_petal', amount: 1 }])] },
+    { id: 'samsara_tea', name: '輪廻の茶話会', summary: '何周も巡った勇者たちとお茶を飲みながら、巡る人生の段取りを話し合う。', unlock: { type: 'jobLevel', job: 'samsara_guide', level: 2 }, seconds: 11, rewards: { gold: [40, 65], xp: 22 }, drops: [D('samsara_seed', 0.15), D('samsara_petal', 0.10), D('samsara_guidebook', 0.05)], failChance: 0.20, failMusings: ['お茶をこぼした。輪廻した勇者の前で粗相をした', '先輩の話が長くて、お茶が冷めた。話は冷めない', '「何周目？」と聞かれた。数えるのをやめた、と答えた', '茶話会の予定を忘れた。予定を忘れるのも、ある意味輪廻の余裕だ'], musings: [M('輪廻の茶話会に参加した。お茶を飲みながら、巡る人生の段取りを話し合う。\n\n勇者「何周も巡った勇者は、みんな少しだけ穏やかだ。穏やかさって、輪廻の証より先に手に入るものだったのか」', [{ item: 'samsara_seed', amount: 1 }], 'unlock'), M('茶話会で、先輩勇者が「何周目？」と聞いてきた。\n\n勇者「数えるのをやめました、と答えたら『それが正解だね』と笑われた。何周したら『もう十分』って言われるんだろう。聞くのが少し怖い」', [{ item: 'samsara_petal', amount: 1 }])] },
+  ], upgrades: [
+    { id: 'samsara_guide_notebook', name: '輪廻案内の手帳', description: '輪廻案内の手帳を、自分用に書き直した版。初回は自分用だったはずが、誰かへの案内になっている。', cost: { gold: 200, resources: { fish: 12, wood: 12 } }, effects: { maxMp: 14, failReduction: 0.06 }, log: '手帳を改訂した。案内の失敗が少し減った。教える側の準備が整ってきた。', level: 2 },
+    { id: 'samsara_guide_robe', name: '輪廻案内の羽織', description: '案内役の羽織。付けると、生まれたての勇者が少しだけ安心して寄ってくる。', cost: { gold: 320, resources: { ore: 18, wood: 18 } }, effects: { maxHp: 16, maxMp: 12, failReduction: 0.06 }, log: '羽織を手に入れた。案内役としての自覚が少し生まれた。失敗も少し減った。', level: 4 },
+    { id: 'samsara_guide_lantern', name: '輪廻案内の行灯', description: '庭の灯を小さくした行灯。暗い道でも、輪廻の花が見える。', cost: { gold: 480, resources: { ore: 24, wood: 24 } }, effects: { maxHp: 18, maxMp: 16, failReduction: 0.07 }, log: '行灯を手に入れた。案内の道が少し明るくなった。失敗も少し減った。', level: 6 },
+  ],
+  levelMusings: {
+    1: [
+      M('輪廻案内Lv1：勇者は輪廻案内を始めた。\n\n勇者「生まれ変わったばかりの勇者に、輪廻の歩き方を教える。教える側になると、自分の人生もさらに整理されるな」', [{ item: 'samsara_petal', amount: 1 }], 'level_up'),
+    ],
+    2: [
+      M('輪廻案内Lv2：案内の段取りが少しわかってきた。\n\n勇者「初心者の質問に答えられるようになった。答えながら、自分の答えも少しずつ固まってくる」', [{ item: 'samsara_petal', amount: 1 }], 'level_up'),
+    ],
+    3: [
+      M('輪廻案内Lv3：教えるのが少し上手くなった。\n\n勇者「教えるって、自分の人生をもう一度なぞることだな。なぞるたびに、少しだけ見えてくる」', [{ item: 'samsara_seed', amount: 1 }], 'level_up'),
+    ],
+    4: [
+      M('輪廻案内Lv4：案内役としての自信がついた。\n\n勇者「生まれたての勇者の顔が、少しだけほころぶとこっちも嬉しい。教える側の報酬って、こういうのか」', [{ item: 'samsara_petal', amount: 2 }], 'level_up'),
+    ],
+    5: [
+      M('輪廻案内Lv5：輪廻案内の達人になった。\n\n勇者「何周目かの人生で、やっと人に教えられることが増えた。教えることは、自分の人生の棚卸しでもある」', [{ item: 'samsara_guidebook', amount: 1 }], 'level_up'),
     ],
   },
 },

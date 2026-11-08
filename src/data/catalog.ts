@@ -27,6 +27,17 @@ export const ITEM: Record<string, [string, string, string]> = {
   rebirth_guidebook: ['転生案内の手引き', '重要', '転生した勇者だけが持つ手引き。初回は自分用だったはずが、いつの間にか誰かへの案内になっている。'],
   second_life_note: ['二周目のメモ', '素材', '二周目の生活で気づいたことのメモ。一周目では気づけなかったことが、意外とたくさん書いてある。'],
   retiree_tea: ['引退勇者のお茶', '素材', '引退した勇者が淹れるお茶。味より、淹れるまでの余裕がうまい。'],
+  // 輪廻専用アイテム（2026-11-09 / プレステージ第3層）。輪廻した勇者だけが手に入れる。
+  samsara_guidebook: ['輪廻案内の手引き', '重要', '輪廻した勇者だけが持つ手引き。何周目かの人生で、やっと人に教えられることが増えた。'],
+  samsara_petal: ['輪廻の花びら', '素材', '四季が一度に巡る庭の花びら。拾うたび、季節がひとつ進んだ気がする。'],
+  samsara_seed: ['輪廻の種', '素材', '何度でも芽吹く種。植える場所より、巡る回数のほうが大事らしい。'],
+  // 日常の置き忘れ・小バッチ（2026-11-09）。各エリアのドロップから手に入る。
+  frayed_handkerchief: ['ほつれたハンカチ', '素材', '誰かのハンカチ。ほつれ具合からして、長く使われたものだ。'],
+  bent_bookmark: ['曲がったしおり', '素材', '本の途中で曲がったしおり。読むのをやめた場所が、ここに置き去り。'],
+  damp_candle: ['湿ったろうそく', '素材', '湿気で火がつかないろうそく。明かりより、置かれた理由のほうが気になる。'],
+  lost_pass: ['なくした定期券', '素材', '誰かの定期券。期限はまだあるのに、持ち主はもうここにいない。'],
+  chipped_spoon: ['欠けたスプーン', '素材', '欠けたスプーン。すくう量より、欠けた理由のほうが多い。'],
+  bent_clip: ['曲がったクリップ', '素材', '書類を留めていたクリップ。留めていた書類より、こっちのほうが長生きした。'],
   life_stamp: ['生活スタンプ', '記録', '今日も来た証。派手ではないが、継続は財布より先に心へ効く。'],
   employee_badge: ['王国職員証', '重要', '安定収入の気配がする。気配だけでも少し重い。'],
   mute_button: ['ミュート確認ボタン', '重要', '在宅作業の境界線を守るための小さな儀式。'],
@@ -165,6 +176,9 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   first_rebirth: { name: '転生、達成', description: '初めて転生した。思い出ポイントまで置いていったが、転生の証だけはポケットに残った。', hint: '初めて転生する', category: '周回' },
   rebirth_3: { name: '三度目の人生', description: '3回転生した。人生の回数が、もう履歴書の欄に収まらない。', hint: '3回転生する', category: '周回' },
   first_rebirth_upgrade: { name: '転生の証は複利', description: '転生の証で永続強化を買った。前の前の自分まで、今の自分を助けている。', hint: '転生の証で永続強化を買う', category: '周回' },
+  first_samsara: { name: '輪廻、達成', description: '初めて輪廻した。転生の証まで置いていったが、輪廻の証だけはポケットに残った。', hint: '初めて輪廻する', category: '周回' },
+  samsara_3: { name: '三度目の輪廻', description: '3回輪廻した。人生の回数が、もうカレンダーの欄に収まらない。', hint: '3回輪廻する', category: '周回' },
+  first_samsara_upgrade: { name: '輪廻の証は複利', description: '輪廻の証で永続強化を買った。前の前の前の自分まで、今の自分を助けている。', hint: '輪廻の証で永続強化を買う', category: '周回' },
   all_jobs_unlocked: { name: '職業欄が騒がしい', description: 'すべての仕事を解禁した。自由に近づくほど、選択肢も増えてしまう。', hint: 'すべての仕事を解禁する', category: '仕事' },
   release_goal: { name: 'そこそこ安心生活', description: 'リリース版の生活目標に到達した。世界最強ではないが、今日の勇者はかなり勝っている。', hint: '仕事全解禁・拠点整備6割・最高Lv8・実績10個を満たす', category: '実績' },
   // ---- 仕事Lv5（16種） ----
@@ -265,7 +279,7 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   achievements_50: { name: '実績50個', description: '実績を50個集めた。もう半分近くまで来た。', hint: '実績を50個集める', category: '実績' },
   achievements_75: { name: '実績75個', description: '実績を75個集めた。残りは、もう少しだけ。', hint: '実績を75個集める', category: '実績' },
   achievements_100: { name: '実績100個', description: '実績を100個集めた。三桁の人生ログだ。', hint: '実績を100個集める', category: '実績' },
-  achievements_120: { name: '実績コンプリート', description: '実績を120個すべて集めた。勇者の人生ログが完成した。', hint: '実績を120個すべて集める', category: '実績' },
+  achievements_120: { name: '実績コンプリート', description: '実績を123個すべて集めた。勇者の人生ログが完成した。', hint: '実績を123個すべて集める', category: '実績' },
   // ---- 連鎖 ----
   synergy_all_7: { name: '七つの連鎖', description: '7つの連鎖すべてを発動させた。仕事同士が、もう完全に噛み合っている。', hint: '7つの連鎖すべてを発動させる', category: '連鎖' },
 };

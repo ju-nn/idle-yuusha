@@ -14,7 +14,7 @@ import { addAchievement, addItems, applyMilestoneAchievements, checkMilestoneAch
 import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } from './requirements';
 import { xpToNext } from './progression';
 import { parseSaveBackup, SAVE_BACKUP_GAME_ID } from './saveTransfer';
-import { buyPrestigeUpgrade, buyRebirthUpgrade, canRebirth, canRetire, createPrestigeState, getPrestigeOfflineBonus, getPrestigeScore, getPrestigeStage, getRebirthChestLimitBonus, getRebirthOfflineCapHours, getRebirthPoints, getRebirthSpeedMultiplier, getRebirthStage, getRetirementPoints, PRESTIGE_UPGRADES, REBIRTH_UPGRADES, rebirth, retire } from './prestige';
+import { buyPrestigeUpgrade, buyRebirthUpgrade, buySamsaraUpgrade, canRebirth, canRetire, canSamsara, createPrestigeState, getPrestigeOfflineBonus, getPrestigeScore, getPrestigeStage, getRebirthChestLimitBonus, getRebirthOfflineCapHours, getRebirthPoints, getRebirthSpeedMultiplier, getRebirthStage, getRetirementPoints, getSamsaraGoldMultiplier, getSamsaraMusingMultiplier, getSamsaraPoints, getSamsaraRebirthMultiplier, getSamsaraSpeedMultiplier, getSamsaraXpMultiplier, PRESTIGE_UPGRADES, REBIRTH_UPGRADES, rebirth, retire, samsara, SAMSARA_UPGRADES } from './prestige';
 import { defaultSettings } from './settings';
 import { runTick } from './tick';
 import { autoSellGainedItems, isAutoSellTarget } from './automation';
@@ -269,7 +269,7 @@ export function runSelfTests() {
   console.assert(!canRebirth(initialState) && getRebirthPoints(initialState) === 0, 'fresh state should not be rebirthable');
   const rebirthReady = {
     ...grownState,
-    prestige: { memoryPoints: 20, totalEarned: 100, retireCount: 3, upgrades: { memory_xp: 2 }, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {} },
+    prestige: { memoryPoints: 20, totalEarned: 100, retireCount: 3, upgrades: { memory_xp: 2 }, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: {}, samsaraPoints: 0, totalSamsaraEarned: 0, samsaraCount: 0, samsaraUpgrades: {} },
   };
   console.assert(canRebirth(rebirthReady) && getRebirthPoints(rebirthReady) === 20, 'three retires with 100 total memory should grant 20 rebirth points');
   const notYetRebirth = { ...rebirthReady, prestige: { ...rebirthReady.prestige, retireCount: 2 } };
@@ -297,8 +297,52 @@ export function runSelfTests() {
   // v4相当のセーブは転生フィールドを持たない形で渡す（旧セーブの再現のため unknown 経由）。
   const migratedV4 = migrateState({ saveVersion: 4, gold: 50, jobData: { fishing: { level: 4, xp: 0, seenMusings: [] } }, items: { small_fish: 3 }, prestige: { memoryPoints: 5, totalEarned: 5, retireCount: 1, upgrades: {} } } as unknown as Partial<typeof initialState>, initialState);
   console.assert(migratedV4.saveVersion === SAVE_VERSION && migratedV4.prestige?.rebirthPoints === 0 && migratedV4.prestige?.rebirthCount === 0 && migratedV4.autoRestReturn === null, 'v4 save should gain an empty rebirth state');
-  const migratedWithRebirth = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {}, prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 7, totalRebirthEarned: 7, rebirthCount: 1, rebirthUpgrades: { rebirth_gold: 1 } } } as Partial<typeof initialState>, initialState);
+  const migratedWithRebirth = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {}, prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 7, totalRebirthEarned: 7, rebirthCount: 1, rebirthUpgrades: { rebirth_gold: 1 }, samsaraPoints: 0, totalSamsaraEarned: 0, samsaraCount: 0, samsaraUpgrades: {} } } as Partial<typeof initialState>, initialState);
   console.assert(migratedWithRebirth.prestige?.rebirthPoints === 7 && migratedWithRebirth.prestige?.rebirthUpgrades.rebirth_gold === 1, 'rebirth data should survive migration');
+  // 輪廻（2026-11-09 / プレステージ第3層）: 転生3回が条件で、獲得は転生の証の累計から平方根型。
+  console.assert(!canSamsara(initialState) && getSamsaraPoints(initialState) === 0, 'fresh state should not be samsarable');
+  const samsaraReady = {
+    ...grownState,
+    prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 20, totalRebirthEarned: 100, rebirthCount: 3, rebirthUpgrades: { rebirth_efficiency: 2 }, samsaraPoints: 0, totalSamsaraEarned: 0, samsaraCount: 0, samsaraUpgrades: {} },
+  };
+  console.assert(canSamsara(samsaraReady) && getSamsaraPoints(samsaraReady) === 20, 'three rebirths with 100 total rebirth points should grant 20 samsara points');
+  const notYetSamsara = { ...samsaraReady, prestige: { ...samsaraReady.prestige, rebirthCount: 2 } };
+  console.assert(!canSamsara(notYetSamsara) && samsara(notYetSamsara, initialState) === notYetSamsara, 'two rebirths should not unlock samsara');
+  // 輪廻: 第1・第2層まで置いていき、輪廻の証と輪廻回数だけが残ること。
+  const samsaraed = samsara(samsaraReady, initialState);
+  console.assert(samsaraed !== samsaraReady && samsaraed.jobData.fishing.level === 1 && samsaraed.gold === initialState.gold, 'samsara should reset run progress');
+  console.assert(samsaraed.prestige?.samsaraCount === 1 && samsaraed.prestige?.samsaraPoints === 20 && samsaraed.prestige?.totalSamsaraEarned === 20, 'samsara should bank samsara points');
+  console.assert(samsaraed.prestige?.memoryPoints === 0 && samsaraed.prestige?.rebirthPoints === 0 && samsaraed.prestige?.totalRebirthEarned === 0 && samsaraed.prestige?.rebirthCount === 0 && Object.keys(samsaraed.prestige?.rebirthUpgrades || {}).length === 0, 'samsara should reset layers 1 and 2');
+  console.assert(samsaraed.achievements.includes('first_fish') && samsaraed.achievements.includes('first_samsara'), 'samsara should keep achievements and add first_samsara');
+  const samsaraedAgain = samsara({ ...samsaraReady, prestige: { ...samsaraReady.prestige, samsaraCount: 2, samsaraPoints: 5, totalSamsaraEarned: 15 } }, initialState);
+  console.assert(samsaraedAgain.prestige?.samsaraCount === 3 && samsaraedAgain.achievements.includes('samsara_3'), 'third samsara should add the samsara_3 achievement');
+  // 輪廻の強化: 所持する証の範囲でだけ買えて、倍率に効くこと。
+  const boughtSamsara = buySamsaraUpgrade(samsaraed, 'samsara_efficiency');
+  console.assert(boughtSamsara.prestige?.samsaraUpgrades.samsara_efficiency === 1, 'samsara upgrade should apply one stage');
+  console.assert((boughtSamsara.prestige?.samsaraPoints || 0) === 17, 'samsara upgrade should cost points');
+  const brokeSamsara = buySamsaraUpgrade({ ...initialState, prestige: { ...createInitialState(jobs).prestige!, samsaraPoints: 0 } }, 'samsara_efficiency');
+  console.assert(brokeSamsara.prestige?.samsaraUpgrades.samsara_efficiency === undefined, 'samsara upgrade should not apply without points');
+  const samsaraBoosted = { ...initialState, prestige: { ...createInitialState(jobs).prestige!, samsaraUpgrades: { samsara_efficiency: 2, samsara_gold: 2, samsara_xp: 1, samsara_musing: 1, samsara_rebirth: 1 } } };
+  console.assert(getSamsaraSpeedMultiplier(samsaraBoosted) === 1.24, 'samsara efficiency 2 should give x1.24 speed');
+  console.assert(getSamsaraGoldMultiplier(samsaraBoosted) === 1.3, 'samsara gold 2 should give x1.30 gold');
+  console.assert(getSamsaraXpMultiplier(samsaraBoosted) === 1.15, 'samsara xp 1 should give x1.15 xp');
+  console.assert(getSamsaraMusingMultiplier(samsaraBoosted) === 1.3, 'samsara musing 1 should give x1.30 musing rewards');
+  console.assert(getRebirthPoints({ ...rebirthReady, prestige: { ...rebirthReady.prestige, totalEarned: 36 } }) === 12, 'thirty-six total memory should grant 12 rebirth points');
+  console.assert(getRebirthPoints({ ...rebirthReady, prestige: { ...rebirthReady.prestige, totalEarned: 36, samsaraUpgrades: { samsara_rebirth: 1 } } }) === 15, 'samsara rebirth 1 should raise rebirth points from 12 to 15');
+  console.assert(getSamsaraRebirthMultiplier(samsaraBoosted) === 1.3, 'samsara rebirth 1 should give x1.30 rebirth points');
+  console.assert(SAMSARA_UPGRADES.length === 5 && SAMSARA_UPGRADES.every((def) => def.maxStage >= 4), 'there should be five samsara upgrades');
+  // 輪廻の移行: 輪廻フィールド無しのセーブは空の輪廻状態になり、転生の証は引き継がれること。
+  const migratedNoSamsara = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {}, prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: {}, rebirthPoints: 7, totalRebirthEarned: 7, rebirthCount: 1, rebirthUpgrades: { rebirth_gold: 1 } } } as unknown as Partial<typeof initialState>, initialState);
+  console.assert(migratedNoSamsara.prestige?.samsaraPoints === 0 && migratedNoSamsara.prestige?.samsaraCount === 0 && migratedNoSamsara.prestige?.rebirthPoints === 7, 'old save without samsara fields should gain an empty samsara state and keep rebirth data');
+  // 輪廻専用コンテンツ（2026-11-09 / プレステージ第3層）：輪廻1回で解禁される仕事とエリア。
+  console.assert(jobs.samsara_guide && jobs.samsara_guide.areas.length === 2 && jobs.samsara_guide.upgrades.length === 3, 'samsara guide job should have two areas and three upgrades');
+  console.assert(checkRequirement(jobs.samsara_guide.unlock, initialState) === false, 'samsara guide should be locked before any samsara');
+  const samsaraedOnce = { ...initialState, prestige: { ...createInitialState(jobs).prestige!, samsaraCount: 1 } };
+  console.assert(checkRequirement(jobs.samsara_guide.unlock, samsaraedOnce) === true, 'samsara guide should unlock after one samsara');
+  console.assert(describeRequirement(jobs.samsara_guide.unlock, initialState).includes('輪廻1回'), 'samsara unlock hint should name the samsara count');
+  const samsaraGarden = jobs.adventure.areas.find((area) => area.id === 'samsara_garden');
+  console.assert(samsaraGarden && (samsaraGarden.monsters || []).length === 2 && checkRequirement(samsaraGarden.unlock, initialState) === false && checkRequirement(samsaraGarden.unlock, samsaraedOnce) === true, 'samsara garden should hold two monsters and unlock after one samsara');
+  console.assert(!isJobUnlocked('samsara_guide', initialState) && isJobUnlocked('samsara_guide', samsaraedOnce), 'samsara guide should be locked fresh and unlocked after samsara');
   // 自動化の既定: 宝箱の自動開封と自動休憩はどちらも OFF から始まること。
   console.assert(defaultSettings.autoOpenChest === false && defaultSettings.autoRest === false, 'auto chest and auto rest should default to off');
   // 自動休憩・宝箱の自動開封: node でのみ localStorage を差し替えて tick 挙動を検証する
@@ -349,10 +393,10 @@ export function runSelfTests() {
       delete (globalThis as unknown as Record<string, unknown>).localStorage;
     }
   }
-  // 実績120件（2026-11-07）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。
+  // 実績123件（2026-11-07 に120件へ拡張、2026-11-09 に輪廻3種を追加）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。
   const achievementIds = Object.keys(ACHIEVEMENTS);
-  console.assert(achievementIds.length === 120, `achievements should total 120 (got ${achievementIds.length})`);
-  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 120, 'achievement names should be unique');
+  console.assert(achievementIds.length === 123, `achievements should total 123 (got ${achievementIds.length})`);
+  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 123, 'achievement names should be unique');
   console.assert(Object.values(ACHIEVEMENTS).every((a) => a.name && a.description && a.hint && a.category), 'every achievement should have a name, description, hint and category');
   const twentyFour = achievementIds.filter((id) => !['achievements_25', 'achievements_50', 'achievements_75', 'achievements_100', 'achievements_120', 'ten_achievements'].includes(id)).slice(0, 24);
   const milestoneLogs: string[] = [];
@@ -360,7 +404,7 @@ export function runSelfTests() {
   console.assert(with25.includes('achievements_25'), 'the 25th achievement should also grant achievements_25');
   const allBut120 = achievementIds.filter((id) => id !== 'achievements_120' && id !== 'synergy_all_7');
   const completed = addAchievement({ ...initialState, achievements: allBut120 }, 'synergy_all_7', []);
-  console.assert(completed.length === 120 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 120');
+  console.assert(completed.length === 123 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 123');
   const milestoneState = {
     ...initialState,
     jobData: { ...initialState.jobData, fishing: { level: 5, xp: 0, seenMusings: [] }, mining: { level: 2, xp: 0, seenMusings: [] }, rest: { level: 2, xp: 0, seenMusings: [] }, nightwatch: { level: 2, xp: 0, seenMusings: [] }, woodcutting: { level: 4, xp: 0, seenMusings: [] }, housekeeping: { level: 2, xp: 0, seenMusings: [] }, booktrade: { level: 3, xp: 0, seenMusings: [] } },
@@ -414,8 +458,10 @@ export function runSelfTests() {
   console.assert(getCollectionGoldMultiplier(initialState) === 1 && getCollectionXpMultiplier(initialState) === 1, 'fresh state should have no collection bonus');
   const allDiscoverable = getAllDiscoverableItemIds();
   const allMonsters = getAllMonsterIds();
-  console.assert(allMonsters.length === 52, `there should be 52 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allMonsters.length === 57, `there should be 57 monsters to defeat (got ${allMonsters.length})`);
   console.assert(allMonsters.includes('left_hat') && allMonsters.includes('forgotten_raincoat') && allMonsters.includes('forgotten_map'), 'new daily-life monsters should be counted');
+  console.assert(allMonsters.includes('left_handkerchief') && allMonsters.includes('left_notebook') && allMonsters.includes('forgotten_matches'), 'samsara batch daily-life monsters should be counted');
+  console.assert(allMonsters.includes('past_self_shadow') && allMonsters.includes('samsara_blossom'), 'samsara garden monsters should be counted');
   console.assert(allMonsters.includes('past_life_echo') && allMonsters.includes('new_life_wisp'), 'rebirth corridor monsters should be counted');
   // 転生専用コンテンツ（2026-11-07 / ロードマップ5の残り）：転生1回で解禁される仕事とエリア。
   // 初期状態では未解禁、転生1回で解禁。転生は周回でリセットされないため再ロックは起きない。
@@ -427,10 +473,11 @@ export function runSelfTests() {
   const rebirthCorridor = jobs.adventure.areas.find((area) => area.id === 'rebirth_corridor');
   console.assert(rebirthCorridor && checkRequirement(rebirthCorridor.unlock, initialState) === false && checkRequirement(rebirthCorridor.unlock, rebirthedOnce) === true, 'rebirth corridor should unlock after one rebirth');
   console.assert(!isJobUnlocked('rebirth_guide', initialState) && isJobUnlocked('rebirth_guide', rebirthedOnce), 'rebirth guide should be locked fresh and unlocked after rebirth');
-  // エリア専用イラスト（2026-11-08）：冒険エリア7種すべてに専用絵がある。フォールバック（仕事絵＋色調変化）は残っていない。
-  console.assert(Object.keys(AREA_ART).length === 7 && ['forest', 'mountain', 'cave', 'throne_room', 'old_castle_gate', 'inner_courtyard', 'rebirth_corridor'].every((id) => AREA_ART[id]?.startsWith('data:image/webp;base64,')), 'seven adventure areas should have dedicated art');
-  console.assert(jobs.adventure.areas.filter((area) => AREA_ART[area.id]).length === 7, 'dedicated area art should cover all seven adventure areas');
+  // エリア専用イラスト（2026-11-08）：冒険エリア8種すべてに専用絵がある。フォールバック（仕事絵＋色調変化）は残っていない。
+  console.assert(Object.keys(AREA_ART).length === 8 && ['forest', 'mountain', 'cave', 'throne_room', 'old_castle_gate', 'inner_courtyard', 'rebirth_corridor', 'samsara_garden'].every((id) => AREA_ART[id]?.startsWith('data:image/webp;base64,')), 'eight adventure areas should have dedicated art');
+  console.assert(jobs.adventure.areas.filter((area) => AREA_ART[area.id]).length === 8, 'dedicated area art should cover all eight adventure areas');
   console.assert(jobs.adventure.areas.every((area) => AREA_ART[area.id] || SCENE_ART.adventure), 'every adventure area should resolve to area art or the adventure job art');
+  console.assert(Object.keys(jobs).every((key) => SCENE_ART[key]?.startsWith('data:image/')), 'every job should resolve to scene art');
   // 解禁間隔の再設計（2026-11-07）：仕事の解禁は Lv3 までに収め、整備は Lv2 → Lv4 → Lv6 の2刻みにする。
   console.assert(Object.values(jobs).every((job) => job.unlock.type !== 'jobLevel' || (job.unlock.level || 0) <= 3), 'every job gate should be at most level 3');
   console.assert(Object.entries(jobs).filter(([key]) => key !== 'adventure').every(([, job]) => job.upgrades.some((upgrade) => (upgrade.level || 0) === 6)), 'every non-adventure job should have a level 6 upgrade');
@@ -468,7 +515,7 @@ export function runSelfTests() {
   const offlineOverflow = { ...initialState, prestige: { ...createInitialState(jobs).prestige!, upgrades: { memory_offline: 9 }, rebirthUpgrades: { rebirth_offline: 9 } } };
   console.assert(getPrestigeStage(offlineOverflow, 'memory_offline') === 6 && getRebirthStage(offlineOverflow, 'rebirth_offline') === 4, 'offline stages should clamp to their new maxima');
   console.assert(buyPrestigeUpgrade(offlineMaxed, 'memory_offline') === offlineMaxed, 'buying memory offline past max should be a no-op');
-  const offlineLegacy = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {}, prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: { memory_offline: 4 }, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: { rebirth_offline: 3 } } } as Partial<typeof initialState>, initialState);
+  const offlineLegacy = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {}, prestige: { memoryPoints: 0, totalEarned: 0, retireCount: 0, upgrades: { memory_offline: 4 }, rebirthPoints: 0, totalRebirthEarned: 0, rebirthCount: 0, rebirthUpgrades: { rebirth_offline: 3 }, samsaraPoints: 0, totalSamsaraEarned: 0, samsaraCount: 0, samsaraUpgrades: {} } } as Partial<typeof initialState>, initialState);
   console.assert(getPrestigeStage(offlineLegacy, 'memory_offline') === 4 && getRebirthStage(offlineLegacy, 'rebirth_offline') === 3, 'old saves should keep their offline stages under the new maxima');
   // 帰還サマリの詳細化：不在前後の差分から XP・レベルアップ・討伐・新発見を出すこと。
   const offlineBefore = {

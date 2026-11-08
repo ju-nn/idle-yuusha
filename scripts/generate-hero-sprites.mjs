@@ -1115,6 +1115,78 @@ function monsterForgottenMap(f) {
   rect(c, 14 + sway, 40, 20, 2, WOOD_D);
   return c;
 }
+function monsterLeftHandkerchief(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 置き去りのハンカチ（ほつれた白いハンカチ）
+  rect(c, 12 + sway, 14, 24, 24, WHITE);
+  rect(c, 12 + sway, 14, 24, 2, [120, 160, 220]);
+  rect(c, 12 + sway, 36, 24, 2, [120, 160, 220]);
+  rect(c, 12 + sway, 14, 2, 24, [120, 160, 220]);
+  rect(c, 34 + sway, 14, 2, 24, [120, 160, 220]);
+  px(c, 20 + sway, 22, K); px(c, 28 + sway, 22, K);
+  rect(c, 21 + sway, 26, 6, 1, [120, 160, 220]);
+  // ほつれた糸
+  px(c, 38 + sway, 30, [120, 160, 220]); px(c, 39 + sway, 32, [120, 160, 220]); px(c, 37 + sway, 34, [120, 160, 220]);
+  rect(c, 14 + sway, 40, 20, 2, GREEN_D);
+  return c;
+}
+function monsterLeftNotebook(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 置き去りの手帳（表紙と栞ひも）
+  rect(c, 12 + sway, 8, 24, 32, [90, 110, 160]);
+  rect(c, 12 + sway, 8, 24, 3, [70, 88, 130]);
+  rect(c, 16 + sway, 12, 16, 24, PAPER);
+  rect(c, 18 + sway, 16, 12, 1, GRAY_D); rect(c, 18 + sway, 20, 12, 1, GRAY_D); rect(c, 18 + sway, 24, 12, 1, GRAY_D); rect(c, 18 + sway, 28, 8, 1, GRAY_D);
+  rect(c, 30 + sway, 36, 3, 6, RED);
+  px(c, 20 + sway, 14, K); px(c, 28 + sway, 14, K);
+  rect(c, 14 + sway, 42, 20, 2, WOOD_D);
+  return c;
+}
+function monsterForgottenMatches(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 忘れられたマッチ箱（マッチ棒つき）
+  rect(c, 12 + sway, 20, 24, 16, [168, 124, 74]);
+  rect(c, 12 + sway, 20, 24, 3, WOOD_D);
+  rect(c, 12 + sway, 26, 24, 4, [90, 90, 90]);
+  px(c, 18 + sway, 28, WHITE); px(c, 24 + sway, 28, WHITE); px(c, 30 + sway, 28, WHITE);
+  // 飛び出したマッチ棒
+  rect(c, 30 + sway, 8, 3, 12, [222, 200, 160]);
+  px(c, 31 + sway, 6, RED); px(c, 30 + sway, 7, RED); px(c, 32 + sway, 7, RED);
+  px(c, 20 + sway, 16, K); px(c, 28 + sway, 16, K);
+  rect(c, 14 + sway, 40, 20, 2, WOOD_D);
+  return c;
+}
+function monsterPastSelfShadow(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 過去の自分の影（フードの影、目だけが淡く光る）
+  rect(c, 16 + sway, 6, 16, 12, [40, 40, 56]);
+  rect(c, 14 + sway, 16, 20, 24, [52, 52, 70]);
+  rect(c, 14 + sway, 16, 20, 3, [40, 40, 56]);
+  px(c, 20 + sway, 12, [200, 220, 255]); px(c, 21 + sway, 12, [200, 220, 255]);
+  px(c, 26 + sway, 12, [200, 220, 255]); px(c, 27 + sway, 12, [200, 220, 255]);
+  rect(c, 12 + sway, 22, 3, 12, [40, 40, 56]); rect(c, 33 + sway, 22, 3, 12, [40, 40, 56]);
+  rect(c, 14 + sway, 40, 20, 2, [90, 90, 110]);
+  return c;
+}
+function monsterSamsaraBlossom(f) {
+  const c = canvas(48, 48);
+  const sway = f === 1 ? 1 : 0;
+  // 輪廻の花（四季の花びらを一度に咲かせる花）
+  rect(c, 22 + sway, 24, 4, 18, GREEN_D);
+  rect(c, 14 + sway, 38, 20, 2, GREEN_D);
+  // 花びら：桜色・緑・紅葉・雪白
+  rect(c, 20 + sway, 8, 8, 8, [244, 170, 200]);
+  rect(c, 12 + sway, 14, 8, 8, [140, 200, 120]);
+  rect(c, 28 + sway, 14, 8, 8, [230, 130, 60]);
+  rect(c, 20 + sway, 20, 8, 8, WHITE);
+  px(c, 23 + sway, 15, GOLD); px(c, 24 + sway, 15, GOLD); px(c, 23 + sway, 16, GOLD); px(c, 24 + sway, 16, GOLD);
+  px(c, 16 + sway, 30, K); px(c, 32 + sway, 30, K);
+  return c;
+}
 function monsterLostPicnicBasket(f) {
   const c = canvas(48, 48);
   const sway = f === 1 ? 1 : 0;
@@ -1419,6 +1491,8 @@ const MONSTER_BUILDERS = {
   past_life_echo: monsterPastLifeEcho, new_life_wisp: monsterNewLifeWisp,
   lost_boot: monsterLostBoot, left_lunchbox: monsterLeftLunchbox, forgotten_scarf: monsterForgottenScarf,
   left_hat: monsterLeftHat, forgotten_raincoat: monsterForgottenRaincoat, forgotten_map: monsterForgottenMap,
+  left_handkerchief: monsterLeftHandkerchief, left_notebook: monsterLeftNotebook, forgotten_matches: monsterForgottenMatches,
+  past_self_shadow: monsterPastSelfShadow, samsara_blossom: monsterSamsaraBlossom,
 };
 for (const [id, build] of Object.entries(MONSTER_BUILDERS)) {
   saveSheet([build(0), build(1)], `monster-${id}.png`);
@@ -1559,6 +1633,15 @@ const ITEM_ICON_BUILDERS = {
   lost_lure: (c) => { rect(c, 12, 10, 9, 6, RED2); rect(c, 12, 10, 9, 2, [226, 96, 84]); px(c, 18, 12, WHITE); px(c, 18, 13, K); line(c, 16, 10, 16, 4, GRAY_D); px(c, 14, 19, METAL_D); px(c, 15, 21, METAL_D); px(c, 14, 23, METAL_D); px(c, 18, 19, METAL_D); px(c, 17, 21, METAL_D); },
   chipped_chisel: (c) => { line(c, 12, 6, 18, 22, METAL); line(c, 13, 6, 19, 22, METAL_D); rect(c, 10, 4, 6, 4, WOOD_D); px(c, 18, 22, METAL); px(c, 19, 23, METAL_D); px(c, 11, 5, BROWN); px(c, 14, 10, GRAY_D); },
   bent_stapler: (c) => { rect(c, 7, 12, 18, 7, METAL_D); rect(c, 7, 12, 18, 2, METAL); rect(c, 7, 19, 18, 3, GRAY_D); line(c, 9, 12, 13, 8, METAL_D); line(c, 13, 8, 20, 12, METAL_D); px(c, 11, 14, GRAY); px(c, 20, 15, GRAY); px(c, 15, 10, METAL); },
+  samsara_guidebook: (c) => { rect(c, 9, 5, 14, 22, [90, 110, 160]); rect(c, 9, 5, 14, 2, [70, 88, 130]); rect(c, 12, 8, 8, 16, PAPER); rect(c, 13, 11, 6, 1, GRAY_D); rect(c, 13, 14, 6, 1, GRAY_D); rect(c, 13, 17, 4, 1, GRAY_D); rect(c, 20, 24, 2, 4, RED); px(c, 14, 9, GOLD); px(c, 19, 9, GOLD); },
+  samsara_petal: (c) => { for (const [x, y, col] of [[16, 8, [244, 170, 200]], [10, 14, [140, 200, 120]], [22, 14, [230, 130, 60]], [16, 20, WHITE]]) { rect(c, x - 3, y - 3, 6, 6, col); } px(c, 15, 15, GOLD); px(c, 16, 15, GOLD); px(c, 15, 16, GOLD); px(c, 16, 16, GOLD); px(c, 10, 24, [244, 170, 200]); px(c, 22, 26, [230, 130, 60]); },
+  samsara_seed: (c) => { rect(c, 12, 12, 8, 10, [168, 124, 74]); rect(c, 12, 12, 8, 2, WOOD_D); px(c, 14, 16, WHITE); px(c, 17, 16, WHITE); rect(c, 15, 8, 2, 4, GREEN); rect(c, 13, 6, 4, 2, GREEN); px(c, 13, 22, GREEN_D); px(c, 18, 22, GREEN_D); },
+  frayed_handkerchief: (c) => { rect(c, 8, 8, 16, 16, WHITE); rect(c, 8, 8, 16, 2, [120, 160, 220]); rect(c, 8, 22, 16, 2, [120, 160, 220]); px(c, 12, 14, K); px(c, 19, 14, K); px(c, 25, 26, [120, 160, 220]); px(c, 26, 27, [120, 160, 220]); px(c, 24, 27, [120, 160, 220]); },
+  bent_bookmark: (c) => { rect(c, 11, 4, 10, 22, RED2); rect(c, 11, 4, 10, 2, [150, 60, 60]); rect(c, 14, 20, 4, 6, PAPER); px(c, 15, 10, WHITE); px(c, 16, 12, WHITE); line(c, 13, 26, 17, 22, [150, 60, 60]); },
+  damp_candle: (c) => { rect(c, 13, 12, 6, 14, WHITE); rect(c, 13, 12, 6, 2, [222, 226, 232]); px(c, 15, 8, [255, 236, 170]); px(c, 16, 8, [255, 236, 170]); px(c, 13, 26, WATER); px(c, 17, 26, WATER); px(c, 15, 24, WATER_D); },
+  lost_pass: (c) => { rect(c, 8, 9, 16, 12, [90, 110, 160]); rect(c, 8, 9, 16, 2, [70, 88, 130]); rect(c, 11, 13, 5, 5, PAPER); px(c, 12, 14, K); px(c, 14, 14, K); rect(c, 18, 13, 4, 1, GRAY_D); rect(c, 18, 16, 4, 1, GRAY_D); px(c, 20, 22, GOLD); },
+  chipped_spoon: (c) => { rect(c, 14, 6, 4, 8, METAL); rect(c, 13, 5, 6, 3, METAL); rect(c, 15, 14, 2, 12, METAL_D); px(c, 14, 7, METAL_D); px(c, 16, 26, METAL); },
+  bent_clip: (c) => { line(c, 10, 8, 20, 8, METAL); line(c, 20, 8, 20, 20, METAL_D); line(c, 20, 20, 12, 20, METAL); line(c, 12, 20, 12, 12, METAL_D); line(c, 12, 12, 17, 12, METAL); px(c, 22, 10, METAL); px(c, 22, 14, METAL_D); },
   worn_rag: (c) => { rect(c, 8, 10, 16, 13, [178, 190, 200]); rect(c, 8, 10, 16, 2, [150, 164, 176]); line(c, 11, 14, 15, 19, [150, 164, 176]); line(c, 16, 13, 20, 20, [150, 164, 176]); px(c, 12, 21, [150, 164, 176]); },
   lost_glove: (c) => { rect(c, 12, 8, 8, 16, TEAL); rect(c, 12, 8, 8, 2, [62, 158, 138]); rect(c, 20, 12, 4, 8, TEAL); px(c, 14, 24, [62, 158, 138]); px(c, 16, 24, [62, 158, 138]); },
   backlit_photo: (c) => { rect(c, 7, 7, 18, 18, PAPER); rect(c, 9, 9, 14, 14, [255, 240, 190]); rect(c, 9, 16, 14, 7, [90, 90, 100]); rect(c, 14, 13, 4, 10, [60, 60, 70]); px(c, 20, 11, WHITE); },

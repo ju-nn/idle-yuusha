@@ -13,6 +13,8 @@ export function checkRequirement(unlock: Requirement | undefined, state: GameSta
   // 転生専用: 転生回数が条件。転生は周回でリセットされないため、既存プレイヤーの
   // 再ロックは起きない（転生した勇者はずっと転生済みのまま）。
   if (unlock.type === 'rebirth') return (state.prestige?.rebirthCount || 0) >= unlock.count;
+  // 輪廻専用: 輪廻回数が条件。輪廻も周回でリセットされないため、再ロックは起きない。
+  if (unlock.type === 'samsara') return (state.prestige?.samsaraCount || 0) >= unlock.count;
   return false;
 }
 
@@ -61,6 +63,13 @@ export function describeRequirement(unlock: Requirement | undefined, state: Game
     return gap > 0
       ? `転生${unlock.count}回で解禁（現在${current}回／あと${gap}回）`
       : `転生${unlock.count}回で解禁`;
+  }
+  if (unlock.type === 'samsara') {
+    const current = state.prestige?.samsaraCount || 0;
+    const gap = Math.max(0, unlock.count - current);
+    return gap > 0
+      ? `輪廻${unlock.count}回で解禁（現在${current}回／あと${gap}回）`
+      : `輪廻${unlock.count}回で解禁`;
   }
   return '未解禁';
 }

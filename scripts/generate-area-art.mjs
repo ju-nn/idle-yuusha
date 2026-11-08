@@ -10,9 +10,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// 冒険エリア7種のうち、専用絵があるものだけを列挙する（2026-11-07 時点で4種）。
-// 残り old_castle_gate / inner_courtyard / rebirth_corridor はフォールバック（仕事絵＋色調変化）のまま。
-const AREAS = ['forest', 'mountain', 'cave', 'throne_room'];
+// 冒険エリア7種すべてに専用絵がある（2026-11-08 時点で7種。古い城門・静かな中庭・転生の回廊を本コミットで追加し、フォールバックは残っていない）。
+const AREAS = ['forest', 'mountain', 'cave', 'throne_room', 'old_castle_gate', 'inner_courtyard', 'rebirth_corridor'];
 
 const entries = [];
 for (const area of AREAS) {

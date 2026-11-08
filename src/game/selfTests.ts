@@ -426,9 +426,9 @@ export function runSelfTests() {
   const rebirthCorridor = jobs.adventure.areas.find((area) => area.id === 'rebirth_corridor');
   console.assert(rebirthCorridor && checkRequirement(rebirthCorridor.unlock, initialState) === false && checkRequirement(rebirthCorridor.unlock, rebirthedOnce) === true, 'rebirth corridor should unlock after one rebirth');
   console.assert(!isJobUnlocked('rebirth_guide', initialState) && isJobUnlocked('rebirth_guide', rebirthedOnce), 'rebirth guide should be locked fresh and unlocked after rebirth');
-  // エリア専用イラスト（2026-11-07）：冒険エリアのうち4種は専用絵を持ち、残り3種は仕事絵＋色調変化にフォールバックする。
-  console.assert(Object.keys(AREA_ART).length === 4 && ['forest', 'mountain', 'cave', 'throne_room'].every((id) => AREA_ART[id]?.startsWith('data:image/webp;base64,')), 'four adventure areas should have dedicated art');
-  console.assert(jobs.adventure.areas.filter((area) => AREA_ART[area.id]).length === 4, 'dedicated area art should cover exactly four adventure areas');
+  // エリア専用イラスト（2026-11-08）：冒険エリア7種すべてに専用絵がある。フォールバック（仕事絵＋色調変化）は残っていない。
+  console.assert(Object.keys(AREA_ART).length === 7 && ['forest', 'mountain', 'cave', 'throne_room', 'old_castle_gate', 'inner_courtyard', 'rebirth_corridor'].every((id) => AREA_ART[id]?.startsWith('data:image/webp;base64,')), 'seven adventure areas should have dedicated art');
+  console.assert(jobs.adventure.areas.filter((area) => AREA_ART[area.id]).length === 7, 'dedicated area art should cover all seven adventure areas');
   console.assert(jobs.adventure.areas.every((area) => AREA_ART[area.id] || SCENE_ART.adventure), 'every adventure area should resolve to area art or the adventure job art');
   // 解禁間隔の再設計（2026-11-07）：仕事の解禁は Lv3 までに収め、整備は Lv2 → Lv4 → Lv6 の2刻みにする。
   console.assert(Object.values(jobs).every((job) => job.unlock.type !== 'jobLevel' || (job.unlock.level || 0) <= 3), 'every job gate should be at most level 3');

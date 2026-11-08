@@ -8,7 +8,7 @@ import { getAdventureEntryCost } from './equipment';
 import { describeUpgradeEffects, formatResourceName, rewardText } from './formatters';
 import { getFarmingProgress } from './farming';
 import { enqueueMusing, routeAmbientMusing } from './musings';
-import { callCat, claimCatVisit, createCatState, getCatCallRemainingMs, getCatGiftGold, getCatGoldMultiplier, getCatXpMultiplier, getOwnedUpgradeCount, getPeople, getPersonBonusLines, hasMetPerson, maybeCatVisit, maybeMeetPeople, normalizeCatState, normalizeMetPeople, refreshCatState } from './companion';
+import { callCat, claimCatVisit, createCatState, getCatCallRemainingMs, getCatGiftGold, getCatGoldMultiplier, getCatXpMultiplier, getFamilyRemittanceGold, getOwnedUpgradeCount, getPeople, getPersonBonusLines, hasMetPerson, maybeCatVisit, maybeFamilyLetter, maybeMeetPeople, normalizeCatState, normalizeMetPeople, refreshCatState } from './companion';
 import { prestigeCostCurve } from './pricing';
 import { addAchievement, addItems, applyMilestoneAchievements, checkMilestoneAchievements, emptyLifetime, getAchievementBonusLines, getAchievementGoldMultiplier, getAchievementProgress, getAllDiscoverableItemIds, getAllMonsterIds, getCollectionBonusLines, getCollectionGoldMultiplier, getCollectionXpMultiplier, getLifePlan, getNextTarget, rollDrops } from './progression';
 import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } from './requirements';
@@ -414,7 +414,8 @@ export function runSelfTests() {
   console.assert(getCollectionGoldMultiplier(initialState) === 1 && getCollectionXpMultiplier(initialState) === 1, 'fresh state should have no collection bonus');
   const allDiscoverable = getAllDiscoverableItemIds();
   const allMonsters = getAllMonsterIds();
-  console.assert(allMonsters.length === 49, `there should be 49 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allMonsters.length === 52, `there should be 52 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allMonsters.includes('left_hat') && allMonsters.includes('forgotten_raincoat') && allMonsters.includes('forgotten_map'), 'new daily-life monsters should be counted');
   console.assert(allMonsters.includes('past_life_echo') && allMonsters.includes('new_life_wisp'), 'rebirth corridor monsters should be counted');
   // 転生専用コンテンツ（2026-11-07 / ロードマップ5の残り）：転生1回で解禁される仕事とエリア。
   // 初期状態では未解禁、転生1回で解禁。転生は周回でリセットされないため再ロックは起きない。
@@ -581,6 +582,34 @@ export function runSelfTests() {
   const failBefore = getFailChance(peopleForestArea, jobs.adventure.upgrades, {}, initialState);
   const failAfter = getFailChance(peopleForestArea, jobs.adventure.upgrades, {}, metNeighbor);
   console.assert(Math.abs(failBefore - failAfter - 0.02) < 1e-9, 'neighbor should cut adventure fail chance by 2%');
+  // 敵2名＋家族（2026-11-08）：条件・初登場ぼやき・ボーナス・週次仕送り。
+  const officeGrown = { ...initialState, jobData: { ...initialState.jobData, office: { level: 3, xp: 0, seenMusings: [] } } };
+  const metDemon = maybeMeetPeople(officeGrown, 100_000);
+  console.assert(hasMetPerson(metDemon, 'deadline_demon') && metDemon.musingQueue.some((m) => m.id === 'meet-deadline_demon'), 'office level 3 should meet the deadline demon with a first-meeting musing');
+  const remoteArea = jobs.remote.areas[0];
+  const jobFailBefore = getFailChance(remoteArea, jobs.remote.upgrades, {}, initialState);
+  const jobFailAfter = getFailChance(remoteArea, jobs.remote.upgrades, {}, metDemon);
+  console.assert(Math.abs(jobFailBefore - jobFailAfter - 0.03) < 1e-9, 'deadline demon should cut job fail chance by 3%');
+  const deliveryGrown = { ...initialState, jobData: { ...initialState.jobData, delivery: { level: 3, xp: 0, seenMusings: [] } } };
+  const metGolem = maybeMeetPeople(deliveryGrown, 100_000);
+  console.assert(hasMetPerson(metGolem, 'commuter_golem') && metGolem.musingQueue.some((m) => m.id === 'meet-commuter_golem'), 'delivery level 3 should meet the commuter golem with a first-meeting musing');
+  console.assert(getAdventureEntryCost(initialState, 100) === 100, 'entry cost should stay at base before meeting the golem');
+  console.assert(getAdventureEntryCost(metGolem, 100) === 95, 'commuter golem should cut adventure entry cost by 5%');
+  const stamped = { ...initialState, items: { life_stamp: 7 } };
+  const meetMonday = new Date(2026, 10, 9).getTime();
+  const metFamily = maybeMeetPeople(stamped, meetMonday);
+  console.assert(hasMetPerson(metFamily, 'family') && metFamily.musingQueue.some((m) => m.id === 'meet-family'), 'seven life stamps should meet the family with a first-meeting musing');
+  console.assert(metFamily.familyLetterWeek === getWeekKey(new Date(2026, 10, 9)), 'meeting the family should stamp the current week so the first letter is the meeting itself');
+  console.assert(getPersonBonusLines(metFamily).some((line) => line.includes('仕送り')), 'family bonus line should mention the weekly remittance');
+  // 週次仕送り：出会った週は届かず、翌週に一度だけ届き、同じ週の2回目は届かない。
+  const nextMonday = new Date(2026, 10, 16).getTime();
+  const lettered = maybeFamilyLetter(metFamily, nextMonday);
+  console.assert(lettered.gold === metFamily.gold + getFamilyRemittanceGold(metFamily) && lettered.familyLetterWeek === getWeekKey(new Date(2026, 10, 16)) && lettered.musingQueue.some((m) => m.id === `family-letter-${getWeekKey(new Date(2026, 10, 16))}`), 'a new week should deliver the family remittance and letter once');
+  console.assert(maybeFamilyLetter(lettered, new Date(2026, 10, 17).getTime()).gold === lettered.gold, 'the same week should not pay the remittance twice');
+  console.assert(maybeFamilyLetter(initialState, Date.now()).gold === initialState.gold, 'family letter should not pay before meeting the family');
+  // 旧セーブ：実家と出会っていない旧セーブは仕送り週も未記録のまま移行する。
+  const migratedNoFamily = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedNoFamily.familyLetterWeek === undefined && !hasMetPerson(migratedNoFamily, 'family'), 'old save without family should migrate with no letter week');
   const metAllThree = maybeMeetPeople({ ...metShopkeeper, jobData: { ...metShopkeeper.jobData }, items: { fishing_better_rod: 1, fishing_lure: 1, fishing_boat: 1 }, prestige: { ...createInitialState(jobs).prestige!, retireCount: 1 } }, 200_000);
   const peopleMetAll = getPeople(metAllThree);
   console.assert(peopleMetAll.slice(2, 5).every((person) => person.met === true), 'all three new faces should appear in the people book once met');

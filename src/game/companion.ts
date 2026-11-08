@@ -7,6 +7,7 @@
 // （90秒のバフが数日ぶんの進行に掛かるのを防ぐため。tick.ts 参照）。
 import { jobs } from '../data/gameData';
 import { enqueueMusing } from './musings';
+import { getWeekKey } from './weekly';
 import type { CatBuffId, CatState, CatVisit, GameState } from '../types';
 
 export type CatBuffDef = {
@@ -233,6 +234,10 @@ export type PersonEntry = {
 export const PERSON_SELL_BONUS_PCT = 5;
 export const PERSON_UPGRADE_DISCOUNT_PCT = 5;
 export const PERSON_FAIL_REDUCTION = 0.02;
+// 敵・家族のボーナス（2026-11-08 / 登場人物の残り）。仲間と同じく軽いものだけ。
+// 締切の魔人：冒険以外の仕事の失敗率 -3%。満員電車ゴーレム：冒険の出発費 -5%。
+export const PERSON_JOB_FAIL_REDUCTION = 0.03;
+export const PERSON_ENTRY_COST_DISCOUNT_PCT = 5;
 
 export type PersonDef = PersonEntry & {
   bonusLabel: string;
@@ -286,6 +291,51 @@ export const PERSON_DEFS: PersonDef[] = [
       '隣人がベランダでお茶を飲んでいる。引退後の余裕が、湯気になって見える。',
     ],
   },
+  {
+    id: 'deadline_demon',
+    name: '締切の魔人',
+    role: '敵',
+    description: '王国の締切を守らせる魔人。倒すというより、間に合わせる相手。出会うと仕事の失敗率が -3%。',
+    hint: '王国勤務を続けると、締切の気配が近づいてくるらしい。',
+    met: false,
+    bonusLabel: '仕事の失敗率 -3%',
+    meetText: `王国勤務の締切が近づいた夜、書類の影がゆっくり立ち上がった。\n\n魔人「締切は守るものだ。おまえのペースは知らん」\n\n勇者「来た。締切の魔人。倒すんじゃなくて、間に合わせる相手だ」\n\n締切の魔人と出会った。仕事の失敗率が -3% になった。締切を知ると、段取りが少しだけ早くなる。`,
+    ambient: [
+      '締切の魔人「締切は伸びない。おまえの昼寝は伸びるのに」',
+      '締切の魔人がカレンダーを指さした。指さされた日付だけ、急に重く見える。',
+      '締切の魔人「間に合ったな。次も間に合わせろよ。俺は待たない」',
+    ],
+  },
+  {
+    id: 'commuter_golem',
+    name: '満員電車ゴーレム',
+    role: '敵',
+    description: '朝の満員電車に棲むゴーレム。押されても倒れない。乗る側も倒れない。出会うと冒険の出発費が -5%。',
+    hint: '配達を続けると、朝の満員電車で何かと出会うらしい。',
+    met: false,
+    bonusLabel: '冒険の出発費 -5%',
+    meetText: `朝の配達で満員電車に乗った。ドアが閉まる直前、目の前に大きな影が立った。\n\nゴーレム「押すな。押されるな。降りる人から、先に」\n\n勇者「満員電車ゴーレムだ。戦う相手じゃない。流れに乗る相手だ」\n\n満員電車ゴーレムと出会った。冒険の出発費が -5% になった。混雑をやり過ごすと、足取りが少しだけ軽くなる。`,
+    ambient: [
+      '満員電車ゴーレム「今日は空いてる。空いてる日は、俺も少しだけ優しい」',
+      '満員電車ゴーレムがドアの前で仁王立ちしている。降りる人が先、という無言の圧がある。',
+      '満員電車ゴーレム「押すなよ。押されたら、俺が押しかえす」',
+    ],
+  },
+  {
+    id: 'family',
+    name: '実家からの連絡',
+    role: '家族',
+    description: '実家からの定期連絡。元気かと聞かれると、つい元気なふりをしてしまう。出会うと毎週、少しの仕送りが届く。',
+    hint: '生活スタンプを続けると、実家から手紙が届くらしい。',
+    met: false,
+    bonusLabel: '毎週の仕送り（週に一度Gが届く）',
+    meetText: `生活スタンプが7個たまった頃、実家から手紙が届いた。\n\n手紙「元気か。無理するなよ。たまには帰ってこい」\n\n勇者「……元気なふりをする手紙を書く時間だけ、急に手が止まる」\n\n実家からの連絡と出会った。毎週、実家から少しの仕送りが届くようになった。返事を書くのは、来週の自分に任せた。`,
+    ambient: [
+      '実家からの手紙「ごはんは食べてるか。野菜も食べなさい」',
+      '実家からの電話「声が聞けてよかった。また来週な」',
+      '実家からの手紙「無理するなよ、という文字だけ妙に太い」',
+    ],
+  },
 ];
 
 export const PERSON_AMBIENT_MUSINGS: Record<string, string[]> = Object.fromEntries(
@@ -319,7 +369,60 @@ function meetsPersonCondition(state: GameState, id: string): boolean {
   if (id === 'shopkeeper') return (state.jobData?.merchant?.level || 1) >= 3;
   if (id === 'landlord') return getOwnedUpgradeCount(state) >= 3;
   if (id === 'neighbor') return (state.prestige?.retireCount || 0) >= 1;
+  // 敵2名：日常の強敵は、仕事を続けるうちに自然と顔を出す。
+  // 締切の魔人は王国勤務Lv3、満員電車ゴーレムは配達Lv3が節目。
+  if (id === 'deadline_demon') return (state.jobData?.office?.level || 1) >= 3;
+  if (id === 'commuter_golem') return (state.jobData?.delivery?.level || 1) >= 3;
+  // 家族：生活スタンプ7個（1週間ほど通う）で、実家から最初の手紙が届く。
+  if (id === 'family') return (state.items?.life_stamp || 0) >= 7;
   return false;
+}
+
+// ---- 実家からの定期連絡（家族イベント / 2026-11-08） ----
+// 出会い（初回の手紙）は maybeMeetPeople で。2回目以降は週が変わるたびに
+// 仕送り＋手紙が届く。見逃し損は作らない（週をまたいでいても、その週の分は
+// 次の tick で届く。遡っての複数週分は出さない）。
+export const FAMILY_REMITTANCE_BASE_GOLD = 150;
+export const FAMILY_REMITTANCE_PER_JOB_LEVEL = 15;
+
+export function getFamilyRemittanceGold(state: GameState): number {
+  return FAMILY_REMITTANCE_BASE_GOLD + FAMILY_REMITTANCE_PER_JOB_LEVEL * maxJobLevel(state);
+}
+
+const FAMILY_LETTER_MUSINGS = [
+  `実家から仕送りと手紙が届いた。\n\n手紙「今週も元気そうで何より。こっちは変わらないよ」\n\n勇者「変わらない、という報告が一番安心する。仕送りはありがたく受け取った。返事は、来週の自分に任せた。`,
+  `実家から仕送りが届いた。手紙には「野菜を食べなさい」とだけある。\n\n勇者「野菜は食べてる。大根は育ててる。……報告できることが増えたのは、悪くないな」`,
+  `実家から手紙が届いた。「たまには帰ってこい」と書いてある。\n\n勇者「帰る、という選択肢があるだけで、今日はもう少し頑張れる。選択肢だけ先に、ありがたく受け取った」`,
+];
+
+function hashWeekKey(weekKey: string): number {
+  let hash = 0;
+  for (let i = 0; i < weekKey.length; i += 1) hash = (hash * 31 + weekKey.charCodeAt(i)) >>> 0;
+  return hash;
+}
+
+export function maybeFamilyLetter(prev: GameState, now: number = Date.now()): GameState {
+  if (!hasMetPerson(prev, 'family')) return prev;
+  const weekKey = getWeekKey(now);
+  if (prev.familyLetterWeek === weekKey) return prev;
+  const gold = getFamilyRemittanceGold(prev);
+  const text = FAMILY_LETTER_MUSINGS[hashWeekKey(weekKey) % FAMILY_LETTER_MUSINGS.length];
+  const next: GameState = {
+    ...prev,
+    gold: (prev.gold || 0) + gold,
+    familyLetterWeek: weekKey,
+    eventLog: [`実家からの仕送り：+${gold}G と手紙が届いた。「元気か」とだけ書いてある。`, ...(prev.eventLog || [])].slice(0, 24),
+  };
+  return enqueueMusing(next, {
+    id: `family-letter-${weekKey}`,
+    job: '実家からの連絡',
+    area: '拠点',
+    text,
+    category: 'event',
+    eventType: 'event',
+    eventSubType: 'family_letter',
+    once: true,
+  }, { now }).state;
 }
 
 // 出会いの判定。条件を満たした人物がいれば出会い済みにし、初登場イベントの
@@ -335,6 +438,9 @@ export function maybeMeetPeople(prev: GameState, now: number = Date.now()): Game
     next = {
       ...next,
       metPeople: Array.from(met),
+      // 家族と出会った週は、初回の手紙そのものが出会いなので仕送りは翌週から。
+      // 出会い週を記録しておくと、同じ tick の後続処理でも二重に届かない。
+      ...(def.id === 'family' ? { familyLetterWeek: getWeekKey(now) } : {}),
       eventLog: [`出会い：${def.name}と出会った。${def.bonusLabel}が効くようになった。`, ...(next.eventLog || [])].slice(0, 24),
     };
     next = enqueueMusing(next, {
@@ -379,29 +485,5 @@ export function getPeople(state: GameState): PersonEntry[] {
       hint: def.hint,
       met: hasMetPerson(state, def.id),
     })),
-    {
-      id: 'deadline_demon',
-      name: '締切の魔人',
-      role: '敵',
-      description: '王国の締切を守らせる魔人。倒すというより、間に合わせる相手。',
-      hint: '王国勤務を続けると、締切の気配が近づいてくるらしい。',
-      met: false,
-    },
-    {
-      id: 'commuter_golem',
-      name: '満員電車ゴーレム',
-      role: '敵',
-      description: '朝の満員電車に棲むゴーレム。押されても倒れない。乗る側も倒れない。',
-      hint: '配達を続けると、朝の満員電車で何かと出会うらしい。',
-      met: false,
-    },
-    {
-      id: 'family',
-      name: '実家からの連絡',
-      role: '家族',
-      description: '実家からの定期連絡。元気かと聞かれると、つい元気なふりをしてしまう。',
-      hint: '生活スタンプを続けると、実家から手紙が届くらしい。',
-      met: false,
-    },
   ];
 }

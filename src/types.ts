@@ -300,9 +300,13 @@ export type GameState = {
   autoRestReturn?: { job: string; area: string } | null;
   // 相棒の猫: 旧セーブは未記録扱い（来訪なし）。引退・転生でも引き継ぐ。
   cat?: CatState;
-  // 出会った人物（商店の店主・大家さん・元勇者仲間の隣人）: 旧セーブは未記録扱い
+  // 出会った人物（商店の店主・大家さん・元勇者仲間の隣人・締切の魔人・
+  // 満員電車ゴーレム・実家からの連絡）: 旧セーブは未記録扱い
   // （条件を満たせば次の tick で自動で出会う）。引退・転生でも引き継ぐ。
   metPeople?: string[];
+  // 実家からの仕送りが最後に届いた週キー（`YYYY-Www`）。出会い週は初回の手紙
+  // そのものなので、仕送りは翌週から。旧セーブは未記録扱い（出会いなし）。
+  familyLetterWeek?: string;
   // ティッカー表示中の日常ぼやき: 雰囲気専用で、リロード時に消える一時的な表示。
   tickerMusing?: TickerMusing | null;
   prestige?: PrestigeState;

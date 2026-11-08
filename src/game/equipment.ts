@@ -1,5 +1,5 @@
 import type { EquipmentItem, EquipmentOption, EquipmentOptionTarget, EquipmentRarity, EquipmentSlot, FeedbackEvent, GameState, JobType, ResourceKey, TreasureChest, TreasureChestType } from '../types';
-import { hasMetPerson, PERSON_SELL_BONUS_PCT } from './companion';
+import { hasMetPerson, PERSON_ENTRY_COST_DISCOUNT_PCT, PERSON_SELL_BONUS_PCT } from './companion';
 import { enqueueMusing } from './musings';
 import { getSynergyEntryCostReductionPct, getSynergySellBonusPct } from './synergy';
 import { getTraitSellBonusPct } from './traits';
@@ -327,7 +327,9 @@ export function getAdventureEntryCost(state: GameState, baseCost = 0) {
   const multiplier = Math.max(0.5, 1 - getEquipmentBonus(state, 'adventureCost') / 100);
   // 連鎖：夜間警備Lvが出発費をさらに下げる（装備ボーナスとは別枠）。
   const synergyMultiplier = 1 - getSynergyEntryCostReductionPct(state) / 100;
-  return Math.max(1, Math.floor(baseCost * multiplier * synergyMultiplier));
+  // 人物：満員電車ゴーレムと出会うとさらに -5%（別枠）。
+  const personMultiplier = hasMetPerson(state, 'commuter_golem') ? 1 - PERSON_ENTRY_COST_DISCOUNT_PCT / 100 : 1;
+  return Math.max(1, Math.floor(baseCost * multiplier * synergyMultiplier * personMultiplier));
 }
 
 export function equipmentOptionText(option: EquipmentOption) {

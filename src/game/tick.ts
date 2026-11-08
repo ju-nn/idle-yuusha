@@ -5,7 +5,7 @@ import { bossStreakBonusPct, nextBossStreak, simulateMonsterBattle } from './com
 import { getAdventureEntryCost, getChestLimit, getEquipmentBonus, getResourceGainMultiplier, getSellPriceMultiplier, maybeDropChest, openTreasureChest } from './equipment';
 import { formatResourceName, rewardText } from './formatters';
 import { enqueueMusing, routeAmbientMusing } from './musings';
-import { getCatGoldMultiplier, getCatXpMultiplier, maybeCatVisit, maybeMeetPeople, PERSON_AMBIENT_MUSINGS, refreshCatState } from './companion';
+import { getCatGoldMultiplier, getCatXpMultiplier, maybeCatVisit, maybeFamilyLetter, maybeMeetPeople, PERSON_AMBIENT_MUSINGS, refreshCatState } from './companion';
 import { getPrestigeGoldMultiplier, getPrestigeMusingRewardMultiplier, getPrestigeXpMultiplier } from './prestige';
 import { getActiveArea, isJobUnlocked } from './requirements';
 import { getCurrentSeason, SEASON_ITEM_DROP_CHANCE, seasonItemMusing, seasonStartMusing, seasonStartMusingId } from './seasons';
@@ -170,6 +170,8 @@ export function runTick(prev: GameState, options: { offline?: boolean } = {}): G
   // 登場人物の出会い：条件を満たした人物がいれば初登場イベントを出す。
   // ライブtick・オフラインtickの両方で判定する（出会いは一度きりのため）。
   prev = maybeMeetPeople(prev, now);
+  // 実家からの定期連絡：出会い済みなら週が変わるたびに仕送り＋手紙が届く。
+  prev = maybeFamilyLetter(prev, now);
   // 相棒の猫：期限切れの来訪・バフを消す。来訪の抽選はライブtickだけ
   // （オフライン進行のシミュレーション時間では振らない）。
   prev = refreshCatState(prev, now);

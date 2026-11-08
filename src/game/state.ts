@@ -267,6 +267,9 @@ function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameSt
     cat: normalizeCatState(parsed.cat),
     // 出会った人物: 旧セーブ（未記録）は未出会い扱い。条件を満たせば次の tick で出会う。
     metPeople: normalizeMetPeople(parsed.metPeople),
+    // 実家からの仕送り週：旧セーブ（未記録）は未設定扱い。出会い済みでも未記録なら
+    // 次の tick でその週の仕送りが届く（初回は出会い週の記録で翌週からになる）。
+    familyLetterWeek: typeof parsed.familyLetterWeek === 'string' ? parsed.familyLetterWeek : undefined,
     // ティッカーは一時的な表示のため、読み込み時は消す（古い文を残さない）。
     tickerMusing: null,
     // 自動休憩の復帰先: 仕事とエリアが実在するものだけ残す。不正・未記録は未設定扱い。

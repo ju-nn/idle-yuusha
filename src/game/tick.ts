@@ -5,7 +5,7 @@ import { bossStreakBonusPct, nextBossStreak, simulateMonsterBattle } from './com
 import { getAdventureEntryCost, getChestLimit, getEquipmentBonus, getResourceGainMultiplier, getSellPriceMultiplier, maybeDropChest, openTreasureChest } from './equipment';
 import { formatResourceName, rewardText } from './formatters';
 import { enqueueMusing, routeAmbientMusing } from './musings';
-import { getCatGoldMultiplier, getCatXpMultiplier, maybeCatVisit, refreshCatState } from './companion';
+import { getCatGoldMultiplier, getCatXpMultiplier, maybeCatVisit, maybeMeetPeople, PERSON_AMBIENT_MUSINGS, refreshCatState } from './companion';
 import { getPrestigeGoldMultiplier, getPrestigeMusingRewardMultiplier, getPrestigeXpMultiplier } from './prestige';
 import { getActiveArea, isJobUnlocked } from './requirements';
 import { getCurrentSeason, SEASON_ITEM_DROP_CHANCE, seasonItemMusing, seasonStartMusing, seasonStartMusingId } from './seasons';
@@ -74,6 +74,14 @@ function maybeAmbientMusing(prev: GameState, now: number) {
   const elapsed = now - (prev.lastAmbientMusingAt || 0);
   if (elapsed < 30_000) return prev;
   if (elapsed < 60_000 && Math.random() >= 0.25) return prev;
+  // 出会った人物のひとりごと：ときどき（3割ほど）人物の声をティッカーへ流す。
+  // 日常の繰り返しぼやきと同じく雰囲気専用で、見逃し損はない。
+  const metPeople = (prev.metPeople || []).filter((id) => PERSON_AMBIENT_MUSINGS[id]?.length);
+  if (metPeople.length > 0 && Math.random() < 0.3) {
+    const id = metPeople[Math.floor(Math.random() * metPeople.length)];
+    const list = PERSON_AMBIENT_MUSINGS[id];
+    return routeAmbientMusing(prev, list[Math.floor(Math.random() * list.length)], now);
+  }
   const useIdle = Math.random() < 0.7;
   const list = useIdle ? IDLE_MUSINGS : DAILY_MUSINGS;
   const text = list[Math.floor(Math.random() * list.length)];
@@ -159,6 +167,9 @@ export function runTick(prev: GameState, options: { offline?: boolean } = {}): G
   // ライブtick・オフラインtickの両方で週の切り替えが起きる。
   prev = ensureWeeklyState(prev, now);
   prev = maybeSeasonStartMusing(prev, now);
+  // 登場人物の出会い：条件を満たした人物がいれば初登場イベントを出す。
+  // ライブtick・オフラインtickの両方で判定する（出会いは一度きりのため）。
+  prev = maybeMeetPeople(prev, now);
   // 相棒の猫：期限切れの来訪・バフを消す。来訪の抽選はライブtickだけ
   // （オフライン進行のシミュレーション時間では振らない）。
   prev = refreshCatState(prev, now);

@@ -5,6 +5,7 @@
 // 見逃しても損はない（取り逃しで罰しない。CODEX_HANDOFF の方針通り）。
 // バフはライブセッション限定。オフライン進行の計算時は無効化する
 // （90秒のバフが数日ぶんの進行に掛かるのを防ぐため。tick.ts 参照）。
+import { jobs } from '../data/gameData';
 import { enqueueMusing } from './musings';
 import type { CatBuffId, CatState, CatVisit, GameState } from '../types';
 
@@ -222,6 +223,134 @@ export type PersonEntry = {
   met: boolean;
 };
 
+// ---- 登場人物の出会い（2026-11-08 / 仲間3名） ----
+// 出会いの出し方は 2026-11-07 にユーザーが承認した通り：初登場イベント＋ぼやきセット＋
+// 図鑑の人物欄。システム連動は軽いボーナスのみ（見逃し損は作らない。条件を満たせば
+// 次の tick で自動で出会うので、取りこぼしの心配はない）。
+// 出会いの条件は、すでに遊んでいる進行に自然に絡むものにする。
+// 店主は商人Lv3（王国勤務の解禁と同じ節目）、大家さんは拠点整備3種、
+// 隣人は引退1回（引退した先輩と初めて会話が弾む頃合い）。
+export const PERSON_SELL_BONUS_PCT = 5;
+export const PERSON_UPGRADE_DISCOUNT_PCT = 5;
+export const PERSON_FAIL_REDUCTION = 0.02;
+
+export type PersonDef = PersonEntry & {
+  bonusLabel: string;
+  meetText: string;
+  ambient: string[];
+};
+
+export const PERSON_DEFS: PersonDef[] = [
+  {
+    id: 'shopkeeper',
+    name: '商店の店主',
+    role: '仲間',
+    description: '街の商店を切り盛りする店主。素材の値段に妙に詳しい。出会うと売却額が +5%。',
+    hint: '商人の仕事を続けると、店の奥から店主が顔を出すらしい。',
+    met: false,
+    bonusLabel: '売却額 +5%',
+    meetText: `店の奥から店主が顔を出した。\n\n店主「おや、常連さん。売るだけじゃなく、買う顔も見せなさいよ」\n\n勇者「商売、こっち側に回ると急に緊張する」\n\n店主と出会った。素材の売却額が +5% になった。顔なじみは、値段にも効く。`,
+    ambient: [
+      '店主「今日の相場はね、勇者の機嫌と連動してるのよ」',
+      '店主「安く買って高く売る。勇者もそれ、人生でやってるでしょ」',
+      '店主が値札を書き直した。数字の前でだけ、やけに真剣だ。',
+    ],
+  },
+  {
+    id: 'landlord',
+    name: '大家さん',
+    role: '仲間',
+    description: '拠点の大家さん。家賃の話になると、なぜか少しだけ優しい。出会うと拠点整備の金コストが -5%。',
+    hint: '拠点整備を進めると、大家さんが見回りに来るらしい。',
+    met: false,
+    bonusLabel: '拠点整備の金コスト -5%',
+    meetText: `大家さんが拠点の見回りに来た。\n\n大家さん「あら、少しは住み心地がよくなったじゃない。家賃はそのままよ」\n\n勇者「整えた分だけ、家がこっちを見てくれる気がする」\n\n大家さんと出会った。拠点整備の金コストが -5% になった。住み心地は、値引きにもなる。`,
+    ambient: [
+      '大家さん「廊下の電球、替えておいたわよ。家賃とは別枠よ」',
+      '大家さん「家賃の話はまた今度。今日は天気がいいからね」',
+      '大家さんが植木に水をやっている。大家さんの方が、この家に住んでいる。',
+    ],
+  },
+  {
+    id: 'neighbor',
+    name: '元勇者仲間の隣人',
+    role: '仲間',
+    description: '隣の部屋に住む元勇者。引退後の生活にやけに詳しい。出会うと冒険の失敗率が -2%。',
+    hint: '引退を重ねると、隣の部屋の元勇者が声をかけてくるらしい。',
+    met: false,
+    bonusLabel: '冒険の失敗率 -2%',
+    meetText: `隣の部屋から声がかかった。\n\n隣人「おう、新入りの引退者。引退ってな、最初の一回が一番こわいんだ」\n\n勇者「先輩がいた。しかも、引退済みだった」\n\n元勇者仲間の隣人と出会った。冒険の失敗率が -2% になった。先輩の助言は、転ばぬ先の杖だ。`,
+    ambient: [
+      '隣人「俺も昔は魔王と戦ってた。今は洗濯物と戦ってる」',
+      '隣人「引退してからが本番だぞ。生活のボスは逃げないからな」',
+      '隣人がベランダでお茶を飲んでいる。引退後の余裕が、湯気になって見える。',
+    ],
+  },
+];
+
+export const PERSON_AMBIENT_MUSINGS: Record<string, string[]> = Object.fromEntries(
+  PERSON_DEFS.map((def) => [def.id, def.ambient]),
+);
+
+// 出会い済みの人物 id 一覧。旧セーブは未記録扱い（空）。
+export function normalizeMetPeople(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const valid = new Set(PERSON_DEFS.map((def) => def.id));
+  return Array.from(new Set(raw.filter((id): id is string => typeof id === 'string' && valid.has(id))));
+}
+
+export function hasMetPerson(state: GameState, id: string): boolean {
+  return (state.metPeople || []).includes(id);
+}
+
+// 出会った人物のボーナス表示（統計モーダル用）。出会いがなければ空。
+export function getPersonBonusLines(state: GameState): string[] {
+  return PERSON_DEFS.filter((def) => hasMetPerson(state, def.id))
+    .map((def) => `${def.name}：${def.bonusLabel}`);
+}
+
+export function getOwnedUpgradeCount(state: GameState): number {
+  return Object.values(jobs)
+    .flatMap((job) => job.upgrades)
+    .filter((upgrade) => state.items?.[upgrade.id]).length;
+}
+
+function meetsPersonCondition(state: GameState, id: string): boolean {
+  if (id === 'shopkeeper') return (state.jobData?.merchant?.level || 1) >= 3;
+  if (id === 'landlord') return getOwnedUpgradeCount(state) >= 3;
+  if (id === 'neighbor') return (state.prestige?.retireCount || 0) >= 1;
+  return false;
+}
+
+// 出会いの判定。条件を満たした人物がいれば出会い済みにし、初登場イベントの
+// ぼやきを出す。ライブtick・オフラインtickの両方で呼ぶ（出会いは一度きりの
+// フラグ＋ぼやきなので、オフライン帰還時に出るのも自然な流れ）。
+export function maybeMeetPeople(prev: GameState, now: number = Date.now()): GameState {
+  const met = new Set(normalizeMetPeople(prev.metPeople));
+  let next = prev;
+  for (const def of PERSON_DEFS) {
+    if (met.has(def.id)) continue;
+    if (!meetsPersonCondition(next, def.id)) continue;
+    met.add(def.id);
+    next = {
+      ...next,
+      metPeople: Array.from(met),
+      eventLog: [`出会い：${def.name}と出会った。${def.bonusLabel}が効くようになった。`, ...(next.eventLog || [])].slice(0, 24),
+    };
+    next = enqueueMusing(next, {
+      id: `meet-${def.id}`,
+      job: def.name,
+      area: '拠点',
+      text: def.meetText,
+      category: 'event',
+      eventType: 'event',
+      eventSubType: 'meet_person',
+      once: true,
+    }, { now }).state;
+  }
+  return next;
+}
+
 export function getPeople(state: GameState): PersonEntry[] {
   const cat = normalizeCatState(state.cat);
   const metCat = cat.visits > 0;
@@ -242,30 +371,14 @@ export function getPeople(state: GameState): PersonEntry[] {
       hint: '拠点で生活を続けると、猫がやってくるらしい。',
       met: metCat,
     },
-    {
-      id: 'shopkeeper',
-      name: '商店の店主',
-      role: '仲間',
-      description: '街の商店を切り盛りする店主。素材の値段に妙に詳しい。',
-      hint: '商人の仕事を続けると、店の奥から店主が顔を出すらしい。',
-      met: false,
-    },
-    {
-      id: 'landlord',
-      name: '大家さん',
-      role: '仲間',
-      description: '拠点の大家さん。家賃の話になると、なぜか少しだけ優しい。',
-      hint: '拠点整備を進めると、大家さんが見回りに来るらしい。',
-      met: false,
-    },
-    {
-      id: 'neighbor',
-      name: '元勇者仲間の隣人',
-      role: '仲間',
-      description: '隣の部屋に住む元勇者。引退後の生活にやけに詳しい。',
-      hint: '引退を重ねると、隣の部屋の元勇者が声をかけてくるらしい。',
-      met: false,
-    },
+    ...PERSON_DEFS.map((def) => ({
+      id: def.id,
+      name: def.name,
+      role: def.role,
+      description: def.description,
+      hint: def.hint,
+      met: hasMetPerson(state, def.id),
+    })),
     {
       id: 'deadline_demon',
       name: '締切の魔人',

@@ -1,7 +1,7 @@
 import type { GameState, Job, Musing, OfflineTier } from '../types';
 import { itemKind } from '../data/catalog';
 import { jobs as gameJobs } from '../data/gameData';
-import { createCatState, normalizeCatState } from './companion';
+import { createCatState, normalizeCatState, normalizeMetPeople } from './companion';
 import { createPrestigeState, getPrestigeOfflineBonus, getRebirthOfflineCapHours, normalizePrestigeState } from './prestige';
 import { xpToNext } from './progression';
 import { getTraitOfflineBonus } from './traits';
@@ -81,6 +81,7 @@ export function createInitialState(jobs: Record<string, Job>): GameState {
     trait: null,
     traitChanges: 0,
     cat: createCatState(),
+    metPeople: [],
     tickerMusing: null,
     lifetime: { cycles: 0, goldEarned: 0, kills: 0, salesGold: 0, harvests: 0, chestsOpened: 0, musingsRead: 0, maxCombo: 0, discovered: [] },
   };
@@ -264,6 +265,8 @@ function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameSt
     weekly: normalizeWeekly(parsed.weekly),
     // 相棒の猫: 旧セーブ（未記録）は来訪なし扱い。引退・転生でも引き継ぐ。
     cat: normalizeCatState(parsed.cat),
+    // 出会った人物: 旧セーブ（未記録）は未出会い扱い。条件を満たせば次の tick で出会う。
+    metPeople: normalizeMetPeople(parsed.metPeople),
     // ティッカーは一時的な表示のため、読み込み時は消す（古い文を残さない）。
     tickerMusing: null,
     // 自動休憩の復帰先: 仕事とエリアが実在するものだけ残す。不正・未記録は未設定扱い。

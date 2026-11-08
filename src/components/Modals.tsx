@@ -3,7 +3,7 @@ import chestClosed from '../assets/sprites/hero/chest-closed.png';
 import { ACHIEVEMENTS, itemDesc, itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import { getJobDropItems } from '../game/collection';
-import { getPeople } from '../game/companion';
+import { getPeople, getPersonBonusLines } from '../game/companion';
 import { CHEST_LABELS, EQUIPMENT_RARITY_LABELS, EQUIPMENT_SLOT_LABELS, equipmentBaseName, equipmentOptionText, getChestLimit, getEquipmentBonus, getEquipmentLimit, getEquipmentSellValue } from '../game/equipment';
 import { formatResourceName } from '../game/formatters';
 import { MUSING_LABELS } from '../game/musings';
@@ -166,6 +166,15 @@ export function StatsModal({ state, onClose, onSelectTrait, onClaimWeeklyGoal }:
           : <div className="statsRow"><span>特性ボーナス</span><b>未選択。どれか1つ選ぶと、ここに効いている効果が出る。</b></div>}
       </div>
       <p className="sub">特性は1つだけ。変えたくなったら、いつでもここから変えられる。生き方の模様替えは、意外と高い。</p>
+    </div>
+    <div>
+      <div className="sectionHead"><h3>人物ボーナス</h3></div>
+      <div className="statsRows">
+        {getPersonBonusLines(state).length > 0
+          ? getPersonBonusLines(state).map((line) => <div className="statsRow" key={line}><span>出会い</span><b>{line}</b></div>)
+          : <div className="statsRow"><span>出会い</span><b>まだ誰とも出会っていない。図鑑の「人物」タブに、会えるヒントがある。</b></div>}
+      </div>
+      <p className="sub">商人の仕事・拠点整備・引退を進めると、街の人と出会う。出会うと、ちょっとした暮らしの助けが効くようになる。</p>
     </div>
     <div>
       <div className="sectionHead"><h3>実績ボーナス</h3></div>

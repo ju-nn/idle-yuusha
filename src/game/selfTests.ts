@@ -8,7 +8,7 @@ import { getAdventureEntryCost } from './equipment';
 import { describeUpgradeEffects, formatResourceName, rewardText } from './formatters';
 import { getFarmingProgress } from './farming';
 import { enqueueMusing, routeAmbientMusing } from './musings';
-import { callCat, claimCatVisit, createCatState, getCatCallRemainingMs, getCatGiftGold, getCatGoldMultiplier, getCatXpMultiplier, getPeople, maybeCatVisit, normalizeCatState, refreshCatState } from './companion';
+import { callCat, claimCatVisit, createCatState, getCatCallRemainingMs, getCatGiftGold, getCatGoldMultiplier, getCatXpMultiplier, getOwnedUpgradeCount, getPeople, getPersonBonusLines, hasMetPerson, maybeCatVisit, maybeMeetPeople, normalizeCatState, normalizeMetPeople, refreshCatState } from './companion';
 import { prestigeCostCurve } from './pricing';
 import { addAchievement, addItems, applyMilestoneAchievements, checkMilestoneAchievements, emptyLifetime, getAchievementBonusLines, getAchievementGoldMultiplier, getAchievementProgress, getAllDiscoverableItemIds, getAllMonsterIds, getCollectionBonusLines, getCollectionGoldMultiplier, getCollectionXpMultiplier, getLifePlan, getNextTarget, rollDrops } from './progression';
 import { checkRequirement, describeRequirement, getActiveArea, isJobUnlocked } from './requirements';
@@ -414,7 +414,7 @@ export function runSelfTests() {
   console.assert(getCollectionGoldMultiplier(initialState) === 1 && getCollectionXpMultiplier(initialState) === 1, 'fresh state should have no collection bonus');
   const allDiscoverable = getAllDiscoverableItemIds();
   const allMonsters = getAllMonsterIds();
-  console.assert(allMonsters.length === 46, `there should be 46 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allMonsters.length === 49, `there should be 49 monsters to defeat (got ${allMonsters.length})`);
   console.assert(allMonsters.includes('past_life_echo') && allMonsters.includes('new_life_wisp'), 'rebirth corridor monsters should be counted');
   // 転生専用コンテンツ（2026-11-07 / ロードマップ5の残り）：転生1回で解禁される仕事とエリア。
   // 初期状態では未解禁、転生1回で解禁。転生は周回でリセットされないため再ロックは起きない。
@@ -563,5 +563,31 @@ export function runSelfTests() {
   console.assert(peopleFresh.length === 8 && peopleFresh[0].met === true && peopleFresh[1].met === false && peopleFresh.slice(2).every((person) => person.met === false && person.hint.length > 0), 'people book should list the hero, the cat, and future faces with hints');
   const peopleMetCat = getPeople({ ...initialState, cat: { ...createCatState(), visits: 1 } });
   console.assert(peopleMetCat[1].met === true && peopleMetCat[1].name === 'ミケ', 'cat should appear in the people book after the first visit');
+  // 登場人物の出会い（2026-11-08 / 仲間3名）：条件・初登場ぼやき・ボーナス・図鑑。
+  const merchantGrown = { ...initialState, jobData: { ...initialState.jobData, merchant: { level: 3, xp: 0, seenMusings: [] } } };
+  const metShopkeeper = maybeMeetPeople(merchantGrown, 100_000);
+  console.assert(hasMetPerson(metShopkeeper, 'shopkeeper') && metShopkeeper.musingQueue.some((m) => m.id === 'meet-shopkeeper'), 'merchant level 3 should meet the shopkeeper with a first-meeting musing');
+  console.assert(Math.abs(getSellPriceMultiplier(metShopkeeper) - 1.05) < 1e-9, 'shopkeeper should raise the sell price by 5%');
+  console.assert(getSellPriceMultiplier(initialState) === 1, 'sell price should stay at 1x before meeting the shopkeeper');
+  const upgradedBase = { ...initialState, items: { fishing_better_rod: 1, fishing_lure: 1, fishing_boat: 1 } };
+  console.assert(getOwnedUpgradeCount(upgradedBase) === 3, 'three owned upgrades should count as three base improvements');
+  const metLandlord = maybeMeetPeople(upgradedBase, 100_000);
+  console.assert(hasMetPerson(metLandlord, 'landlord') && metLandlord.musingQueue.some((m) => m.id === 'meet-landlord'), 'three base improvements should meet the landlord');
+  console.assert(getUpgradeGoldCost(metLandlord, 100) === 95, 'landlord should cut upgrade gold cost by 5%');
+  const retiredOnce = { ...initialState, prestige: { ...createInitialState(jobs).prestige!, retireCount: 1 } };
+  const metNeighbor = maybeMeetPeople(retiredOnce, 100_000);
+  console.assert(hasMetPerson(metNeighbor, 'neighbor') && metNeighbor.musingQueue.some((m) => m.id === 'meet-neighbor'), 'one retirement should meet the former-hero neighbor');
+  const peopleForestArea = jobs.adventure.areas[0];
+  const failBefore = getFailChance(peopleForestArea, jobs.adventure.upgrades, {}, initialState);
+  const failAfter = getFailChance(peopleForestArea, jobs.adventure.upgrades, {}, metNeighbor);
+  console.assert(Math.abs(failBefore - failAfter - 0.02) < 1e-9, 'neighbor should cut adventure fail chance by 2%');
+  const metAllThree = maybeMeetPeople({ ...metShopkeeper, jobData: { ...metShopkeeper.jobData }, items: { fishing_better_rod: 1, fishing_lure: 1, fishing_boat: 1 }, prestige: { ...createInitialState(jobs).prestige!, retireCount: 1 } }, 200_000);
+  const peopleMetAll = getPeople(metAllThree);
+  console.assert(peopleMetAll.slice(2, 5).every((person) => person.met === true), 'all three new faces should appear in the people book once met');
+  console.assert(getPersonBonusLines(metAllThree).length === 3, 'three met people should list three bonus lines');
+  console.assert(maybeMeetPeople(metAllThree, 300_000).musingQueue.filter((m) => m.id === 'meet-shopkeeper').length === 1, 'meeting the same person twice should not repeat the first-meeting musing');
+  console.assert(normalizeMetPeople(['shopkeeper', 'nope', 42, 'landlord']).length === 2, 'invalid met-people entries should be dropped');
+  const migratedNoPeople = migrateState({ saveVersion: 5, gold: 50, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(Array.isArray(migratedNoPeople.metPeople) && migratedNoPeople.metPeople.length === 0, 'old save without met people should migrate with nobody met');
 }
 

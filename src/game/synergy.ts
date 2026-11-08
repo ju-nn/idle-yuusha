@@ -1,4 +1,5 @@
 import type { GameState } from '../types';
+import { hasMetPerson, PERSON_UPGRADE_DISCOUNT_PCT } from './companion';
 import { applyTraitUpgradeDiscount } from './traits';
 
 // システム間シナジー（ロードマップ3）。
@@ -53,7 +54,11 @@ export function getUpgradeGoldCost(state: GameState, baseGold: number): number {
   if (baseGold <= 0) return 0;
   const synergyDiscounted = Math.max(0, Math.floor(baseGold * (1 - getSynergyUpgradeDiscountPct(state) / 100)));
   // 特性：職人気質ならさらに -10%（シナジー割引とは別枠で両方適用）。
-  return applyTraitUpgradeDiscount(state, synergyDiscounted);
+  const traitDiscounted = applyTraitUpgradeDiscount(state, synergyDiscounted);
+  // 人物：大家さんと出会うとさらに -5%（別枠）。
+  return hasMetPerson(state, 'landlord')
+    ? Math.max(0, Math.floor(traitDiscounted * (1 - PERSON_UPGRADE_DISCOUNT_PCT / 100)))
+    : traitDiscounted;
 }
 
 // 古本せどりLv → ドロップ確率：目利きが上がると、戦利品の中から価値あるものを見逃さなくなる。

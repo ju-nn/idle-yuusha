@@ -1,6 +1,7 @@
 import { ACHIEVEMENTS, itemKind, itemName } from '../data/catalog';
 import { jobs } from '../data/gameData';
 import { getJobDropItems } from './collection';
+import { hasMetPerson, PERSON_FAIL_REDUCTION } from './companion';
 import { SEASONAL_ITEM_IDS } from './seasons';
 import { checkRequirement, describeRequirement, isJobUnlocked } from './requirements';
 import type { Area, GameState, LifetimeStats, Musing, Requirement, ResourceKey, Upgrade } from '../types';
@@ -656,9 +657,11 @@ export function getFailChance(area: Area, jobUpgrades: import('../types').Upgrad
     .reduce((sum, u) => sum + (u.effects.failReduction ?? 0), 0);
   // 連鎖：冒険エリア（出発費のあるエリア）では、休憩Lvが失敗率をさらに下げる。
   // 特性：冒険者気質ならさらに -5%（シナジーとは別枠）。下限 0% は最後に守る。
+  // 人物：元勇者仲間の隣人と出会うとさらに -2%（別枠）。
   const synergyReduction = state && area.adventureCost ? getSynergyAdventureFailReduction(state) : 0;
   const traitReduction = state && area.adventureCost ? getTraitFailReduction(state) : 0;
-  return Math.max(0, base - reduction - synergyReduction - traitReduction);
+  const personReduction = state && area.adventureCost && hasMetPerson(state, 'neighbor') ? PERSON_FAIL_REDUCTION : 0;
+  return Math.max(0, base - reduction - synergyReduction - traitReduction - personReduction);
 }
 
 export function pickFailMusing(area: Area): string {

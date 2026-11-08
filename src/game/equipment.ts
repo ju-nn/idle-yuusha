@@ -1,4 +1,5 @@
 import type { EquipmentItem, EquipmentOption, EquipmentOptionTarget, EquipmentRarity, EquipmentSlot, FeedbackEvent, GameState, JobType, ResourceKey, TreasureChest, TreasureChestType } from '../types';
+import { hasMetPerson, PERSON_SELL_BONUS_PCT } from './companion';
 import { enqueueMusing } from './musings';
 import { getSynergyEntryCostReductionPct, getSynergySellBonusPct } from './synergy';
 import { getTraitSellBonusPct } from './traits';
@@ -316,7 +317,9 @@ export function getResourceGainMultiplier(state: GameState, resource: ResourceKe
 export function getSellPriceMultiplier(state: GameState) {
   // 連鎖：釣りLvが商人の売却額を押し上げる（装備ボーナスとは別枠）。
   // 特性：商人気質ならさらに +15%（シナジーとは別枠）。
-  return 1 + getEquipmentBonus(state, 'sellPrice') / 100 + getSynergySellBonusPct(state) / 100 + getTraitSellBonusPct(state) / 100;
+  // 人物：商店の店主と出会うとさらに +5%（別枠）。
+  return 1 + getEquipmentBonus(state, 'sellPrice') / 100 + getSynergySellBonusPct(state) / 100 + getTraitSellBonusPct(state) / 100
+    + (hasMetPerson(state, 'shopkeeper') ? PERSON_SELL_BONUS_PCT / 100 : 0);
 }
 
 export function getAdventureEntryCost(state: GameState, baseCost = 0) {

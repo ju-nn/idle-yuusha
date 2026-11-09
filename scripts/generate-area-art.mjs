@@ -10,8 +10,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// 冒険エリア8種すべてに専用絵がある（2026-11-09 時点で8種。輪廻の庭を本コミットで追加し、フォールバックは残っていない）。
-const AREAS = ['forest', 'mountain', 'cave', 'throne_room', 'old_castle_gate', 'inner_courtyard', 'rebirth_corridor', 'samsara_garden'];
+// 冒険エリア9種すべてに専用絵がある（2026-11-09 時点で9種。輪廻の庭に加え、無限の塔を本コミットで追加し、フォールバックは残っていない）。
+const AREAS = ['forest', 'mountain', 'cave', 'throne_room', 'old_castle_gate', 'inner_courtyard', 'rebirth_corridor', 'samsara_garden', 'endless_tower'];
 
 const entries = [];
 for (const area of AREAS) {

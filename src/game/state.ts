@@ -70,6 +70,8 @@ export function createInitialState(jobs: Record<string, Job>): GameState {
     visitedAreas: [],
     defeatedMonsters: [],
     bossStreak: 0,
+    towerFloor: 1,
+    towerBest: 0,
     unlockedJobs: ['fishing'],
     seenMusingIds: ['intro_001'],
     recentMusingIds: ['intro_001'],
@@ -248,6 +250,9 @@ function normalizeMigratedState(parsed: Partial<GameState>, initialState: GameSt
     defeatedMonsters: parsed.defeatedMonsters || [],
     // ボス連勝: 旧セーブ（未記録）や不正な値は 0 に倒す。
     bossStreak: typeof parsed.bossStreak === 'number' && parsed.bossStreak >= 0 ? Math.floor(parsed.bossStreak) : 0,
+    // 無限の塔: 旧セーブ（未記録）や不正な値は 1階・0階に倒す。
+    towerFloor: typeof parsed.towerFloor === 'number' && parsed.towerFloor >= 1 ? Math.floor(parsed.towerFloor) : 1,
+    towerBest: typeof parsed.towerBest === 'number' && parsed.towerBest >= 0 ? Math.floor(parsed.towerBest) : 0,
     unlockedJobs: [] as string[],
     seenMusingIds: parsed.seenMusingIds || [],
     recentMusingIds: parsed.recentMusingIds || [],

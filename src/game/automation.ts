@@ -25,6 +25,13 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   mossy_coin: 6,
   echo_stone: 4,
   cold_coffee: 1,
+  tower_shard: 30,
+  single_glove: 4,
+  faded_towel: 5,
+  burnt_wick: 4,
+  sunken_key: 6,
+  rusty_nail: 2,
+  dried_ink: 3,
 };
 
 export function isAutoSellTarget(itemId: string) {

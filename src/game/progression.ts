@@ -321,8 +321,8 @@ export function addAchievement(prev: GameState, id: string, logs: string[]) {
 }
 
 // 実績の節目（コンプリート報酬の区切り）。実績数が区切りに届いたら、その場で
-// 節目実績も付与する。123 は全123個の到達点で、117個の通常実績＋節目5個＝122
-// の状態で最後の1個が入ると、節目が付与されてちょうど123になる。
+// 節目実績も付与する。122 は 122個の到達点で、121 の状態で付与されてちょうど
+// 122 になる（全127個のうちの区切りで、最後の1個の到達点ではない）。
 const ACHIEVEMENT_MILESTONES = [
   { at: 10, id: 'ten_achievements' },
   { at: 25, id: 'achievements_25' },
@@ -447,9 +447,12 @@ export function getAchievementBonusLines(state: GameState): string[] {
   lines.push(dropPct > 0
     ? `実績 ${count}個：ドロップ確率 +${dropPct}%`
     : `実績 ${count}個：ドロップ確率のボーナスは実績25個から（次は25個で+2%）`);
-  const nextMilestone = [10, 25, 50, 75, 100, 123].find((at) => count < at);
-  if (nextMilestone) lines.push(`次の節目：実績${nextMilestone}個（あと${nextMilestone - count}個）`);
-  else lines.push('実績コンプリート：123個すべて集めた。');
+  const total = Object.keys(ACHIEVEMENTS).length;
+  if (count >= total) lines.push(`実績コンプリート：${total}個すべて集めた。`);
+  else {
+    const nextMilestone = [10, 25, 50, 75, 100, 122].find((at) => count < at) ?? total;
+    lines.push(`次の節目：実績${nextMilestone}個（あと${nextMilestone - count}個）`);
+  }
   return lines;
 }
 

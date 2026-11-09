@@ -424,6 +424,8 @@ export function retire(prev: GameState, initialState: GameState): GameState {
     musingCooldowns: prev.musingCooldowns || {},
     defeatedMonsters: prev.defeatedMonsters || [],
     visitedAreas: prev.visitedAreas || [],
+    // 無限の塔: 今の階数は1階に戻る（初期状態のまま）が、最高階の記録は残す。
+    towerBest: prev.towerBest || 0,
     seenEquipmentBaseIds: prev.seenEquipmentBaseIds || [],
     equipmentDropLog: prev.equipmentDropLog || [],
     openedChestLog: prev.openedChestLog || [],
@@ -551,6 +553,8 @@ export function rebirth(prev: GameState, initialState: GameState): GameState {
     musingCooldowns: prev.musingCooldowns || {},
     defeatedMonsters: prev.defeatedMonsters || [],
     visitedAreas: prev.visitedAreas || [],
+    // 無限の塔: 今の階数は1階に戻る（初期状態のまま）が、最高階の記録は残す。
+    towerBest: prev.towerBest || 0,
     seenEquipmentBaseIds: prev.seenEquipmentBaseIds || [],
     equipmentDropLog: prev.equipmentDropLog || [],
     openedChestLog: prev.openedChestLog || [],

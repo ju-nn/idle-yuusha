@@ -14,6 +14,7 @@ import { countOwnedUpgrades, getEffectiveDurationTicksForState } from './timing'
 import { addAchievement, announceJobUnlocks, checkMilestoneAchievements, clamp, emptyLifetime, getAchievementDropMultiplier, getAchievementGoldMultiplier, getAchievementXpMultiplier, getCollectionGoldMultiplier, getCollectionXpMultiplier, getFailChance, grantItemRewards, isUniqueItem, pickFailMusing, pickFreshMusing, randInt, rollDrops, xpToNext } from './progression';
 import { getSynergyDropChanceMultiplier } from './synergy';
 import { getTraitJobGoldBonusPct, getTraitRestXpMultiplier } from './traits';
+import { TOWER_AREA_ID, scaleTowerMonster, towerMilestoneForFloor } from './tower';
 import { autoSellGainedItems, autoSellLogText } from './automation';
 import { loadUserSettings } from './settings';
 
@@ -262,6 +263,10 @@ export function runTick(prev: GameState, options: { offline?: boolean } = {}): G
   // ボス連勝数: 玉座の間でのみ積み上がる。敗北・遭遇なし・玉座の間以外での
   // サイクル完了で 0 に戻る（作業失敗では途切れない）。
   let bossStreak = prev.bossStreak || 0;
+  // 無限の塔: 今登っている階数と、到達した最高階。塔を離れると1階に戻るのは
+  // selectArea/selectJob 側で行い、ここでは勝敗による遷移だけを扱う。
+  let towerFloor = Math.max(1, Math.floor(prev.towerFloor || 1));
+  let towerBest = Math.max(0, Math.floor(prev.towerBest || 0));
   let battleWon = false;
   const adventureEntryCost = job.type === 'adventure' ? getAdventureEntryCost(prev, area.adventureCost || 0) : 0;
   let bonusGold = 0;
@@ -478,11 +483,17 @@ export function runTick(prev: GameState, options: { offline?: boolean } = {}): G
 
   if (job.type === 'adventure') {
     if (area.encounterChance && area.monsters && Math.random() < area.encounterChance) {
-      const monster = area.monsters[Math.floor(Math.random() * area.monsters.length)];
+      const baseMonster = area.monsters[Math.floor(Math.random() * area.monsters.length)];
+      // 無限の塔: 出会うモンスターを今の階数で強化する。1階は素の強さのまま。
+      const isTower = area.id === TOWER_AREA_ID;
+      const monster = isTower ? scaleTowerMonster(baseMonster, towerFloor) : baseMonster;
       const battle = simulateMonsterBattle({ ...prev, hp: recoveredHp, mp: recoveredMp }, job, monster, data.level);
       combatEvents.push(...battle.logs);
       if (!battle.won) {
         bossStreak = 0;
+        // 塔では負けても階数はそのまま（同じ階を登り直す）。1階へのリセットは
+        // 塔を離れるときだけで、負けで振り出しに戻す設計にはしない。
+        if (isTower) combatEvents.push(`塔の${towerFloor}階で引き返した。階数はそのまま。また登り直せる。`);
         addFeedback('battleLose');
         addMusing({
           id: `failure-monster-${monster.id}-${now}`,
@@ -520,6 +531,28 @@ export function runTick(prev: GameState, options: { offline?: boolean } = {}): G
       }
       adventureHpCost = battle.hpCost;
       adventureMpCost = battle.mpCost;
+      // 無限の塔: 勝てば1階上がる。節目の階に到達したら実績とぼやきが出る。
+      if (isTower) {
+        const clearedFloor = towerFloor;
+        towerFloor = clearedFloor + 1;
+        towerBest = Math.max(towerBest, towerFloor);
+        combatEvents.push(`塔を登った：${clearedFloor}階を制覇し、${towerFloor}階へ。塔に終わりはない。`);
+        const milestone = towerMilestoneForFloor(towerFloor);
+        if (milestone) {
+          achievements = addAchievement({ ...prev, achievements }, `tower_floor_${milestone}`, eventLog);
+          addMusing({
+            id: `tower-milestone-${milestone}`,
+            job: job.name,
+            area: area.name,
+            text: `無限の塔${towerFloor}階に到達した。\n\n勇者「${towerFloor}階だ。まだ上がある。あると思うと、少しだけ楽しい」`,
+            category: 'milestone',
+            eventType: 'milestone',
+            eventSubType: 'tower_milestone',
+            eventTarget: area.id,
+            once: true,
+          });
+        }
+      }
       combatEvents.push(`戦闘結果：+${adventureXp}XP。Gは落ちない。冒険を財布で永久機関にしないための現実。`);
       addFeedback('adventureSuccess');
       achievements = addAchievement({ ...prev, achievements }, 'first_battle', eventLog);
@@ -788,6 +821,8 @@ export function runTick(prev: GameState, options: { offline?: boolean } = {}): G
     eventLog: [...eventLog, ...prev.eventLog].slice(0, 24),
     defeatedMonsters,
     bossStreak,
+    towerFloor,
+    towerBest,
     combo: { lastJob: prev.activeJob, streak: nextStreak, boons: nextBoons },
     seenMusingIds: musingState.seenMusingIds,
     recentMusingIds: musingState.recentMusingIds,

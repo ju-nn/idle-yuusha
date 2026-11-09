@@ -296,6 +296,11 @@ export type GameState = {
   // ボス連勝数: 玉座の間でボスに連勝した回数。敗北・遭遇なし・玉座の間以外での
   // サイクル完了で 0 に戻る。旧セーブは未記録扱い（0）。
   bossStreak?: number;
+  // 無限の塔: 今登っている階数と、到達した最高階。塔を離れる（他のエリア・
+  // 仕事へ移る）と今の階数は 1 階に戻る。休憩では維持する。引退・転生では
+  // 今の階数は 1 階に戻るが、最高階の記録は残る。旧セーブは未記録扱い（1階・0階）。
+  towerFloor?: number;
+  towerBest?: number;
   unlockedJobs: string[];
   seenMusingIds: string[];
   recentMusingIds: string[];

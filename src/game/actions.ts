@@ -9,6 +9,7 @@ import { autoSellGainedItems, autoSellLogText } from './automation';
 import { getSellPriceMultiplier } from './equipment';
 import { getUpgradeGoldCost } from './synergy';
 import { loadUserSettings } from './settings';
+import { TOWER_AREA_ID } from './tower';
 
 function localDateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -98,6 +99,8 @@ export function selectJob(prev: GameState, key: string): GameState {
     activeJob: key,
     activeArea: area.id,
     tick: 0,
+    // 無限の塔: 仕事を変えると塔を離れるため、今の階数は1階に戻る。
+    towerFloor: area.id === TOWER_AREA_ID ? Math.max(1, Math.floor(prev.towerFloor || 1)) : 1,
     // 手動で仕事を選んだら、自動休憩の復帰先は消す（プレイヤーの意思を優先する）。
     autoRestReturn: null,
     // 初回チュートリアル：仕事を選んだら次は「素材を売る」へ進む。
@@ -146,6 +149,9 @@ export function selectArea(prev: GameState, id: string): GameState {
     ...prev,
     activeArea: id,
     tick: 0,
+    // 無限の塔: 塔を離れる（他のエリアを選ぶ）と今の階数は1階に戻る。
+    // 塔そのものを選び直すときは、今の階数を維持する。
+    towerFloor: id === TOWER_AREA_ID ? Math.max(1, Math.floor(prev.towerFloor || 1)) : 1,
     visitedAreas: isFirstVisit ? [...(prev.visitedAreas || []), id] : prev.visitedAreas,
     eventLog: [`${activeJob.name}：${area.name}を始めた。${area.summary}`, ...prev.eventLog].slice(0, 24),
   };

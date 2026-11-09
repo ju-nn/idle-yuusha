@@ -211,6 +211,7 @@ export function StatsModal({ state, onClose, onSelectTrait, onClaimWeeklyGoal }:
         <SummaryPill label={REBIRTH_POINT_NAME} value={`${prestige.rebirthPoints || 0}`} />
         <SummaryPill label="輪廻" value={`${prestige.samsaraCount || 0}回`} />
         <SummaryPill label={SAMSARA_POINT_NAME} value={`${prestige.samsaraPoints || 0}`} />
+        {(state.towerBest || 0) > 0 && <SummaryPill label="無限の塔" value={`最高${state.towerBest}階`} />}
       </div>
       <p className="sub">宝箱と装備の上限はここで見えます。上限に近づいたら、宝箱を開けるか装備を売る・保護する判断の目安にしてください。</p>
     </div>

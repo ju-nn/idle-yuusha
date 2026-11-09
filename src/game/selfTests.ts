@@ -26,8 +26,9 @@ import { getCurrentSeason, getSeasonCalendar, SEASONAL_ITEM_IDS, seasonStartMusi
 import { claimWeeklyGoal, ensureWeeklyState, getWeekKey, getWeeklyGoals } from './weekly';
 import { getHeroAttack } from './combat';
 import { bossStreakBonusPct, nextBossStreak } from './combat';
+import { scaleTowerMonster, towerMilestoneForFloor } from './tower';
 import { getFailChance } from './progression';
-import { advanceTutorial, buyUpgrade, dismissTutorial, selectJob } from './actions';
+import { advanceTutorial, buyUpgrade, dismissTutorial, selectArea, selectJob } from './actions';
 import { getSellPriceMultiplier } from './equipment';
 import { computeOfflineGains, createInitialState, getOfflineEfficiency, getOfflineMaxTicks, migrateState, SAVE_VERSION, totalJobXp } from './state';
 
@@ -265,6 +266,41 @@ export function runSelfTests() {
   console.assert(migratedBadStreak.bossStreak === 0, 'invalid boss streak should normalize to zero');
   const migratedWithStreak = migrateState({ gold: 55, bossStreak: 3, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
   console.assert(migratedWithStreak.bossStreak === 3, 'boss streak should survive migration');
+  // 無限の塔（2026-11-08）: 玉座の鍵で解禁され、既存モンスターを階数で強化して出す。
+  const tower = jobs.adventure.areas.find((area) => area.id === 'endless_tower');
+  console.assert(tower !== undefined, 'endless tower area should exist');
+  console.assert(tower?.unlock?.type === 'item' && 'item' in (tower?.unlock || {}) && (tower?.unlock as { item: string }).item === 'throne_key', 'endless tower should unlock with the throne key');
+  console.assert(checkRequirement(tower?.unlock, { ...initialState, items: { throne_key: 1 } }) === true, 'throne key should unlock the endless tower');
+  console.assert(checkRequirement(tower?.unlock, initialState) === false, 'endless tower should stay locked without the throne key');
+  console.assert(describeRequirement(tower?.unlock, initialState).includes('玉座の鍵'), 'endless tower hint should name the throne key');
+  console.assert((tower?.monsters || []).length === 6 && (tower?.monsters || []).every((monster) => !monster.boss), 'tower should hold six non-boss monsters');
+  console.assert((tower?.monsters || []).every((monster) => (monster.drops || []).some((drop) => drop.item === 'tower_shard')), 'tower monsters should drop tower shards');
+  console.assert(itemName('tower_shard') === '塔のかけら', 'tower shard should be a catalog item');
+  console.assert(isAutoSellTarget('tower_shard') === true, 'tower shard should be auto-sellable');
+  console.assert(getJobDropItems('adventure').includes('tower_shard'), 'tower shard should count toward adventure discovery');
+  // コンテンツ小バッチ（2026-11-09 / 無限の塔と同時公開）：置き去りの日用品モンスター3体と素材6種。
+  console.assert(['single_glove', 'faded_towel', 'burnt_wick', 'sunken_key', 'rusty_nail', 'dried_ink'].every((id) => itemName(id) !== id && isAutoSellTarget(id)), 'new batch materials should be catalogued and auto-sellable');
+  console.assert(getJobDropItems('adventure').includes('single_glove') && getJobDropItems('adventure').includes('faded_towel') && getJobDropItems('adventure').includes('burnt_wick'), 'new batch adventure materials should count toward discovery');
+  // 階数による強化の純粋計算。
+  const towerSlime = (tower?.monsters || []).find((monster) => monster.id === 'slime');
+  if (towerSlime) {
+    const floor1 = scaleTowerMonster(towerSlime, 1);
+    console.assert(floor1.hp === towerSlime.hp && floor1.attack === towerSlime.attack && floor1.name === towerSlime.name, 'tower floor 1 should not scale the monster');
+    const floor10 = scaleTowerMonster(towerSlime, 10);
+    console.assert(floor10.hp > towerSlime.hp * 3 && floor10.hp < towerSlime.hp * 4 && floor10.attack === towerSlime.attack + 4 && (floor10.rewards.xp || 0) > (towerSlime.rewards.xp || 0), 'tower floor 10 should scale hp about 3.5x, attack +4 and xp up');
+    const floor25 = scaleTowerMonster(towerSlime, 25);
+    console.assert(floor25.hp > towerSlime.hp * 25 && floor25.attack === towerSlime.attack + 12, 'tower floor 25 should scale hp about 28x and attack +12');
+  }
+  console.assert(towerMilestoneForFloor(9) === null && towerMilestoneForFloor(10) === 10 && towerMilestoneForFloor(25) === 25 && towerMilestoneForFloor(50) === 50 && towerMilestoneForFloor(100) === 100, 'tower milestones should be 10/25/50/100 only');
+  // 旧セーブ: towerFloor/towerBest 未記録・不正値は 1階・0階に倒れること。
+  const migratedNoTower = migrateState({ gold: 55, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedNoTower.towerFloor === 1 && migratedNoTower.towerBest === 0, 'old save without tower state should migrate as floor 1 and best 0');
+  const migratedTower = migrateState({ gold: 55, towerFloor: 12, towerBest: 25, jobData: {}, items: {} } as Partial<typeof initialState>, initialState);
+  console.assert(migratedTower.towerFloor === 12 && migratedTower.towerBest === 25, 'tower floor and best should survive migration');
+  // 塔を離れると今の階数は1階に戻るが、最高階は残ること。
+  const towerState = { ...initialState, activeJob: 'adventure', activeArea: 'endless_tower', towerFloor: 7, towerBest: 10, visitedAreas: ['forest', 'endless_tower'], jobData: { ...initialState.jobData, mining: { level: 2, xp: 0, seenMusings: [] } } };
+  const leftTower = selectArea(towerState, 'forest');
+  console.assert(leftTower.towerFloor === 1 && leftTower.towerBest === 10, 'leaving the tower should reset the current floor but keep the best');
   // 転生（2026-11-07 / ロードマップ5）: 引退3回が条件で、獲得は思い出の累計から平方根型。
   console.assert(!canRebirth(initialState) && getRebirthPoints(initialState) === 0, 'fresh state should not be rebirthable');
   const rebirthReady = {
@@ -393,10 +429,10 @@ export function runSelfTests() {
       delete (globalThis as unknown as Record<string, unknown>).localStorage;
     }
   }
-  // 実績123件（2026-11-07 に120件へ拡張、2026-11-09 に輪廻3種を追加）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。
+  // 実績127件（2026-11-07 に120件へ拡張、2026-11-09 に輪廻3種と無限の塔4種を追加）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。
   const achievementIds = Object.keys(ACHIEVEMENTS);
-  console.assert(achievementIds.length === 123, `achievements should total 123 (got ${achievementIds.length})`);
-  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 123, 'achievement names should be unique');
+  console.assert(achievementIds.length === 127, `achievements should total 127 (got ${achievementIds.length})`);
+  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 127, 'achievement names should be unique');
   console.assert(Object.values(ACHIEVEMENTS).every((a) => a.name && a.description && a.hint && a.category), 'every achievement should have a name, description, hint and category');
   const twentyFour = achievementIds.filter((id) => !['achievements_25', 'achievements_50', 'achievements_75', 'achievements_100', 'achievements_120', 'ten_achievements'].includes(id)).slice(0, 24);
   const milestoneLogs: string[] = [];
@@ -404,7 +440,7 @@ export function runSelfTests() {
   console.assert(with25.includes('achievements_25'), 'the 25th achievement should also grant achievements_25');
   const allBut120 = achievementIds.filter((id) => id !== 'achievements_120' && id !== 'synergy_all_7');
   const completed = addAchievement({ ...initialState, achievements: allBut120 }, 'synergy_all_7', []);
-  console.assert(completed.length === 123 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 123');
+  console.assert(completed.length === 127 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 127');
   const milestoneState = {
     ...initialState,
     jobData: { ...initialState.jobData, fishing: { level: 5, xp: 0, seenMusings: [] }, mining: { level: 2, xp: 0, seenMusings: [] }, rest: { level: 2, xp: 0, seenMusings: [] }, nightwatch: { level: 2, xp: 0, seenMusings: [] }, woodcutting: { level: 4, xp: 0, seenMusings: [] }, housekeeping: { level: 2, xp: 0, seenMusings: [] }, booktrade: { level: 3, xp: 0, seenMusings: [] } },
@@ -458,9 +494,10 @@ export function runSelfTests() {
   console.assert(getCollectionGoldMultiplier(initialState) === 1 && getCollectionXpMultiplier(initialState) === 1, 'fresh state should have no collection bonus');
   const allDiscoverable = getAllDiscoverableItemIds();
   const allMonsters = getAllMonsterIds();
-  console.assert(allMonsters.length === 57, `there should be 57 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allMonsters.length === 60, `there should be 60 monsters to defeat (got ${allMonsters.length})`);
   console.assert(allMonsters.includes('left_hat') && allMonsters.includes('forgotten_raincoat') && allMonsters.includes('forgotten_map'), 'new daily-life monsters should be counted');
   console.assert(allMonsters.includes('left_handkerchief') && allMonsters.includes('left_notebook') && allMonsters.includes('forgotten_matches'), 'samsara batch daily-life monsters should be counted');
+  console.assert(allMonsters.includes('left_gloves') && allMonsters.includes('forgotten_towel') && allMonsters.includes('forgotten_lantern'), 'endless tower batch daily-life monsters should be counted');
   console.assert(allMonsters.includes('past_self_shadow') && allMonsters.includes('samsara_blossom'), 'samsara garden monsters should be counted');
   console.assert(allMonsters.includes('past_life_echo') && allMonsters.includes('new_life_wisp'), 'rebirth corridor monsters should be counted');
   // 転生専用コンテンツ（2026-11-07 / ロードマップ5の残り）：転生1回で解禁される仕事とエリア。
@@ -473,9 +510,9 @@ export function runSelfTests() {
   const rebirthCorridor = jobs.adventure.areas.find((area) => area.id === 'rebirth_corridor');
   console.assert(rebirthCorridor && checkRequirement(rebirthCorridor.unlock, initialState) === false && checkRequirement(rebirthCorridor.unlock, rebirthedOnce) === true, 'rebirth corridor should unlock after one rebirth');
   console.assert(!isJobUnlocked('rebirth_guide', initialState) && isJobUnlocked('rebirth_guide', rebirthedOnce), 'rebirth guide should be locked fresh and unlocked after rebirth');
-  // エリア専用イラスト（2026-11-08）：冒険エリア8種すべてに専用絵がある。フォールバック（仕事絵＋色調変化）は残っていない。
-  console.assert(Object.keys(AREA_ART).length === 8 && ['forest', 'mountain', 'cave', 'throne_room', 'old_castle_gate', 'inner_courtyard', 'rebirth_corridor', 'samsara_garden'].every((id) => AREA_ART[id]?.startsWith('data:image/webp;base64,')), 'eight adventure areas should have dedicated art');
-  console.assert(jobs.adventure.areas.filter((area) => AREA_ART[area.id]).length === 8, 'dedicated area art should cover all eight adventure areas');
+  // エリア専用イラスト（2026-11-08〜11-09）：冒険エリア9種すべてに専用絵がある。フォールバック（仕事絵＋色調変化）は残っていない。
+  console.assert(Object.keys(AREA_ART).length === 9 && ['forest', 'mountain', 'cave', 'throne_room', 'old_castle_gate', 'inner_courtyard', 'rebirth_corridor', 'samsara_garden', 'endless_tower'].every((id) => AREA_ART[id]?.startsWith('data:image/webp;base64,')), 'nine adventure areas should have dedicated art');
+  console.assert(jobs.adventure.areas.filter((area) => AREA_ART[area.id]).length === 9, 'dedicated area art should cover all nine adventure areas');
   console.assert(jobs.adventure.areas.every((area) => AREA_ART[area.id] || SCENE_ART.adventure), 'every adventure area should resolve to area art or the adventure job art');
   console.assert(Object.keys(jobs).every((key) => SCENE_ART[key]?.startsWith('data:image/')), 'every job should resolve to scene art');
   // 解禁間隔の再設計（2026-11-07）：仕事の解禁は Lv3 までに収め、整備は Lv2 → Lv4 → Lv6 の2刻みにする。

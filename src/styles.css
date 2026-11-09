@@ -2414,6 +2414,8 @@ button.primary:active:not(:disabled) {
 .gameSprite.silhouette { filter: brightness(0); opacity: .26; }
 .monsterThumb { display: block; flex: none; background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; }
 .monsterThumb.silhouette { filter: brightness(0); opacity: .26; }
+.monsterArt { display: block; flex: none; object-fit: cover; border-radius: 8px; image-rendering: pixelated; }
+.monsterArt.silhouette { filter: brightness(0); opacity: .26; }
 .monsterArchive { display: flex; gap: 12px; align-items: flex-start; }
 .monsterArchiveBody { flex: 1; min-width: 0; }
 .monsterArchiveBody > div { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }

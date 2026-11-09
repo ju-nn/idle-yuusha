@@ -1,3 +1,5 @@
+import { MONSTER_ART } from '../assets/monsterArt';
+
 const itemModules = import.meta.glob<string>('../assets/sprites/hero/item-*.png', { eager: true, query: '?url', import: 'default' });
 const equipModules = import.meta.glob<string>('../assets/sprites/hero/equip-*.png', { eager: true, query: '?url', import: 'default' });
 const monsterModules = import.meta.glob<string>('../assets/sprites/hero/monster-*.png', { eager: true, query: '?url', import: 'default' });
@@ -29,6 +31,12 @@ export function EquipSprite({ baseId, size = 32 }: { baseId: string; size?: numb
 }
 
 export function MonsterThumb({ id, size = 48, silhouette = false }: { id: string; size?: number; silhouette?: boolean }) {
+  // 専用絵のあるモンスター（2026-11-09 時点ではボス4体）はイラストを優先する。
+  // 専用絵のないモンスターは従来通りプログラム生成スプライトのフォールバック。
+  const art = MONSTER_ART[id];
+  if (art) {
+    return <img className={`monsterArt ${silhouette ? 'silhouette' : ''}`} src={art} alt="" aria-hidden="true" width={size} height={size} style={{ width: size, height: size }} draggable={false} />;
+  }
   const src = MONSTER_SPRITES[id];
   if (!src) return null;
   return <span className={`monsterThumb ${silhouette ? 'silhouette' : ''}`} aria-hidden="true" style={{ width: size, height: size, backgroundImage: `url(${src})`, backgroundSize: `${size * 2}px ${size}px` }} />;

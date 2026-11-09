@@ -2,6 +2,7 @@ import { ACHIEVEMENTS, itemDesc, itemKind, itemName } from '../data/catalog';
 import { jobs, upgrades } from '../data/gameData';
 import { AREA_ART } from '../assets/areaArt';
 import { MONSTER_ART } from '../assets/monsterArt';
+import { UPGRADE_ART } from '../assets/upgradeArt';
 import { SCENE_ART } from '../assets/sceneArtAll';
 import { simulateMonsterBattle } from './combat';
 import { getJobDropItems } from './collection';
@@ -431,18 +432,18 @@ export function runSelfTests() {
       delete (globalThis as unknown as Record<string, unknown>).localStorage;
     }
   }
-  // 実績130件（2026-11-07 に120件へ拡張、2026-11-09 に輪廻3種と無限の塔4種、ボスイラストと同時公開の小バッチ3種を追加）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。
+  // 実績133件（2026-11-07 に120件へ拡張、2026-11-09 に輪廻3種と無限の塔4種、ボスイラストと同時公開の小バッチ3種、拠点整備絵・初期モンスター絵と同時公開の小バッチ3種を追加）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。
   const achievementIds = Object.keys(ACHIEVEMENTS);
-  console.assert(achievementIds.length === 130, `achievements should total 130 (got ${achievementIds.length})`);
-  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 130, 'achievement names should be unique');
+  console.assert(achievementIds.length === 133, `achievements should total 133 (got ${achievementIds.length})`);
+  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 133, 'achievement names should be unique');
   console.assert(Object.values(ACHIEVEMENTS).every((a) => a.name && a.description && a.hint && a.category), 'every achievement should have a name, description, hint and category');
-  const twentyFour = achievementIds.filter((id) => !['achievements_25', 'achievements_50', 'achievements_75', 'achievements_100', 'achievements_120', 'achievements_125', 'ten_achievements'].includes(id)).slice(0, 24);
+  const twentyFour = achievementIds.filter((id) => !['achievements_25', 'achievements_50', 'achievements_75', 'achievements_100', 'achievements_120', 'achievements_125', 'achievements_135', 'ten_achievements'].includes(id)).slice(0, 24);
   const milestoneLogs: string[] = [];
   const with25 = addAchievement({ ...initialState, achievements: twentyFour }, twentyFour.length ? achievementIds.find((id) => !twentyFour.includes(id) && !id.startsWith('achievements_') && id !== 'ten_achievements')! : 'first_fish', milestoneLogs);
   console.assert(with25.includes('achievements_25'), 'the 25th achievement should also grant achievements_25');
   const allBut120 = achievementIds.filter((id) => id !== 'achievements_120' && id !== 'synergy_all_7');
   const completed = addAchievement({ ...initialState, achievements: allBut120 }, 'synergy_all_7', []);
-  console.assert(completed.length === 130 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 130');
+  console.assert(completed.length === 133 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 133');
   const milestoneState = {
     ...initialState,
     jobData: { ...initialState.jobData, fishing: { level: 5, xp: 0, seenMusings: [] }, mining: { level: 2, xp: 0, seenMusings: [] }, rest: { level: 2, xp: 0, seenMusings: [] }, nightwatch: { level: 2, xp: 0, seenMusings: [] }, woodcutting: { level: 4, xp: 0, seenMusings: [] }, housekeeping: { level: 2, xp: 0, seenMusings: [] }, booktrade: { level: 3, xp: 0, seenMusings: [] } },
@@ -496,13 +497,17 @@ export function runSelfTests() {
   console.assert(getCollectionGoldMultiplier(initialState) === 1 && getCollectionXpMultiplier(initialState) === 1, 'fresh state should have no collection bonus');
   const allDiscoverable = getAllDiscoverableItemIds();
   const allMonsters = getAllMonsterIds();
-  console.assert(allMonsters.length === 63, `there should be 63 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allMonsters.length === 66, `there should be 66 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allDiscoverable.length === 141, `there should be 141 discoverable items (got ${allDiscoverable.length})`);
   console.assert(allMonsters.includes('left_hat') && allMonsters.includes('forgotten_raincoat') && allMonsters.includes('forgotten_map'), 'new daily-life monsters should be counted');
   console.assert(allMonsters.includes('left_handkerchief') && allMonsters.includes('left_notebook') && allMonsters.includes('forgotten_matches'), 'samsara batch daily-life monsters should be counted');
   console.assert(allMonsters.includes('left_gloves') && allMonsters.includes('forgotten_towel') && allMonsters.includes('forgotten_lantern'), 'endless tower batch daily-life monsters should be counted');
   console.assert(allMonsters.includes('forgotten_picture_book') && allMonsters.includes('left_binoculars') && allMonsters.includes('forgotten_bucket'), 'boss art batch daily-life monsters should be counted');
-  // ボス専用絵（2026-11-09）：玉座の間のボス4体すべてにイラストがある。
-  console.assert(Object.keys(MONSTER_ART).length === 4 && ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king'].every((id) => MONSTER_ART[id]?.startsWith('data:image/webp;base64,')), 'all four bosses should have dedicated art');
+  console.assert(allMonsters.includes('forgotten_hand_mirror') && allMonsters.includes('left_compass') && allMonsters.includes('forgotten_candle'), 'upgrade art batch daily-life monsters should be counted');
+  // 初期モンスター専用絵（2026-11-09 15時台）：スライム／ゴブリン／オオカミ／洞窟コウモリにイラストを追加し、専用絵は8体になった。
+  console.assert(Object.keys(MONSTER_ART).length === 8 && ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat'].every((id) => MONSTER_ART[id]?.startsWith('data:image/webp;base64,')), 'all four bosses and four early monsters should have dedicated art');
+  // 拠点整備パネル絵（2026-11-09 15時台）：最初の4仕事（釣り／休憩／木こり／商人）に専用絵がある。
+  console.assert(Object.keys(UPGRADE_ART).length === 4 && ['fishing', 'rest', 'woodcutting', 'merchant'].every((id) => UPGRADE_ART[id]?.startsWith('data:image/webp;base64,')), 'the first four jobs should have dedicated upgrade art');
   console.assert(allMonsters.includes('past_self_shadow') && allMonsters.includes('samsara_blossom'), 'samsara garden monsters should be counted');
   console.assert(allMonsters.includes('past_life_echo') && allMonsters.includes('new_life_wisp'), 'rebirth corridor monsters should be counted');
   // 転生専用コンテンツ（2026-11-07 / ロードマップ5の残り）：転生1回で解禁される仕事とエリア。

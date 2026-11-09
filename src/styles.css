@@ -2774,6 +2774,17 @@ button.primary:active:not(:disabled) {
   border-radius: 6px;
   margin-bottom: 7px;
 }
+/* 拠点整備パネルの見出し絵（2026-11-09 15時台）：エリア絵と同じ帯表示。絵のない仕事は表示されない */
+.upgradeArt {
+  display: block;
+  width: 100%;
+  height: 72px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 6px;
+  margin-bottom: 7px;
+  image-rendering: pixelated;
+}
 .compactAreaGrid .areaArt {
   grid-column: 1 / 3;
   height: 64px;

@@ -11,6 +11,7 @@ import type { Area, GameState, Job, ResourceKey, Upgrade } from '../types';
 import { HeroScene } from './HeroScene';
 import { SCENE_ART } from '../assets/sceneArtAll';
 import { AREA_ART } from '../assets/areaArt';
+import { UPGRADE_ART } from '../assets/upgradeArt';
 import { TOWER_AREA_ID } from '../game/tower';
 import { Icon, JobIcon } from './Icon';
 import { MonsterThumb } from './GameIcon';
@@ -127,7 +128,9 @@ export function AreaGrid({ job, state, selectArea, compact = false }: { job: Job
 
 export function UpgradePanel({ state, job, buyUpgrade, openUpgrades }: { state: GameState; job: Job; buyUpgrade: (u: typeof job.upgrades[number]) => void; openUpgrades?: () => void }) {
   const jobUnlocked = isJobUnlocked(state.activeJob, state);
-  return <Card><div className="sectionHead"><h3>{job.name}の拠点整備</h3>{openUpgrades && <button onClick={openUpgrades}>一覧</button>}</div><div className="upgradeGrid">{job.upgrades.map((u) => <UpgradeCard key={u.id} upgrade={u} state={state} buyUpgrade={buyUpgrade} jobUnlocked={jobUnlocked} />)}</div></Card>;
+  // 拠点整備パネルの見出し絵（2026-11-09 15時台：最初の4仕事に専用絵を追加。絵のない仕事は従来通り絵なし）。
+  const upgradeArt = UPGRADE_ART[state.activeJob];
+  return <Card><div className="sectionHead"><h3>{job.name}の拠点整備</h3>{openUpgrades && <button onClick={openUpgrades}>一覧</button>}</div>{upgradeArt && <img className="upgradeArt" src={upgradeArt} alt="" aria-hidden="true" draggable={false} />}<div className="upgradeGrid">{job.upgrades.map((u) => <UpgradeCard key={u.id} upgrade={u} state={state} buyUpgrade={buyUpgrade} jobUnlocked={jobUnlocked} />)}</div></Card>;
 }
 
 function InlineUpgradeList({ state, job, buyUpgrade }: { state: GameState; job: Job; buyUpgrade: (u: Upgrade) => void }) {

@@ -322,7 +322,7 @@ export function addAchievement(prev: GameState, id: string, logs: string[]) {
 
 // 実績の節目（コンプリート報酬の区切り）。実績数が区切りに届いたら、その場で
 // 節目実績も付与する。122 は 122個の到達点で、121 の状態で付与されてちょうど
-// 122 になる（全130個のうちの区切りで、最後の1個の到達点ではない）。
+// 122 になる（全133個のうちの区切りで、最後の1個の到達点ではない）。
 const ACHIEVEMENT_MILESTONES = [
   { at: 10, id: 'ten_achievements' },
   { at: 25, id: 'achievements_25' },
@@ -331,6 +331,7 @@ const ACHIEVEMENT_MILESTONES = [
   { at: 100, id: 'achievements_100' },
   { at: 122, id: 'achievements_120' },
   { at: 125, id: 'achievements_125' },
+  { at: 135, id: 'achievements_135' },
 ];
 
 function grantAchievementMilestones(next: string[], logs: string[]): string[] {
@@ -493,9 +494,11 @@ export function checkMilestoneAchievements(state: GameState, eventLog: string[])
   if (defeated.length >= 20) grant('monsters_20');
   if (defeated.length >= 44) grant('monsters_44');
   if (defeated.length >= 63) grant('monsters_63');
+  if (defeated.length >= 66) grant('monsters_66');
   if ((lt.discovered || []).length >= 50) grant('discovered_50');
   if ((lt.discovered || []).length >= 100) grant('discovered_100');
   if ((lt.discovered || []).length >= 125) grant('discovered_125');
+  if ((lt.discovered || []).length >= 135) grant('discovered_135');
   const bases = state.seenEquipmentBaseIds || [];
   if (bases.length >= 30) grant('equip_bases_30');
   if (bases.length >= 66) grant('equip_bases_66');
@@ -564,9 +567,11 @@ export function getAchievementProgress(state: GameState, id: string): { current:
     monsters_20: { current: (state.defeatedMonsters || []).length, target: 20 },
     monsters_44: { current: (state.defeatedMonsters || []).length, target: 44 },
     monsters_63: { current: (state.defeatedMonsters || []).length, target: 63 },
+    monsters_66: { current: (state.defeatedMonsters || []).length, target: 66 },
     discovered_50: { current: (lt.discovered || []).length, target: 50 },
     discovered_100: { current: (lt.discovered || []).length, target: 100 },
     discovered_125: { current: (lt.discovered || []).length, target: 125 },
+    discovered_135: { current: (lt.discovered || []).length, target: 135 },
     equip_bases_30: { current: (state.seenEquipmentBaseIds || []).length, target: 30 },
     equip_bases_66: { current: (state.seenEquipmentBaseIds || []).length, target: 66 },
     legendary_3: { current: (state.equipmentInventory || []).filter((item) => item.rarity === 'legendary').length, target: 3 },
@@ -597,6 +602,7 @@ export function getAchievementProgress(state: GameState, id: string): { current:
     achievements_100: { current: (state.achievements || []).length, target: 100 },
     achievements_120: { current: (state.achievements || []).length, target: 123 },
     achievements_125: { current: (state.achievements || []).length, target: 126 },
+    achievements_135: { current: (state.achievements || []).length, target: 136 },
     synergy_all_7: { current: getSynergyChains(state).filter((chain) => chain.active !== '').length, target: 7 },
   };
   return table[id] || null;

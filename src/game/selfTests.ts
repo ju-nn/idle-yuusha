@@ -432,18 +432,18 @@ export function runSelfTests() {
       delete (globalThis as unknown as Record<string, unknown>).localStorage;
     }
   }
-  // 実績139件（2026-11-07 に120件へ拡張、2026-11-09 に輪廻3種と無限の塔4種、ボスイラストと同時公開の小バッチ3種、拠点整備絵・初期モンスター絵と同時公開の小バッチ3種、2026-11-10 05時台の小バッチ3種、2026-11-10 09時台の小バッチ3種を追加。2026-11-10 09時台の統合で実績の追加なし＝139件のまま）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。
+  // 実績142件（2026-11-07 に120件へ拡張、2026-11-09 に輪廻3種と無限の塔4種、ボスイラストと同時公開の小バッチ3種、拠点整備絵・初期モンスター絵と同時公開の小バッチ3種、2026-11-10 05時台の小バッチ3種、2026-11-10 09時台の小バッチ3種を追加。2026-11-10 09時台の統合で実績の追加なし。2026-11-10 13時台に11時台バッチの移植で小バッチ3種を追加）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。
   const achievementIds = Object.keys(ACHIEVEMENTS);
-  console.assert(achievementIds.length === 139, `achievements should total 139 (got ${achievementIds.length})`);
-  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 139, 'achievement names should be unique');
+  console.assert(achievementIds.length === 142, `achievements should total 142 (got ${achievementIds.length})`);
+  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 142, 'achievement names should be unique');
   console.assert(Object.values(ACHIEVEMENTS).every((a) => a.name && a.description && a.hint && a.category), 'every achievement should have a name, description, hint and category');
-  const twentyFour = achievementIds.filter((id) => !['achievements_25', 'achievements_50', 'achievements_75', 'achievements_100', 'achievements_120', 'achievements_125', 'achievements_135', 'achievements_138', 'achievements_141', 'ten_achievements'].includes(id)).slice(0, 24);
+  const twentyFour = achievementIds.filter((id) => !['achievements_25', 'achievements_50', 'achievements_75', 'achievements_100', 'achievements_120', 'achievements_125', 'achievements_135', 'achievements_138', 'achievements_141', 'achievements_142', 'ten_achievements'].includes(id)).slice(0, 24);
   const milestoneLogs: string[] = [];
   const with25 = addAchievement({ ...initialState, achievements: twentyFour }, twentyFour.length ? achievementIds.find((id) => !twentyFour.includes(id) && !id.startsWith('achievements_') && id !== 'ten_achievements')! : 'first_fish', milestoneLogs);
   console.assert(with25.includes('achievements_25'), 'the 25th achievement should also grant achievements_25');
   const allBut120 = achievementIds.filter((id) => id !== 'achievements_120' && id !== 'synergy_all_7');
   const completed = addAchievement({ ...initialState, achievements: allBut120 }, 'synergy_all_7', []);
-  console.assert(completed.length === 139 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 139');
+  console.assert(completed.length === 142 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 142');
   const milestoneState = {
     ...initialState,
     jobData: { ...initialState.jobData, fishing: { level: 5, xp: 0, seenMusings: [] }, mining: { level: 2, xp: 0, seenMusings: [] }, rest: { level: 2, xp: 0, seenMusings: [] }, nightwatch: { level: 2, xp: 0, seenMusings: [] }, woodcutting: { level: 4, xp: 0, seenMusings: [] }, housekeeping: { level: 2, xp: 0, seenMusings: [] }, booktrade: { level: 3, xp: 0, seenMusings: [] } },
@@ -497,8 +497,8 @@ export function runSelfTests() {
   console.assert(getCollectionGoldMultiplier(initialState) === 1 && getCollectionXpMultiplier(initialState) === 1, 'fresh state should have no collection bonus');
   const allDiscoverable = getAllDiscoverableItemIds();
   const allMonsters = getAllMonsterIds();
-  console.assert(allMonsters.length === 74, `there should be 74 monsters to defeat (got ${allMonsters.length})`);
-  console.assert(allDiscoverable.length === 158, `there should be 158 discoverable items (got ${allDiscoverable.length})`);
+  console.assert(allMonsters.length === 77, `there should be 77 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allDiscoverable.length === 164, `there should be 164 discoverable items (got ${allDiscoverable.length})`);
   console.assert(allMonsters.includes('left_hat') && allMonsters.includes('forgotten_raincoat') && allMonsters.includes('forgotten_map'), 'new daily-life monsters should be counted');
   console.assert(allMonsters.includes('left_handkerchief') && allMonsters.includes('left_notebook') && allMonsters.includes('forgotten_matches'), 'samsara batch daily-life monsters should be counted');
   console.assert(allMonsters.includes('left_gloves') && allMonsters.includes('forgotten_towel') && allMonsters.includes('forgotten_lantern'), 'endless tower batch daily-life monsters should be counted');
@@ -507,15 +507,35 @@ export function runSelfTests() {
   console.assert(allMonsters.includes('forgotten_watering_can') && allMonsters.includes('left_telescope') && allMonsters.includes('forgotten_sleeping_bag'), '2026-11-10 batch daily-life monsters should be counted');
   console.assert(allMonsters.includes('forgotten_mug') && allMonsters.includes('left_hiking_boots') && allMonsters.includes('forgotten_pocket_watch'), '2026-11-10 09:00 batch daily-life monsters should be counted');
   console.assert(allMonsters.includes('forgotten_plushie') && allMonsters.includes('left_radio'), '2026-11-10 09:00 merged batch daily-life monsters should be counted');
+  console.assert(allMonsters.includes('forgotten_wristwatch') && allMonsters.includes('forgotten_camera') && allMonsters.includes('forgotten_shovel'), '2026-11-10 13:00 ported 11:00 batch daily-life monsters should be counted');
   console.assert(allDiscoverable.includes('cracked_watering_can') && allDiscoverable.includes('dented_watering_can') && allDiscoverable.includes('cracked_telescope') && allDiscoverable.includes('cracked_telescope_lens') && allDiscoverable.includes('torn_sleeping_bag') && allDiscoverable.includes('broken_sleeping_bag_zipper'), '2026-11-10 batch material items should be discoverable');
   console.assert(allDiscoverable.includes('broken_mug') && allDiscoverable.includes('dented_mug') && allDiscoverable.includes('broken_hiking_boots') && allDiscoverable.includes('frayed_hiking_boot_lace') && allDiscoverable.includes('broken_pocket_watch') && allDiscoverable.includes('stopped_pocket_watch'), '2026-11-10 09:00 batch material items should be discoverable');
   console.assert(allDiscoverable.includes('frayed_plushie') && allDiscoverable.includes('plushie_button') && allDiscoverable.includes('broken_radio') && allDiscoverable.includes('broken_radio_dial') && allDiscoverable.includes('pocket_watch_hand'), '2026-11-10 09:00 merged batch material items should be discoverable');
+  console.assert(allDiscoverable.includes('cracked_wristwatch') && allDiscoverable.includes('stopped_wristwatch') && allDiscoverable.includes('cracked_camera') && allDiscoverable.includes('cracked_camera_lens') && allDiscoverable.includes('bent_shovel') && allDiscoverable.includes('broken_shovel_handle'), '2026-11-10 13:00 ported 11:00 batch material items should be discoverable');
   console.assert(['broken_mug', 'dented_mug', 'broken_hiking_boots', 'frayed_hiking_boot_lace', 'broken_pocket_watch', 'stopped_pocket_watch'].every((id) => itemName(id) !== id && isAutoSellTarget(id)), 'new 09:00 batch materials should be catalogued and auto-sellable');
   console.assert(['frayed_plushie', 'plushie_button', 'broken_radio', 'broken_radio_dial', 'pocket_watch_hand'].every((id) => itemName(id) !== id && isAutoSellTarget(id)), 'new 09:00 merged batch materials should be catalogued and auto-sellable');
-  // 一般モンスター専用絵（2026-11-10 09時台）：迷子の傘／置き忘れのピクニックかご／苔ガメ／迷子の長靴にイラストを追加し、専用絵は16体になった。
-  console.assert(Object.keys(MONSTER_ART).length === 16 && ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot'].every((id) => MONSTER_ART[id]?.startsWith('data:image/webp;base64,')), 'all four bosses, four early monsters and eight general monsters should have dedicated art');
-  // 拠点整備パネル絵（2026-11-10 09時台）：次の4仕事（在宅作業／配達アプリ／家事代行／写真販売）に専用絵を追加し、専用絵は12仕事になった（同09時台の統合で08時台の夜間警備を追加し13仕事へ拡張）。
-  console.assert(Object.keys(UPGRADE_ART).length === 13 && ['fishing', 'rest', 'woodcutting', 'merchant', 'farming', 'mining', 'adventure', 'office', 'remote', 'delivery', 'housekeeping', 'photography', 'nightwatch'].every((id) => UPGRADE_ART[id]?.startsWith('data:image/webp;base64,')), 'the first thirteen jobs should have dedicated upgrade art');
+  // 売却単価（2026-11-10 13時台の移植で判明）：11時台の新素材6種と05時台の小バッチ素材6種は ITEM_SELL_PRICES 未登録で自動売却の対象外だったため、単価を追加して自動売却対象にする。
+  console.assert(['cracked_wristwatch', 'stopped_wristwatch', 'cracked_camera', 'cracked_camera_lens', 'bent_shovel', 'broken_shovel_handle'].every((id) => isAutoSellTarget(id)), '2026-11-10 13:00 ported 11:00 batch material items should be auto-sell targets');
+  console.assert(['cracked_watering_can', 'dented_watering_can', 'cracked_telescope', 'cracked_telescope_lens', 'torn_sleeping_bag', 'broken_sleeping_bag_zipper'].every((id) => isAutoSellTarget(id)), '2026-11-10 05:00 batch material items should be auto-sell targets');
+  // 新実績3件（2026-11-10 13時台）：全77種討伐・164の発見・実績142個の節目が付与される。
+  const nearFullDefeated = { ...initialState, defeatedMonsters: allMonsters.slice(0, 76), lifetime: { ...emptyLifetime(), discovered: allDiscoverable.slice(0, 163) } };
+  console.assert(!checkMilestoneAchievements(nearFullDefeated, []).includes('monsters_77'), '76 defeated monsters should not grant monsters_77');
+  console.assert(!checkMilestoneAchievements(nearFullDefeated, []).includes('discovered_164'), '163 discovered items should not grant discovered_164');
+  const fullDefeated = { ...initialState, defeatedMonsters: allMonsters, lifetime: { ...emptyLifetime(), discovered: allDiscoverable } };
+  console.assert(checkMilestoneAchievements(fullDefeated, []).includes('monsters_77'), '77 defeated monsters should grant monsters_77');
+  console.assert(checkMilestoneAchievements(fullDefeated, []).includes('discovered_164'), '164 discovered items should grant discovered_164');
+  const almostAllAchievements = { ...initialState, achievements: achievementIds.filter((id) => id !== 'achievements_142').slice(0, 141) };
+  console.assert(!checkMilestoneAchievements(almostAllAchievements, []).includes('achievements_142'), '141 achievements should not grant achievements_142');
+  console.assert(getAchievementProgress({ ...initialState, achievements: Array.from({ length: 142 }, (_, i) => `test-${i}`) }, 'achievements_142')?.target === 143, 'achievements_142 progress should target 143');
+  console.assert(getAchievementBonusLines({ ...initialState, achievements: Array.from({ length: 141 }, (_, i) => `test-${i}`) }).some((line) => line.includes('次の節目：実績142個')), 'bonus lines should point to the 142 milestone at 141 achievements');
+  // 一般モンスター専用絵（2026-11-10 13時台）：11時台バッチから3体（転がる岩玉／崖ヤギ／かげネズミ）を移植し、専用絵は19体になった。苔ガメは09時台の版のまま。
+  console.assert(Object.keys(MONSTER_ART).length === 19 && ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat'].every((id) => MONSTER_ART[id]?.startsWith('data:image/webp;base64,')), 'all four bosses, four early monsters and eleven general monsters should have dedicated art');
+  // 一般モンスター専用絵（2026-11-10 09時台）：迷子の傘／置き忘れのピクニックかご／苔ガメ／迷子の長靴にイラストを追加し、専用絵は16体になった（2026-11-10 13時台に19体へ拡張。上記の assert が最新）。
+  console.assert(['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot'].every((id) => MONSTER_ART[id]?.startsWith('data:image/webp;base64,')), 'all four bosses, four early monsters and eight general monsters should have dedicated art');
+  // 拠点整備パネル絵（2026-11-10 13時台）：残り5仕事（闇クエスト／動画投稿者／古本せどり／転生案内／輪廻案内）に専用絵を追加し、全18仕事になった。
+  console.assert(Object.keys(UPGRADE_ART).length === 18 && ['fishing', 'rest', 'woodcutting', 'merchant', 'farming', 'mining', 'adventure', 'office', 'remote', 'delivery', 'housekeeping', 'photography', 'nightwatch', 'shady', 'streaming', 'booktrade', 'rebirth_guide', 'samsara_guide'].every((id) => UPGRADE_ART[id]?.startsWith('data:image/webp;base64,')), 'all eighteen jobs should have dedicated upgrade art');
+  // 拠点整備パネル絵（2026-11-10 09時台）：次の4仕事（在宅作業／配達アプリ／家事代行／写真販売）に専用絵を追加し、専用絵は12仕事になった（同09時台の統合で08時台の夜間警備を追加し13仕事へ拡張。2026-11-10 13時台に18仕事へ拡張。上記の assert が最新）。
+  console.assert(['fishing', 'rest', 'woodcutting', 'merchant', 'farming', 'mining', 'adventure', 'office', 'remote', 'delivery', 'housekeeping', 'photography', 'nightwatch'].every((id) => UPGRADE_ART[id]?.startsWith('data:image/webp;base64,')), 'the first thirteen jobs should have dedicated upgrade art');
   // 一般モンスター専用絵（2026-11-10 05時台）：おすましキノコ／ため息ゴケ／ささやきツタ／寝坊キノコにイラストを追加し、専用絵は12体になった（2026-11-10 09時台に16体へ拡張。上記の assert が最新）。
   console.assert(['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom'].every((id) => MONSTER_ART[id]?.startsWith('data:image/webp;base64,')), 'all four bosses, four early monsters and four general monsters should have dedicated art');
   // 拠点整備パネル絵（2026-11-10 05時台）：次の4仕事（農業／採掘／冒険／王国勤務）に専用絵を追加し、専用絵は8仕事になった（2026-11-10 09時台に12仕事へ拡張。上記の assert が最新）。

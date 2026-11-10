@@ -45,6 +45,19 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   broken_radio: 5,
   broken_radio_dial: 2,
   pocket_watch_hand: 3,
+  // 置き去りの日用品シリーズ（2026-11-10 05時台・11時台の小バッチ素材。従来は未登録で自動売却の対象外だった）。
+  cracked_watering_can: 4,
+  dented_watering_can: 3,
+  cracked_telescope: 5,
+  cracked_telescope_lens: 3,
+  torn_sleeping_bag: 4,
+  broken_sleeping_bag_zipper: 2,
+  cracked_wristwatch: 5,
+  stopped_wristwatch: 3,
+  cracked_camera: 6,
+  cracked_camera_lens: 4,
+  bent_shovel: 5,
+  broken_shovel_handle: 2,
 };
 
 export function isAutoSellTarget(itemId: string) {

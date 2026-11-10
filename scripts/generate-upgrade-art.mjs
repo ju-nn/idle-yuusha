@@ -3,6 +3,8 @@
 // 専用絵のある仕事はパネルの見出しにこの絵を出す（絵のない仕事は従来通り絵なし）。
 // 2026-11-09 15時台に最初の4仕事（釣り／休憩／木こり／商人）を追加した。
 // 2026-11-10 05時台に次の4仕事（農業／採掘／冒険／王国勤務）を追加し、専用絵は8仕事になった。
+// 2026-11-10 09時台に次の4仕事（在宅作業／配達アプリ／家事代行／写真販売）を追加し、専用絵は12仕事になった。
+// 2026-11-10 09時台の統合で08時台の夜間警備を追加し、専用絵は13仕事になった（08時台の nightwatch.webp を採用）。
 // 入力はローカルの upgrade-web-480/<job>.webp（480x320・quality 75。生成物 1920x1280 を PIL で変換）。
 // upgrade-web-480/ と upgrade-gen/ はローカルのみに置き、リポジトリには含めない。
 //
@@ -12,8 +14,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// 専用絵のある仕事の拠点整備パネル（2026-11-10 時点で8仕事。残りの仕事は今後の追加対象）。
-const JOBS = ['fishing', 'rest', 'woodcutting', 'merchant', 'farming', 'mining', 'adventure', 'office'];
+// 専用絵のある仕事の拠点整備パネル（2026-11-10 時点で13仕事。残りの仕事は今後の追加対象）。
+const JOBS = ['fishing', 'rest', 'woodcutting', 'merchant', 'farming', 'mining', 'adventure', 'office', 'remote', 'delivery', 'housekeeping', 'photography', 'nightwatch'];
 
 const entries = [];
 for (const job of JOBS) {

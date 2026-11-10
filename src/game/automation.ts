@@ -32,6 +32,19 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   sunken_key: 6,
   rusty_nail: 2,
   dried_ink: 3,
+  // コンテンツ小バッチ（2026-11-10 09時台）：置き去りの日用品シリーズの続き。
+  broken_mug: 4,
+  dented_mug: 3,
+  broken_hiking_boots: 5,
+  frayed_hiking_boot_lace: 2,
+  broken_pocket_watch: 6,
+  stopped_pocket_watch: 3,
+  // コンテンツ小バッチ（2026-11-10 09時台の統合分。08時台バッチから移植）。
+  frayed_plushie: 4,
+  plushie_button: 2,
+  broken_radio: 5,
+  broken_radio_dial: 2,
+  pocket_watch_hand: 3,
 };
 
 export function isAutoSellTarget(itemId: string) {

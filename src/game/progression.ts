@@ -321,31 +321,39 @@ export function addAchievement(prev: GameState, id: string, logs: string[]) {
 }
 
 // 実績の節目（コンプリート報酬の区切り）。実績数が区切りに届いたら、その場で
-// 節目実績も付与する。122 は 122個の到達点で、121 の状態で付与されてちょうど
-// 122 になる（全133個のうちの区切りで、最後の1個の到達点ではない）。
-// ただし最大値の節目だけは例外で、at は総数-1 にする。節目実績自体が総数に
-// 含まれるため、at を総数にすると付与条件（現在の個数 >= at）を満たす状態が
-// 永遠に来ない（付与される前の最大値は総数-1）。at を総数-1 にすれば、他の
-// 実績をすべて集めた時点で節目が付与されて総数に到達する。
+// 節目実績も付与する。
+// at は「この節目自身を除く他の実績の所持数」で判定する。節目実績自体も総数に
+// 含まれるため、総数を条件にすると最大値の節目は到達不能になる（自己参照：
+// 付与される前の最大値は総数-1で、総数に届くのは節目自身が付与された後だけ）。
+// at を総数-1 にすれば、他の実績をすべて集めた時点で節目が付与されて総数に到達する。
+// label は表示名の数字（「実績145個」の 145）。at と label が違う節目もある
+// （achievements_120 は at 122・表示名「実績122個の歩み」、achievements_145 は
+// at 144・表示名「実績145個」）。ボーナスラインの「次の節目」表示は label と
+// at を対にして使う（at だけの列だと「あと何個」が1個ずれる）。
+// 進捗表示の target は at+1＝付与後の総数（節目を含めた数）で統一する。
 const ACHIEVEMENT_MILESTONES = [
-  { at: 10, id: 'ten_achievements' },
-  { at: 25, id: 'achievements_25' },
-  { at: 50, id: 'achievements_50' },
-  { at: 75, id: 'achievements_75' },
-  { at: 100, id: 'achievements_100' },
-  { at: 122, id: 'achievements_120' },
-  { at: 125, id: 'achievements_125' },
-  { at: 135, id: 'achievements_135' },
-  { at: 138, id: 'achievements_138' },
-  { at: 141, id: 'achievements_141' },
-  { at: 142, id: 'achievements_142' },
-  { at: 144, id: 'achievements_145' },
+  { at: 10, label: 10, id: 'ten_achievements' },
+  { at: 25, label: 25, id: 'achievements_25' },
+  { at: 50, label: 50, id: 'achievements_50' },
+  { at: 75, label: 75, id: 'achievements_75' },
+  { at: 100, label: 100, id: 'achievements_100' },
+  { at: 122, label: 122, id: 'achievements_120' },
+  { at: 125, label: 125, id: 'achievements_125' },
+  { at: 135, label: 135, id: 'achievements_135' },
+  { at: 138, label: 138, id: 'achievements_138' },
+  { at: 141, label: 141, id: 'achievements_141' },
+  { at: 142, label: 142, id: 'achievements_142' },
+  { at: 144, label: 145, id: 'achievements_145' },
+  { at: 147, label: 148, id: 'achievements_148' },
 ];
 
 function grantAchievementMilestones(next: string[], logs: string[]): string[] {
   let out = next;
   for (const milestone of ACHIEVEMENT_MILESTONES) {
-    if (out.length >= milestone.at && ACHIEVEMENTS[milestone.id] && !out.includes(milestone.id)) {
+    // 自分自身を除いた他の実績の数で判定する（上記の at の定義）。
+    // out にはこの節目自身はまだ含まれていないが、明示的に除いて数える。
+    const others = out.filter((id) => id !== milestone.id).length;
+    if (others >= milestone.at && ACHIEVEMENTS[milestone.id] && !out.includes(milestone.id)) {
       logs.unshift(`実績解除：${ACHIEVEMENTS[milestone.id].name} — ${ACHIEVEMENTS[milestone.id].description}`);
       out = [milestone.id, ...out];
     }
@@ -460,8 +468,13 @@ export function getAchievementBonusLines(state: GameState): string[] {
   const total = Object.keys(ACHIEVEMENTS).length;
   if (count >= total) lines.push(`実績コンプリート：${total}個すべて集めた。`);
   else {
-    const nextMilestone = [10, 25, 50, 75, 100, 122, 125, 135, 138, 141, 142, 145].find((at) => count < at) ?? total;
-    lines.push(`次の節目：実績${nextMilestone}個（あと${nextMilestone - count}個）`);
+    // 次の節目は ACHIEVEMENT_MILESTONES から探す。表示する数字は label（表示名の
+    // 数字）、残りは at（他の実績の所持数）から数える。at だけの列だと、label と
+    // at が違う節目（achievements_145 は label 145・at 144）で「あと何個」が1個ずれる。
+    const next = ACHIEVEMENT_MILESTONES.find((m) => count < m.at);
+    const label = next ? next.label : total;
+    const at = next ? next.at : total;
+    lines.push(`次の節目：実績${label}個（あと${at - count}個）`);
   }
   return lines;
 }
@@ -507,6 +520,7 @@ export function checkMilestoneAchievements(state: GameState, eventLog: string[])
   if (defeated.length >= 74) grant('monsters_74');
   if (defeated.length >= 77) grant('monsters_77');
   if (defeated.length >= 80) grant('monsters_80');
+  if (defeated.length >= 88) grant('monsters_88');
   if ((lt.discovered || []).length >= 50) grant('discovered_50');
   if ((lt.discovered || []).length >= 100) grant('discovered_100');
   if ((lt.discovered || []).length >= 125) grant('discovered_125');
@@ -515,6 +529,7 @@ export function checkMilestoneAchievements(state: GameState, eventLog: string[])
   if ((lt.discovered || []).length >= 158) grant('discovered_158');
   if ((lt.discovered || []).length >= 164) grant('discovered_164');
   if ((lt.discovered || []).length >= 170) grant('discovered_170');
+  if ((lt.discovered || []).length >= 186) grant('discovered_186');
   const bases = state.seenEquipmentBaseIds || [];
   if (bases.length >= 30) grant('equip_bases_30');
   if (bases.length >= 66) grant('equip_bases_66');
@@ -588,6 +603,7 @@ export function getAchievementProgress(state: GameState, id: string): { current:
     monsters_74: { current: (state.defeatedMonsters || []).length, target: 74 },
     monsters_77: { current: (state.defeatedMonsters || []).length, target: 77 },
     monsters_80: { current: (state.defeatedMonsters || []).length, target: 80 },
+    monsters_88: { current: (state.defeatedMonsters || []).length, target: 88 },
     discovered_50: { current: (lt.discovered || []).length, target: 50 },
     discovered_100: { current: (lt.discovered || []).length, target: 100 },
     discovered_125: { current: (lt.discovered || []).length, target: 125 },
@@ -596,6 +612,7 @@ export function getAchievementProgress(state: GameState, id: string): { current:
     discovered_158: { current: (lt.discovered || []).length, target: 158 },
     discovered_164: { current: (lt.discovered || []).length, target: 164 },
     discovered_170: { current: (lt.discovered || []).length, target: 170 },
+    discovered_186: { current: (lt.discovered || []).length, target: 186 },
     equip_bases_30: { current: (state.seenEquipmentBaseIds || []).length, target: 30 },
     equip_bases_66: { current: (state.seenEquipmentBaseIds || []).length, target: 66 },
     legendary_3: { current: (state.equipmentInventory || []).filter((item) => item.rarity === 'legendary').length, target: 3 },
@@ -631,6 +648,7 @@ export function getAchievementProgress(state: GameState, id: string): { current:
     achievements_141: { current: (state.achievements || []).length, target: 142 },
     achievements_142: { current: (state.achievements || []).length, target: 143 },
     achievements_145: { current: (state.achievements || []).length, target: 145 },
+    achievements_148: { current: (state.achievements || []).length, target: 148 },
     synergy_all_7: { current: getSynergyChains(state).filter((chain) => chain.active !== '').length, target: 7 },
   };
   return table[id] || null;

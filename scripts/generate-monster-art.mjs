@@ -11,6 +11,8 @@
 // 専用絵は計16体になった。
 // 2026-11-10 15時台に一般モンスター4体（置き去りの帽子／置き去りのハンカチ／置き去りの手袋／忘れられた絵本）を追加し、
 // 専用絵は計23体になった。
+// 2026-11-10 17時台に一般モンスター4体（森に忘れられたリボン／山道に置き去りのペットボトル／洞窟に忘れられたロープ／
+// 森に忘れられた手鏡）を追加し、専用絵は計27体になった。
 // 入力はローカルの monster-web-320/<monster>.webp（320x320・quality 75。生成物 1920x1280 を PIL で変換）。
 // monster-web-320/ と monster-gen/ はローカルのみに置き、リポジトリには含めない。
 //
@@ -20,8 +22,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// 専用絵のあるモンスター（2026-11-10 時点で23体：玉座の間のボス4体＋初期モンスター4体＋一般モンスター15体）。
-const MONSTERS = ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book'];
+// 専用絵のあるモンスター（2026-11-10 時点で27体：玉座の間のボス4体＋初期モンスター4体＋一般モンスター19体）。
+const MONSTERS = ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book', 'forgotten_ribbon', 'forgotten_bottle', 'forgotten_rope', 'forgotten_hand_mirror', 'forgotten_watering_can', 'forgotten_mug', 'forgotten_wristwatch'];
 
 const entries = [];
 for (const monster of MONSTERS) {

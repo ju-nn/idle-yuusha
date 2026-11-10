@@ -224,7 +224,7 @@ html[data-text-speed="fast"] .musingText::after { animation-duration:.12s; }
 .jobHeader p { margin:.14rem 0; color:var(--muted); font-size:.86rem; line-height:1.32; }
 .latestLog { width:100%; max-width:100%; min-width:0; margin-top:9px; display:grid; grid-template-columns:auto minmax(0, 1fr); text-align:left; background:rgba(255,255,255,.62); color:var(--text-soft); border-color:rgba(124,74,35,.15); }
 .main > .card:nth-child(2) .latestLog { margin-top:6px; min-height:30px; justify-content:flex-start; overflow:hidden; padding:6px 8px; font-size:.82rem; }
-.latestLog .logText { min-width:0; max-width:100%; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-soft); }
+.latestLog .logText { min-width:0; max-width:100%; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; color:var(--text-soft); }
 .latestLog span:first-child { min-width:0; color:var(--faint); white-space:nowrap; }
 .levelBox { flex:0 0 78px; min-width:0; max-width:100%; text-align:right; padding:8px 10px; border:1px solid rgba(161,98,7,.22); background:linear-gradient(180deg, rgba(251,191,36,.14), rgba(255,255,255,.74)); border-radius:6px; }
 .levelBox b { display:block; font-size:1.32rem; line-height:1.05; }

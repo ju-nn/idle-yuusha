@@ -65,6 +65,25 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   bottle_cap: 4,
   tangled_rope: 5,
   snapped_rope: 2,
+  // コンテンツ小バッチ（2026-11-10 17時台）：置き去りの日用品シリーズの続き。
+  chipped_comb: 5,
+  missing_comb_tooth: 3,
+  single_work_glove: 5,
+  frayed_work_glove: 3,
+  bent_spoon: 6,
+  rusty_spoon: 4,
+  // コンテンツ小バッチ（2026-11-10 19時台）：置き去りの日用品シリーズの続き。
+  worn_slipper: 5,
+  faded_slipper: 3,
+  empty_wallet: 5,
+  loose_coins: 4,
+  // コンテンツ小バッチ（2026-11-10 21時台）：置き去りの日用品シリーズの続き。
+  single_earring: 5,
+  rusty_earring: 3,
+  parasol_rib: 6,
+  broken_parasol: 4,
+  music_box_spring: 5,
+  stopped_music_box: 2,
 };
 
 export function isAutoSellTarget(itemId: string) {

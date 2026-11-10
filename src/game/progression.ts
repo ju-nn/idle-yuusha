@@ -346,6 +346,7 @@ const ACHIEVEMENT_MILESTONES = [
   { at: 144, label: 145, id: 'achievements_145' },
   { at: 147, label: 148, id: 'achievements_148' },
   { at: 150, label: 151, id: 'achievements_151' },
+  { at: 153, label: 154, id: 'achievements_154' },
 ];
 
 function grantAchievementMilestones(next: string[], logs: string[]): string[] {
@@ -523,6 +524,7 @@ export function checkMilestoneAchievements(state: GameState, eventLog: string[])
   if (defeated.length >= 80) grant('monsters_80');
   if (defeated.length >= 88) grant('monsters_88');
   if (defeated.length >= 91) grant('monsters_91');
+  if (defeated.length >= 94) grant('monsters_94');
   if ((lt.discovered || []).length >= 50) grant('discovered_50');
   if ((lt.discovered || []).length >= 100) grant('discovered_100');
   if ((lt.discovered || []).length >= 125) grant('discovered_125');
@@ -533,6 +535,7 @@ export function checkMilestoneAchievements(state: GameState, eventLog: string[])
   if ((lt.discovered || []).length >= 170) grant('discovered_170');
   if ((lt.discovered || []).length >= 186) grant('discovered_186');
   if ((lt.discovered || []).length >= 192) grant('discovered_192');
+  if ((lt.discovered || []).length >= 198) grant('discovered_198');
   const bases = state.seenEquipmentBaseIds || [];
   if (bases.length >= 30) grant('equip_bases_30');
   if (bases.length >= 66) grant('equip_bases_66');
@@ -608,6 +611,7 @@ export function getAchievementProgress(state: GameState, id: string): { current:
     monsters_80: { current: (state.defeatedMonsters || []).length, target: 80 },
     monsters_88: { current: (state.defeatedMonsters || []).length, target: 88 },
     monsters_91: { current: (state.defeatedMonsters || []).length, target: 91 },
+    monsters_94: { current: (state.defeatedMonsters || []).length, target: 94 },
     discovered_50: { current: (lt.discovered || []).length, target: 50 },
     discovered_100: { current: (lt.discovered || []).length, target: 100 },
     discovered_125: { current: (lt.discovered || []).length, target: 125 },
@@ -618,6 +622,7 @@ export function getAchievementProgress(state: GameState, id: string): { current:
     discovered_170: { current: (lt.discovered || []).length, target: 170 },
     discovered_186: { current: (lt.discovered || []).length, target: 186 },
     discovered_192: { current: (lt.discovered || []).length, target: 192 },
+    discovered_198: { current: (lt.discovered || []).length, target: 198 },
     equip_bases_30: { current: (state.seenEquipmentBaseIds || []).length, target: 30 },
     equip_bases_66: { current: (state.seenEquipmentBaseIds || []).length, target: 66 },
     legendary_3: { current: (state.equipmentInventory || []).filter((item) => item.rarity === 'legendary').length, target: 3 },
@@ -655,6 +660,7 @@ export function getAchievementProgress(state: GameState, id: string): { current:
     achievements_145: { current: (state.achievements || []).length, target: 145 },
     achievements_148: { current: (state.achievements || []).length, target: 148 },
     achievements_151: { current: (state.achievements || []).length, target: 151 },
+    achievements_154: { current: (state.achievements || []).length, target: 154 },
     synergy_all_7: { current: getSynergyChains(state).filter((chain) => chain.active !== '').length, target: 7 },
   };
   return table[id] || null;

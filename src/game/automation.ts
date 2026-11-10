@@ -91,6 +91,12 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   cracked_sunglasses: 4,
   torn_diary: 6,
   faded_diary: 4,
+  cracked_wind_chime: 5,
+  faded_wind_chime_paper: 3,
+  torn_kite: 6,
+  snapped_kite_string: 4,
+  cracked_yutanpo: 6,
+  faded_yutanpo_cover: 4,
 };
 
 export function isAutoSellTarget(itemId: string) {

@@ -432,10 +432,10 @@ export function runSelfTests() {
       delete (globalThis as unknown as Record<string, unknown>).localStorage;
     }
   }
-  // 実績151件（2026-11-07 に120件へ拡張、2026-11-09 に輪廻3種と無限の塔4種、ボスイラストと同時公開の小バッチ3種、拠点整備絵・初期モンスター絵と同時公開の小バッチ3種、2026-11-10 05時台の小バッチ3種、2026-11-10 09時台の小バッチ3種を追加。2026-11-10 09時台の統合で実績の追加なし。2026-11-10 13時台に11時台バッチの移植で小バッチ3種を追加。2026-11-10 15時台にUI重なり修正と同時公開の小バッチ3種を追加。2026-11-10 17時台に節目見直しと同時公開の小バッチ3種を追加）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。2026-11-10 22時台に小バッチ3種を追加。
+  // 実績154件（2026-11-07 に120件へ拡張、2026-11-09 に輪廻3種と無限の塔4種、ボスイラストと同時公開の小バッチ3種、拠点整備絵・初期モンスター絵と同時公開の小バッチ3種、2026-11-10 05時台の小バッチ3種、2026-11-10 09時台の小バッチ3種を追加。2026-11-10 09時台の統合で実績の追加なし。2026-11-10 13時台に11時台バッチの移植で小バッチ3種を追加。2026-11-10 15時台にUI重なり修正と同時公開の小バッチ3種を追加。2026-11-10 17時台に節目見直しと同時公開の小バッチ3種を追加）: 定義数・ヒント・カテゴリ・節目・通算カウンタ・ボーナス。2026-11-10 22時台に小バッチ3種を追加。2026-11-11 05時台に小バッチ3種を追加。
   const achievementIds = Object.keys(ACHIEVEMENTS);
-  console.assert(achievementIds.length === 151, `achievements should total 151 (got ${achievementIds.length})`);
-  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 151, 'achievement names should be unique');
+  console.assert(achievementIds.length === 154, `achievements should total 154 (got ${achievementIds.length})`);
+  console.assert(new Set(Object.values(ACHIEVEMENTS).map((a) => a.name)).size === 154, 'achievement names should be unique');
   console.assert(Object.values(ACHIEVEMENTS).every((a) => a.name && a.description && a.hint && a.category), 'every achievement should have a name, description, hint and category');
   const twentyFour = achievementIds.filter((id) => !['achievements_25', 'achievements_50', 'achievements_75', 'achievements_100', 'achievements_120', 'achievements_125', 'achievements_135', 'achievements_138', 'achievements_141', 'achievements_142', 'achievements_145', 'achievements_148', 'ten_achievements'].includes(id)).slice(0, 24);
   const milestoneLogs: string[] = [];
@@ -443,7 +443,7 @@ export function runSelfTests() {
   console.assert(with25.includes('achievements_25'), 'the 25th achievement should also grant achievements_25');
   const allBut120 = achievementIds.filter((id) => id !== 'achievements_120' && id !== 'synergy_all_7');
   const completed = addAchievement({ ...initialState, achievements: allBut120 }, 'synergy_all_7', []);
-  console.assert(completed.length === 151 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 151');
+  console.assert(completed.length === 154 && completed.includes('achievements_120'), 'collecting the last achievement should grant achievements_120 and reach 154');
   const milestoneState = {
     ...initialState,
     jobData: { ...initialState.jobData, fishing: { level: 5, xp: 0, seenMusings: [] }, mining: { level: 2, xp: 0, seenMusings: [] }, rest: { level: 2, xp: 0, seenMusings: [] }, nightwatch: { level: 2, xp: 0, seenMusings: [] }, woodcutting: { level: 4, xp: 0, seenMusings: [] }, housekeeping: { level: 2, xp: 0, seenMusings: [] }, booktrade: { level: 3, xp: 0, seenMusings: [] } },
@@ -497,8 +497,8 @@ export function runSelfTests() {
   console.assert(getCollectionGoldMultiplier(initialState) === 1 && getCollectionXpMultiplier(initialState) === 1, 'fresh state should have no collection bonus');
   const allDiscoverable = getAllDiscoverableItemIds();
   const allMonsters = getAllMonsterIds();
-  console.assert(allMonsters.length === 91, `there should be 91 monsters to defeat (got ${allMonsters.length})`);
-  console.assert(allDiscoverable.length === 192, `there should be 192 discoverable items (got ${allDiscoverable.length})`);
+  console.assert(allMonsters.length === 94, `there should be 94 monsters to defeat (got ${allMonsters.length})`);
+  console.assert(allDiscoverable.length === 198, `there should be 198 discoverable items (got ${allDiscoverable.length})`);
   console.assert(allMonsters.includes('left_hat') && allMonsters.includes('forgotten_raincoat') && allMonsters.includes('forgotten_map'), 'new daily-life monsters should be counted');
   console.assert(allMonsters.includes('left_handkerchief') && allMonsters.includes('left_notebook') && allMonsters.includes('forgotten_matches'), 'samsara batch daily-life monsters should be counted');
   console.assert(allMonsters.includes('left_gloves') && allMonsters.includes('forgotten_towel') && allMonsters.includes('forgotten_lantern'), 'endless tower batch daily-life monsters should be counted');
@@ -539,11 +539,11 @@ export function runSelfTests() {
   const fullDefeated15 = { ...initialState, defeatedMonsters: allMonsters, lifetime: { ...emptyLifetime(), discovered: allDiscoverable } };
   console.assert(checkMilestoneAchievements(fullDefeated15, []).includes('monsters_80'), '80 defeated monsters should grant monsters_80');
   console.assert(checkMilestoneAchievements(fullDefeated15, []).includes('discovered_170'), '170 discovered items should grant discovered_170');
-  // 下位の節目をすべて含む144件を明示的に作る（除外は新節目3件＋節目でない4件。2026-11-10 22時台に総数が151件になったため除外を増やした）。
-  const almostAllAchievements15 = { ...initialState, achievements: achievementIds.filter((id) => !['achievements_145', 'achievements_148', 'achievements_151', 'first_fish', 'cycles_100', 'gold_10k', 'gold_100k'].includes(id)) };
+  // 下位の節目をすべて含む144件を明示的に作る（除外は新節目4件＋節目でない6件。2026-11-11 05時台に総数が154件になったため除外を増やした）。
+  const almostAllAchievements15 = { ...initialState, achievements: achievementIds.filter((id) => !['achievements_145', 'achievements_148', 'achievements_151', 'achievements_154', 'monsters_94', 'discovered_198', 'first_fish', 'cycles_100', 'gold_10k', 'gold_100k'].includes(id)) };
   console.assert(checkMilestoneAchievements(almostAllAchievements15, []).includes('achievements_145'), '144 achievements should grant achievements_145 (fires at 144 other achievements)');
-  // 下位の節目をすべて含む143件を明示的に作る（除外は新節目3件＋節目でない5件。2026-11-10 22時台に総数が151件になったため除外を増やした）。
-  const oneShortAchievements15 = { ...initialState, achievements: achievementIds.filter((id) => !['achievements_145', 'achievements_148', 'achievements_151', 'first_fish', 'cycles_100', 'gold_10k', 'gold_100k', 'chests_10'].includes(id)) };
+  // 下位の節目をすべて含む143件を明示的に作る（除外は新節目4件＋節目でない7件。2026-11-11 05時台に総数が154件になったため除外を増やした）。
+  const oneShortAchievements15 = { ...initialState, achievements: achievementIds.filter((id) => !['achievements_145', 'achievements_148', 'achievements_151', 'achievements_154', 'monsters_94', 'discovered_198', 'first_fish', 'cycles_100', 'gold_10k', 'gold_100k', 'chests_10'].includes(id)) };
   console.assert(!checkMilestoneAchievements(oneShortAchievements15, []).includes('achievements_145'), '143 achievements should not grant achievements_145');
   console.assert(getAchievementProgress({ ...initialState, achievements: Array.from({ length: 144 }, (_, i) => `test-${i}`) }, 'achievements_145')?.target === 145, 'achievements_145 progress should target 145');
   console.assert(getAchievementBonusLines({ ...initialState, achievements: Array.from({ length: 144 }, (_, i) => `test-${i}`) }).some((line) => line.includes('次の節目：実績148個（あと3個）')), 'bonus lines should point to the 148 milestone at 144 achievements');
@@ -559,8 +559,8 @@ export function runSelfTests() {
   console.assert(checkMilestoneAchievements(almostAllAchievements17, []).includes('achievements_148'), '147 achievements should grant achievements_148 (fires at 147 other achievements)');
   // 2026-11-10 22時台：総数が151件になったため、旧来の slice(0, 146) では末尾の achievements_145 が落ち、
   // 追いつき処理で achievements_145 が付与されて 147件になり achievements_148 まで付いてしまう。
-  // 下位の節目をすべて含む146件を明示的に作る（除外は新節目2件＋節目でない3件）。
-  const oneShortAchievements17 = { ...initialState, achievements: achievementIds.filter((id) => !['achievements_148', 'achievements_151', 'synergy_all_7', 'first_fish', 'cycles_100'].includes(id)) };
+  // 下位の節目をすべて含む146件を明示的に作る（除外は8件：新節目3件＋新実績2件＋節目でない3件。2026-11-11 05時台に総数が154件になったため除外を増やした）。
+  const oneShortAchievements17 = { ...initialState, achievements: achievementIds.filter((id) => !['achievements_148', 'achievements_151', 'achievements_154', 'monsters_94', 'discovered_198', 'synergy_all_7', 'first_fish', 'cycles_100'].includes(id)) };
   console.assert(!checkMilestoneAchievements(oneShortAchievements17, []).includes('achievements_148'), '146 achievements should not grant achievements_148');
   // 最後の非節目実績の獲得と同じ呼び出しで節目も付く（到達可能性の直接確認）。
   const nonMilestoneIds17 = achievementIds.filter((id) => !id.startsWith('achievements_') && id !== 'ten_achievements');
@@ -580,9 +580,24 @@ export function runSelfTests() {
   console.assert(checkMilestoneAchievements(fullDefeated22, []).includes('discovered_192'), '192 discovered items should grant discovered_192');
   const almostAllAchievements22 = { ...initialState, achievements: achievementIds.filter((id) => id !== 'achievements_151').slice(0, 150) };
   console.assert(checkMilestoneAchievements(almostAllAchievements22, []).includes('achievements_151'), '150 achievements should grant achievements_151 (fires at 150 other achievements)');
-  const oneShortAchievements22 = { ...initialState, achievements: achievementIds.filter((id) => id !== 'achievements_151').slice(0, 149) };
+  // 2026-11-11 05時台：総数が154件になったため、旧来の slice(0, 149) では末尾の achievements_145 と
+  // achievements_148 が落ち、追いつき処理で 145→148→151 と連鎖して付与されてしまう。
+  // 下位の節目をすべて含む149件を明示的に作る（除外は5件：節目1件＋新実績2件＋節目でない2件）。
+  const oneShortAchievements22 = { ...initialState, achievements: achievementIds.filter((id) => !['achievements_151', 'achievements_154', 'monsters_94', 'discovered_198', 'synergy_all_7'].includes(id)) };
   console.assert(!checkMilestoneAchievements(oneShortAchievements22, []).includes('achievements_151'), '149 achievements should not grant achievements_151');
   console.assert(getAchievementProgress({ ...initialState, achievements: Array.from({ length: 150 }, (_, i) => `test-${i}`) }, 'achievements_151')?.target === 151, 'achievements_151 progress should target 151');
+  // 新実績3件（2026-11-11 05時台）：全94種討伐・198の発見・実績154個の節目が付与される。
+  const nearFullDefeated05 = { ...initialState, defeatedMonsters: allMonsters.slice(0, 93), lifetime: { ...emptyLifetime(), discovered: allDiscoverable.slice(0, 197) } };
+  console.assert(!checkMilestoneAchievements(nearFullDefeated05, []).includes('monsters_94'), '93 defeated monsters should not grant monsters_94');
+  console.assert(!checkMilestoneAchievements(nearFullDefeated05, []).includes('discovered_198'), '197 discovered items should not grant discovered_198');
+  const fullDefeated05 = { ...initialState, defeatedMonsters: allMonsters, lifetime: { ...emptyLifetime(), discovered: allDiscoverable } };
+  console.assert(checkMilestoneAchievements(fullDefeated05, []).includes('monsters_94'), '94 defeated monsters should grant monsters_94');
+  console.assert(checkMilestoneAchievements(fullDefeated05, []).includes('discovered_198'), '198 discovered items should grant discovered_198');
+  const almostAllAchievements05 = { ...initialState, achievements: achievementIds.filter((id) => id !== 'achievements_154').slice(0, 153) };
+  console.assert(checkMilestoneAchievements(almostAllAchievements05, []).includes('achievements_154'), '153 achievements should grant achievements_154 (fires at 153 other achievements)');
+  const oneShortAchievements05 = { ...initialState, achievements: achievementIds.filter((id) => id !== 'achievements_154').slice(0, 152) };
+  console.assert(!checkMilestoneAchievements(oneShortAchievements05, []).includes('achievements_154'), '152 achievements should not grant achievements_154');
+  console.assert(getAchievementProgress({ ...initialState, achievements: Array.from({ length: 153 }, (_, i) => `test-${i}`) }, 'achievements_154')?.target === 154, 'achievements_154 progress should target 154');
   // 新実績3件（2026-11-10 13時台）：全77種討伐・164の発見・実績142個の節目が付与される。
   const nearFullDefeated = { ...initialState, defeatedMonsters: allMonsters.slice(0, 76), lifetime: { ...emptyLifetime(), discovered: allDiscoverable.slice(0, 163) } };
   console.assert(!checkMilestoneAchievements(nearFullDefeated, []).includes('monsters_77'), '76 defeated monsters should not grant monsters_77');
@@ -592,14 +607,14 @@ export function runSelfTests() {
   console.assert(checkMilestoneAchievements(fullDefeated, []).includes('discovered_164'), '164 discovered items should grant discovered_164');
   // 2026-11-10 17時台：総数が148件になったため、旧テストの除外4件では144件になって
   // 追いつき処理で achievements_142 が付与されてしまう。
-  // 下位の節目をすべて含む141件を明示的に作る（除外は新節目3件＋節目でない4件）。
-  const almostAllAchievements = { ...initialState, achievements: achievementIds.filter((id) => !['achievements_142', 'achievements_145', 'achievements_148', 'achievements_151', 'monsters_91', 'discovered_192', 'first_fish', 'cycles_100', 'gold_10k', 'gold_100k'].includes(id)) };
+  // 下位の節目をすべて含む141件を明示的に作る（除外は13件：節目5件＋討伐・発見4件＋節目でない4件。2026-11-11 05時台に総数が154件になったため除外を増やした）。
+  const almostAllAchievements = { ...initialState, achievements: achievementIds.filter((id) => !['achievements_142', 'achievements_145', 'achievements_148', 'achievements_151', 'achievements_154', 'monsters_91', 'discovered_192', 'monsters_94', 'discovered_198', 'first_fish', 'cycles_100', 'gold_10k', 'gold_100k'].includes(id)) };
   console.assert(!checkMilestoneAchievements(almostAllAchievements, []).includes('achievements_142'), '141 achievements should not grant achievements_142');
   console.assert(getAchievementProgress({ ...initialState, achievements: Array.from({ length: 142 }, (_, i) => `test-${i}`) }, 'achievements_142')?.target === 143, 'achievements_142 progress should target 143');
   console.assert(getAchievementBonusLines({ ...initialState, achievements: Array.from({ length: 141 }, (_, i) => `test-${i}`) }).some((line) => line.includes('次の節目：実績142個')), 'bonus lines should point to the 142 milestone at 141 achievements');
-  // 一般モンスター専用絵（2026-11-10 22時台）：登録順の次の7体（森に忘れられたぬいぐるみ／森に忘れられた櫛／森に忘れられたスリッパ／森に忘れられたイヤリング／ちび岩ゴーレム／置き去りの登山リュック／置き去りの水筒）にイラストを追加し、専用絵は37体になった。
-  // 一般モンスター専用絵（2026-11-10 17・19・21時台の統合）：17時台の4体に19時台の3体（森に忘れられたじょうろ／森に忘れられたマグカップ／森に忘れられた腕時計）を追加し、専用絵は30体になった（2026-11-10 22時台に37体へ拡張。上記の assert が最新）。21時台の絵は19時台と同じ4対象の別生成物のため不採用。
-  console.assert(Object.keys(MONSTER_ART).length === 37 && ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book', 'forgotten_ribbon', 'forgotten_bottle', 'forgotten_rope', 'forgotten_hand_mirror', 'forgotten_watering_can', 'forgotten_mug', 'forgotten_wristwatch', 'forgotten_plushie', 'forgotten_comb', 'forgotten_slippers', 'forgotten_earring', 'pebble_golem', 'left_backpack', 'left_water_bottle'].every((id) => MONSTER_ART[id]?.startsWith('data:image/webp;base64,')), 'all four bosses, four early monsters and twenty-nine general monsters should have dedicated art');
+  // 一般モンスター専用絵（2026-11-11 05時台）：登録順の次の7体（傾いた道しるべ／山頂のカラス／置き去りの弁当箱／忘れられた雨具／置き去りの手帳／忘れられたタオル／置き去りの双眼鏡）にイラストを追加し、専用絵は44体になった。
+  // 一般モンスター専用絵（2026-11-10 22時台）：登録順の次の7体（森に忘れられたぬいぐるみ／森に忘れられた櫛／森に忘れられたスリッパ／森に忘れられたイヤリング／ちび岩ゴーレム／置き去りの登山リュック／置き去りの水筒）にイラストを追加し、専用絵は37体になった（2026-11-11 05時台に44体へ拡張。上記の assert が最新）。
+  console.assert(Object.keys(MONSTER_ART).length === 44 && ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book', 'forgotten_ribbon', 'forgotten_bottle', 'forgotten_rope', 'forgotten_hand_mirror', 'forgotten_watering_can', 'forgotten_mug', 'forgotten_wristwatch', 'forgotten_plushie', 'forgotten_comb', 'forgotten_slippers', 'forgotten_earring', 'pebble_golem', 'left_backpack', 'left_water_bottle', 'tilted_signpost', 'summit_crow', 'left_lunchbox', 'forgotten_raincoat', 'left_notebook', 'forgotten_towel', 'left_binoculars'].every((id) => MONSTER_ART[id]?.startsWith('data:image/webp;base64,')), 'all four bosses, four early monsters and thirty-six general monsters should have dedicated art');
   // 一般モンスター専用絵（2026-11-10 13時台）：11時台バッチから3体（転がる岩玉／崖ヤギ／かげネズミ）を移植し、専用絵は19体になった（2026-11-10 17時台に27体へ拡張。上記の assert が最新）。
   console.assert(['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat'].every((id) => MONSTER_ART[id]?.startsWith('data:image/webp;base64,')), 'all four bosses, four early monsters and eleven general monsters should have dedicated art');
   // 一般モンスター専用絵（2026-11-10 09時台）：迷子の傘／置き忘れのピクニックかご／苔ガメ／迷子の長靴にイラストを追加し、専用絵は16体になった（2026-11-10 13時台に19体へ拡張。上記の assert が最新）。

@@ -13,8 +13,8 @@
 // 専用絵は計23体になった。
 // 2026-11-10 17時台に一般モンスター4体（森に忘れられたリボン／山道に置き去りのペットボトル／洞窟に忘れられたロープ／
 // 森に忘れられた手鏡）を追加し、専用絵は計27体になった。
-// 2026-11-10 22時台に一般モンスター7体（森に忘れられたぬいぐるみ／森に忘れられた櫛／森に忘れられたスリッパ／
-// 森に忘れられたイヤリング／ちび岩ゴーレム／置き去りの登山リュック／置き去りの水筒）を追加し、専用絵は計37体になった。
+// 2026-11-11 05時台に一般モンスター7体（傾いた道しるべ／山頂のカラス／置き去りの弁当箱／
+// 忘れられた雨具／置き去りの手帳／忘れられたタオル／置き去りの双眼鏡）を追加し、専用絵は計44体になった。
 // 入力はローカルの monster-web-320/<monster>.webp（320x320・quality 75。生成物 1920x1280 を PIL で変換）。
 // monster-web-320/ と monster-gen/ はローカルのみに置き、リポジトリには含めない。
 //
@@ -24,8 +24,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// 専用絵のあるモンスター（2026-11-10 時点で37体：玉座の間のボス4体＋初期モンスター4体＋一般モンスター29体）。
-const MONSTERS = ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book', 'forgotten_ribbon', 'forgotten_bottle', 'forgotten_rope', 'forgotten_hand_mirror', 'forgotten_watering_can', 'forgotten_mug', 'forgotten_wristwatch', 'forgotten_plushie', 'forgotten_comb', 'forgotten_slippers', 'forgotten_earring', 'pebble_golem', 'left_backpack', 'left_water_bottle'];
+// 専用絵のあるモンスター（2026-11-11 時点で44体：玉座の間のボス4体＋初期モンスター4体＋一般モンスター36体）。
+const MONSTERS = ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book', 'forgotten_ribbon', 'forgotten_bottle', 'forgotten_rope', 'forgotten_hand_mirror', 'forgotten_watering_can', 'forgotten_mug', 'forgotten_wristwatch', 'forgotten_plushie', 'forgotten_comb', 'forgotten_slippers', 'forgotten_earring', 'pebble_golem', 'left_backpack', 'left_water_bottle', 'tilted_signpost', 'summit_crow', 'left_lunchbox', 'forgotten_raincoat', 'left_notebook', 'forgotten_towel', 'left_binoculars'];
 
 const entries = [];
 for (const monster of MONSTERS) {

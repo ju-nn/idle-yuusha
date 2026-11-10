@@ -58,6 +58,13 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   cracked_camera_lens: 4,
   bent_shovel: 5,
   broken_shovel_handle: 2,
+  // コンテンツ小バッチ（2026-11-10 15時台）：置き去りの日用品シリーズの続き。
+  frayed_ribbon: 5,
+  faded_ribbon: 3,
+  dented_bottle: 6,
+  bottle_cap: 4,
+  tangled_rope: 5,
+  snapped_rope: 2,
 };
 
 export function isAutoSellTarget(itemId: string) {

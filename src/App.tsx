@@ -285,6 +285,10 @@ export default function App() {
   const [state, setState] = useState<GameState>(() => loadState(initialState));
   const [floatingGains, setFloatingGains] = useState<FloatingGain[]>([]);
   const [achievementToasts, setAchievementToasts] = useState<AchievementToast[]>([]);
+  // F1（2026-11-10 15時台）：モーダル表示中に解除された実績のトーストは保留し、
+  // モーダルを閉じた後に流す。保留分はこの ref に溜め、表示中のものとは別管理する。
+  const pendingToastsRef = useRef<AchievementToast[]>([]);
+  const modalOpenRef = useRef(false);
   const [chestReveal, setChestReveal] = useState<ChestReveal | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
   const previousGains = useRef(snapshotGains(state));
@@ -301,12 +305,35 @@ export default function App() {
     if (!unlocked.length) return;
     playUiSound('achievement');
     const toasts = unlocked.map((id) => ({ id: `${id}-${Date.now()}`, name: ACHIEVEMENTS[id].name, description: ACHIEVEMENTS[id].description }));
+    // F1：モーダル表示中はトーストを出さず保留する（閉じた後の flush 用 effect が流す）。
+    // 既に表示中のトーストがあっても z-index 45（backdrop 50 未満）のため
+    // モーダルヘッダーを覆うことはない。
+    if (modalOpenRef.current) {
+      pendingToastsRef.current = [...pendingToastsRef.current, ...toasts].slice(-3);
+      return;
+    }
     setAchievementToasts((current) => [...toasts, ...current].slice(0, 3));
     const removeIds = new Set(toasts.map((toast) => toast.id));
     window.setTimeout(() => {
       setAchievementToasts((current) => current.filter((toast) => !removeIds.has(toast.id)));
     }, 4200);
   }, [state.achievements]);
+  // F1/F2（2026-11-10 15時台）：いずれかのモーダル／宝箱開封オーバーレイが開いている間は
+  // 実績トーストを保留し、帰還バナーの表示も遅らせる。タイトル画面は含めない
+  // （タイトル中は実績解除も帰還バナーも出ない設計のため）。
+  const anyModalOpen = collectionOpen || chestOpen || equipmentOpen || settingsOpen || prestigeOpen || statsOpen || logOpen || areaOpen || upgradesOpen || Boolean(chestReveal);
+  useEffect(() => { modalOpenRef.current = anyModalOpen; });
+  useEffect(() => {
+    if (anyModalOpen) return;
+    const pending = pendingToastsRef.current;
+    if (!pending.length) return;
+    pendingToastsRef.current = [];
+    setAchievementToasts((current) => [...pending, ...current].slice(0, 3));
+    const removeIds = new Set(pending.map((toast) => toast.id));
+    window.setTimeout(() => {
+      setAchievementToasts((current) => current.filter((toast) => !removeIds.has(toast.id)));
+    }, 4200);
+  }, [anyModalOpen]);
   useEffect(() => {
     const previous = previousFeedbackEvents.current;
     const fresh = (state.feedbackEvents || []).filter((event) => !previous.has(event.id));
@@ -418,7 +445,11 @@ export default function App() {
       <FloatingGains gains={floatingGains} />
       <AchievementToasts toasts={achievementToasts} />
       <ChestOpeningOverlay reveal={chestReveal} equipItem={handleEquipItem} onClose={() => setChestReveal(null)} />
-      <OfflineReturnCard state={state} onClose={() => setState((prev) => ({ ...prev, offlineSummary: null }))} />
+      {/* F2：帰還バナーはモーダル表示中は遅延表示（offlineSummary は state に残るため
+          モーダルを閉じると再表示される）。表示中は backdrop で背面タップ不可を明示し、
+          backdrop のタップでも「確認」と同じく閉じられる。 */}
+      {!anyModalOpen && state.offlineSummary && <div className="returnBannerBackdrop" aria-hidden="true" onClick={() => setState((prev) => ({ ...prev, offlineSummary: null }))} />}
+      {!anyModalOpen && <OfflineReturnCard state={state} onClose={() => setState((prev) => ({ ...prev, offlineSummary: null }))} />}
       <Header state={state} foundCount={foundCount} musingCount={readMusings.length} dailyReady={dailyReady} dailyStreak={dailyStreak} claimDaily={handleClaimDaily} openChest={() => { playUiSound('open'); setChestOpen(true); }} openEquipment={() => { playUiSound('open'); setEquipmentOpen(true); }} openCollection={() => { playUiSound('open'); setCollectionOpen(true); }} openPrestige={() => { playUiSound('open'); setPrestigeOpen(true); }} openSettings={() => { playUiSound('open'); setSettingsOpen(true); }} openStats={() => { playUiSound('open'); setStatsOpen(true); }} />
       {saveFailed && <div className="saveWarning" role="alert"><div><small>セーブに失敗しました</small><b>いまの進み具合が保存できていません</b><p>ブラウザの空き容量やプライベートモードを確認してください。進むたびに保存をやり直すので、直ればこの表示は自動で消えます。</p></div></div>}
       <div className="layout">

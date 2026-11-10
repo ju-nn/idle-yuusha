@@ -9,8 +9,8 @@
 // 専用絵は計12体になった。
 // 2026-11-10 09時台に一般モンスター4体（迷子の傘／置き忘れのピクニックかご／苔ガメ／迷子の長靴）を追加し、
 // 専用絵は計16体になった。
-// 2026-11-10 13時台に11時台バッチから3体（転がる岩玉／崖ヤギ／かげネズミ）を移植し、
-// 専用絵は計19体になった。苔ガメは09時台の版を残し、11時台版では上書きしない。
+// 2026-11-10 15時台に一般モンスター4体（置き去りの帽子／置き去りのハンカチ／置き去りの手袋／忘れられた絵本）を追加し、
+// 専用絵は計23体になった。
 // 入力はローカルの monster-web-320/<monster>.webp（320x320・quality 75。生成物 1920x1280 を PIL で変換）。
 // monster-web-320/ と monster-gen/ はローカルのみに置き、リポジトリには含めない。
 //
@@ -20,8 +20,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// 専用絵のあるモンスター（2026-11-10 時点で19体：玉座の間のボス4体＋初期モンスター4体＋一般モンスター11体）。
-const MONSTERS = ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat'];
+// 専用絵のあるモンスター（2026-11-10 時点で23体：玉座の間のボス4体＋初期モンスター4体＋一般モンスター15体）。
+const MONSTERS = ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book'];
 
 const entries = [];
 for (const monster of MONSTERS) {

@@ -74,6 +74,13 @@ export const ITEM: Record<string, [string, string, string]> = {
   cracked_camera_lens: ['割れたカメラのレンズ', '素材', 'カメラのレンズだけが割れて残った。写した景色は、もうこの中にない。'],
   bent_shovel: ['曲がったスコップ', '素材', '洞窟に忘れられたスコップ。曲がった先が、掘った穴の方向を向いている。'],
   broken_shovel_handle: ['折れたスコップの柄', '素材', 'スコップの柄だけが折れて残った。握る手の温もりだけ、まだ残っている。'],
+  // コンテンツ小バッチ（2026-11-10 15時台）：置き去りの日用品シリーズの続き。
+  frayed_ribbon: ['ほどけたリボン', '素材', '森に忘れられたリボン。ほどけた先から、誰かの結び目が少しだけ漏れている。'],
+  faded_ribbon: ['色あせたリボン', '素材', '池から上がったリボン。色はあせたが、結ばれていた時間だけはまだ鮮やかだ。'],
+  dented_bottle: ['へこんだペットボトル', '素材', '山道に置き去りのペットボトル。へこんだ側面に、登った日の汗が少しだけ残っている。'],
+  bottle_cap: ['ペットボトルのキャップ', '素材', '岩場で見つけたペットボトルのキャップ。閉める役目は終えたが、捨てるにはまだ早い気がする。'],
+  tangled_rope: ['絡まったロープ', '素材', '洞窟に忘れられたロープ。絡まった先に、誰かの通り道が少しだけ残っている。'],
+  snapped_rope: ['切れたロープ', '素材', '裏庭の木から出てきたロープ。切れた端が、結び直される日をまだ待っている。'],
   // コンテンツ小バッチ（2026-11-10 09時台）：置き去りの日用品シリーズの続き。
   broken_mug: ['割れたマグカップ', '素材', '森に忘れられたマグカップ。割れた縁から、誰かの朝のコーヒーが少しだけ漏れている。'],
   dented_mug: ['へこんだマグカップ', '素材', 'へこんだマグカップ。形は歪んだが、温かいものを入れる仕事だけはまだ覚えている。'],
@@ -298,6 +305,7 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   monsters_69: { name: '全69種討伐', description: '全69種のモンスターを倒した。もう知らない敵はいない。……今のところは。', hint: '全69種のモンスターを倒す', category: '戦闘' },
   monsters_74: { name: '全74種討伐', description: '全74種のモンスターを倒した。もう知らない敵はいない。……今のところは。', hint: '全74種のモンスターを倒す', category: '戦闘' },
   monsters_77: { name: '全77種討伐', description: '全77種のモンスターを倒した。もう知らない敵はいない。……今のところは。', hint: '全77種のモンスターを倒す', category: '戦闘' },
+  monsters_80: { name: '全80種討伐', description: '全80種のモンスターを倒した。もう知らない敵はいない。……今のところは。', hint: '全80種のモンスターを倒す', category: '戦闘' },
   // ---- 発見 ----
   discovered_50: { name: '50の発見', description: '50種の発見物を集めた。図鑑の？？？が、半分くらい減った。', hint: '50種の発見物を集める', category: '収集' },
   discovered_100: { name: '100の発見', description: '100種の発見物を集めた。図鑑が、もう勇者の生活史だ。', hint: '100種の発見物を集める', category: '収集' },
@@ -306,6 +314,7 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   discovered_147: { name: '147の発見', description: '147種の発見物を集めた。図鑑の？？？が、もうほとんど残っていない。', hint: '147種の発見物を集める', category: '収集' },
   discovered_158: { name: '158の発見', description: '158種の発見物を集めた。図鑑の？？？が、もうほとんど残っていない。', hint: '158種の発見物を集める', category: '収集' },
   discovered_164: { name: '164の発見', description: '164種の発見物を集めた。図鑑の？？？が、もうほとんど残っていない。', hint: '164種の発見物を集める', category: '収集' },
+  discovered_170: { name: '170の発見', description: '170種の発見物を集めた。図鑑の？？？が、もうほとんど残っていない。', hint: '170種の発見物を集める', category: '収集' },
   // ---- 装備 ----
   equip_bases_30: { name: '30種の装備', description: '30種の装備土台を見つけた。宝箱の中身が、生活の味方になる。', hint: '30種の装備土台を見つける', category: '収集' },
   equip_bases_66: { name: '全種の装備', description: '全66種の装備土台を見つけた。装備図鑑が完成した。', hint: '全66種の装備土台を見つける', category: '収集' },
@@ -349,6 +358,7 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   achievements_138: { name: '実績138個', description: '実績を138個集めた。勇者の人生ログが、もうすぐ完成する。', hint: '実績を138個集める', category: '実績' },
   achievements_141: { name: '実績141個', description: '実績を141個集めた。勇者の人生ログが、もうすぐ完成する。', hint: '実績を141個集める', category: '実績' },
   achievements_142: { name: '実績142個', description: '実績を142個集めた。勇者の人生ログが、もうすぐ完成する。', hint: '実績を142個集める', category: '実績' },
+  achievements_145: { name: '実績145個', description: '実績を145個集めた。勇者の人生ログが、もうすぐ完成する。', hint: '実績を145個集める', category: '実績' },
   // ---- 連鎖 ----
   synergy_all_7: { name: '七つの連鎖', description: '7つの連鎖すべてを発動させた。仕事同士が、もう完全に噛み合っている。', hint: '7つの連鎖すべてを発動させる', category: '連鎖' },
 };

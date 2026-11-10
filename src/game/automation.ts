@@ -84,6 +84,13 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   broken_parasol: 4,
   music_box_spring: 5,
   stopped_music_box: 2,
+  // コンテンツ小バッチ（2026-11-10 22時台）：置き去りの日用品シリーズの続き。
+  bent_hairpin: 5,
+  tarnished_hairpin: 3,
+  scratched_sunglasses: 6,
+  cracked_sunglasses: 4,
+  torn_diary: 6,
+  faded_diary: 4,
 };
 
 export function isAutoSellTarget(itemId: string) {

@@ -97,6 +97,12 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   snapped_kite_string: 4,
   cracked_yutanpo: 6,
   faded_yutanpo_cover: 4,
+  holey_socks: 5,
+  single_sock: 3,
+  cracked_magnifier: 6,
+  foggy_magnifier: 4,
+  torn_blanket: 6,
+  faded_blanket: 4,
 };
 
 export function isAutoSellTarget(itemId: string) {

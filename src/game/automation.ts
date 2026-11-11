@@ -103,6 +103,12 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   foggy_magnifier: 4,
   torn_blanket: 6,
   faded_blanket: 4,
+  stained_apron: 6,
+  torn_apron: 4,
+  bent_trekking_pole: 6,
+  worn_trekking_pole: 4,
+  worn_sandal: 6,
+  single_sandal: 3,
 };
 
 export function isAutoSellTarget(itemId: string) {

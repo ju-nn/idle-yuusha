@@ -2,12 +2,12 @@ import { jobs } from '../data/gameData';
 import type { GameState, ResourceKey, Upgrade } from '../types';
 import { rewardText } from './formatters';
 import { enqueueMusing } from './musings';
-import { addAchievement, addItems, announceJobUnlocks, applyMilestoneAchievements, emptyLifetime } from './progression';
+import { addAchievement, addItems, announceJobUnlocks, applyMilestoneAchievements, emptyLifetime, getAchievementDropMultiplier, isUniqueItem, rollDrops } from './progression';
 import { isAreaUnlocked, isJobUnlocked } from './requirements';
 import { CROPS, getCropRewards, type CropId } from './farming';
 import { autoSellGainedItems, autoSellLogText } from './automation';
 import { getSellPriceMultiplier } from './equipment';
-import { getUpgradeGoldCost } from './synergy';
+import { getSynergyDropChanceMultiplier, getUpgradeGoldCost } from './synergy';
 import { loadUserSettings } from './settings';
 import { TOWER_AREA_ID } from './tower';
 
@@ -188,10 +188,16 @@ export function harvestCrop(prev: GameState): GameState {
   if (!prev.farming?.readyAt || Date.now() < prev.farming.readyAt) return prev;
   const crop = CROPS[(prev.farming.cropId || 'daikon') as CropId] || CROPS.daikon;
   const { rewards, bonusCount } = getCropRewards((prev.farming.cropId || 'daikon') as CropId, prev.farming.readyAt, Date.now(), prev);
+  // 畑のドロップ：小さな畑のエリアドロップは収穫時に1回だけ振る。農業にはサイクル進行が
+  // ないため、エリアドロップがどこからも振られず、畑の素材5種が図鑑の発見物として入手不能に
+  // なっていた（2026-11-11 16時台の検証で判明。発見210到達の前提でもある）。収穫のついでに振る。
+  const fieldArea = jobs.farming.areas[0];
+  const fieldDrops = rollDrops(fieldArea?.drops || [], getSynergyDropChanceMultiplier(prev) * getAchievementDropMultiplier(prev)).filter((d) => !isUniqueItem(d.item) || !prev.items?.[d.item]);
+  const allRewards = [...rewards, ...fieldDrops.map((d) => ({ item: d.item, amount: d.amount }))];
   const bonusText = bonusCount > 0 ? ` 完熟おまけ+${bonusCount}段階。` : '';
-  const eventLog = [`出来事報酬：${rewardText(rewards)}`, `${crop.name}を収穫した。畑が静かに勝っていた。${bonusText}`, ...prev.eventLog].slice(0, 24);
+  const eventLog = [`出来事報酬：${rewardText(allRewards)}`, `${crop.name}を収穫した。畑が静かに勝っていた。${bonusText}`, ...prev.eventLog].slice(0, 24);
   // 自動売却（設定ONのとき）: 収穫した素材はその場でGに変える。重要アイテムは対象外。
-  let harvestItems = addItems(prev.items, rewards);
+  let harvestItems = addItems(prev.items, allRewards);
   let harvestGold = 0;
   if (loadUserSettings().autoSell) {
     const autoSold = autoSellGainedItems(prev.items || {}, harvestItems, getSellPriceMultiplier(prev));
@@ -214,7 +220,7 @@ export function harvestCrop(prev: GameState): GameState {
     job: '農業',
     area: '小さな畑',
     text: `勇者は${crop.name}を収穫した。\n\n勇者「${crop.musing}${bonusCount > 0 ? ' 放置しすぎた分まで実ってる。怠惰にも利息がついた。' : ''}」`,
-    rewardItems: rewards,
+    rewardItems: allRewards,
     eventType: 'event' as const,
     eventSubType: 'harvest',
     category: 'event',

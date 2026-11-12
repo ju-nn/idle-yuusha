@@ -115,6 +115,12 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   dim_headlamp: 4,
   rusty_harmonica: 6,
   silent_harmonica: 4,
+  frayed_yarn_ball: 6,
+  yarn_scrap: 4,
+  faded_postcard: 6,
+  torn_postcard: 4,
+  rusty_alarm_clock: 6,
+  stopped_alarm_clock: 4,
 };
 
 export function isAutoSellTarget(itemId: string) {

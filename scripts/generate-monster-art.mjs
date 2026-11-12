@@ -23,6 +23,12 @@
 // ツールが再試行不可を返したためこの回は見送り）で次回へ持ち越し。
 // 2026-11-12 12時台に持ち越しの4体（森に忘れられたエプロン／山道に置き去りのストック／
 // 忘れられたヘルメット／忘れられた懐中電灯）を追加し、専用絵は計65体になった。
+// 2026-11-12 20時台に一般モンスター7体（森に忘れられたバンダナ／山道に置き去りのヘッドランプ／
+// 忘れられた地図／忘れられたマッチ箱／忘れられたランタン／忘れられたバケツ／洞窟に忘れられたろうそく）を追加し、
+// 専用絵は計72体になった。
+// 2026-11-12 22時台に一般モンスター7体（森に忘れられた毛糸玉／山道に置き去りの絵はがき／
+// 洞窟に忘れられた寝袋／洞窟に忘れられた懐中時計／洞窟に忘れられたスコップ／洞窟に忘れられたスプーン／
+// 洞窟に忘れられた財布）を追加し、専用絵は計79体になった。
 // 入力はローカルの monster-web-320/<monster>.webp（320x320・quality 75。生成物 1920x1280 を PIL で変換）。
 // monster-web-320/ と monster-gen/ はローカルのみに置き、リポジトリには含めない。
 //
@@ -32,8 +38,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// 専用絵のあるモンスター（2026-11-12 時点で65体：玉座の間のボス4体＋初期モンスター4体＋一般モンスター57体）。
-const MONSTERS = ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book', 'forgotten_ribbon', 'forgotten_bottle', 'forgotten_rope', 'forgotten_hand_mirror', 'forgotten_watering_can', 'forgotten_mug', 'forgotten_wristwatch', 'forgotten_plushie', 'forgotten_comb', 'forgotten_slippers', 'forgotten_earring', 'pebble_golem', 'left_backpack', 'left_water_bottle', 'tilted_signpost', 'summit_crow', 'left_lunchbox', 'forgotten_raincoat', 'left_notebook', 'forgotten_towel', 'left_binoculars', 'forgotten_hairpin', 'forgotten_wind_chime', 'left_compass', 'left_telescope', 'left_hiking_boots', 'left_radio', 'forgotten_camera', 'forgotten_socks', 'left_work_gloves', 'left_parasol', 'left_sunglasses', 'left_kite', 'left_magnifier', 'dark_mushroom', 'crystal_crab', 'icicle_snail', 'forgotten_scarf', 'forgotten_apron', 'left_trekking_pole', 'forgotten_helmet', 'forgotten_flashlight', 'forgotten_bandana', 'left_headlamp', 'forgotten_map', 'forgotten_matches', 'forgotten_lantern', 'forgotten_bucket', 'forgotten_candle'];
+// 専用絵のあるモンスター（2026-11-12 時点で79体：玉座の間のボス4体＋初期モンスター4体＋一般モンスター71体）。
+const MONSTERS = ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book', 'forgotten_ribbon', 'forgotten_bottle', 'forgotten_rope', 'forgotten_hand_mirror', 'forgotten_watering_can', 'forgotten_mug', 'forgotten_wristwatch', 'forgotten_plushie', 'forgotten_comb', 'forgotten_slippers', 'forgotten_earring', 'pebble_golem', 'left_backpack', 'left_water_bottle', 'tilted_signpost', 'summit_crow', 'left_lunchbox', 'forgotten_raincoat', 'left_notebook', 'forgotten_towel', 'left_binoculars', 'forgotten_hairpin', 'forgotten_wind_chime', 'left_compass', 'left_telescope', 'left_hiking_boots', 'left_radio', 'forgotten_camera', 'forgotten_socks', 'left_work_gloves', 'left_parasol', 'left_sunglasses', 'left_kite', 'left_magnifier', 'dark_mushroom', 'crystal_crab', 'icicle_snail', 'forgotten_scarf', 'forgotten_apron', 'left_trekking_pole', 'forgotten_helmet', 'forgotten_flashlight', 'forgotten_bandana', 'left_headlamp', 'forgotten_map', 'forgotten_matches', 'forgotten_lantern', 'forgotten_bucket', 'forgotten_candle', 'forgotten_yarn_ball', 'left_postcard', 'forgotten_sleeping_bag', 'forgotten_pocket_watch', 'forgotten_shovel', 'forgotten_spoon', 'forgotten_wallet'];
 
 const entries = [];
 for (const monster of MONSTERS) {

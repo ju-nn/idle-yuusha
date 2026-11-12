@@ -121,6 +121,12 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   torn_postcard: 4,
   rusty_alarm_clock: 6,
   stopped_alarm_clock: 4,
+  broken_fishing_rod: 6,
+  frayed_fishing_line: 4,
+  empty_first_aid_kit: 6,
+  used_bandage: 4,
+  worn_pillow: 6,
+  torn_pillowcase: 4,
 };
 
 export function isAutoSellTarget(itemId: string) {

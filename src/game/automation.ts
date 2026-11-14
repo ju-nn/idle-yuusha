@@ -127,6 +127,18 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   used_bandage: 4,
   worn_pillow: 6,
   torn_pillowcase: 4,
+  worn_toothbrush: 6,
+  dried_toothpaste: 4,
+  cracked_whistle: 6,
+  tangled_whistle_strap: 4,
+  melted_soap: 6,
+  faded_soap_dish: 4,
+  broken_bug_cage: 6,
+  tangled_bug_net: 4,
+  rusty_bear_bell: 6,
+  frayed_bear_bell_strap: 4,
+  broken_chalk: 6,
+  dusty_chalkboard_eraser: 4,
 };
 
 export function isAutoSellTarget(itemId: string) {

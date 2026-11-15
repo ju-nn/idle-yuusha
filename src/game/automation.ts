@@ -145,6 +145,12 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   frayed_tenugui_edge: 4,
   burnt_torch: 6,
   melted_torch_handle: 4,
+  torn_picnic_sheet: 6,
+  faded_picnic_sheet: 4,
+  cracked_thermos: 6,
+  dented_thermos: 4,
+  sooty_oil_lamp: 6,
+  cracked_lamp_glass: 4,
 };
 
 export function isAutoSellTarget(itemId: string) {

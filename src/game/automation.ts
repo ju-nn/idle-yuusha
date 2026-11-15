@@ -139,6 +139,12 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   frayed_bear_bell_strap: 4,
   broken_chalk: 6,
   dusty_chalkboard_eraser: 4,
+  broken_tent_pole: 6,
+  frayed_tent_rope: 4,
+  faded_tenugui: 6,
+  frayed_tenugui_edge: 4,
+  burnt_torch: 6,
+  melted_torch_handle: 4,
 };
 
 export function isAutoSellTarget(itemId: string) {

@@ -103,6 +103,11 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   foggy_magnifier: 4,
   torn_blanket: 6,
   faded_blanket: 4,
+  crushed_cookie_tin: 5,
+  empty_cookie_tin: 3,
+  snapped_trekking_pole: 4,
+  rusty_toy_car: 6,
+  faded_toy_car: 4,
   stained_apron: 6,
   torn_apron: 4,
   bent_trekking_pole: 6,
@@ -151,6 +156,12 @@ export const ITEM_SELL_PRICES: Record<string, number> = {
   dented_thermos: 4,
   sooty_oil_lamp: 6,
   cracked_lamp_glass: 4,
+  cracked_vase: 6,
+  faded_vase: 4,
+  bitten_onigiri: 6,
+  cold_onigiri: 4,
+  cracked_cup: 6,
+  chipped_cup: 4,
 };
 
 export function isAutoSellTarget(itemId: string) {

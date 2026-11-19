@@ -41,6 +41,10 @@
 // 2026-11-15 14時台に一般モンスター7体（森に忘れられたテント／山道に置き去りの手ぬぐい／
 // 洞窟に忘れられた松明／閉ざされた門扉／錆びた呼び鈴／税箱ミミック／枯れた噴水の精）を追加し、
 // 専用絵は計107体になった。
+// 2026-11-15 16時台に一般モンスター7体（静かな王の影／ひび割れた石畳／沈黙の庭師／
+// 静かな庭の石像／月夜の庭師／噴水のコイ／玉座の猫）を追加し、専用絵は計114体になった。
+// 2026-11-15 22時台に push 時の MCP 413 回避のため、monsterArt.ts を 30体ずつの分割ファイル
+// （monsterArtPartN.ts）に分け、monsterArt.ts は束ねるだけの形にした（絵の内容は同一）。
 // 入力はローカルの monster-web-320/<monster>.webp（320x320・quality 75。生成物 1920x1280 を PIL で変換）。
 // monster-web-320/ と monster-gen/ はローカルのみに置き、リポジトリには含めない。
 //
@@ -50,30 +54,61 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// 専用絵のあるモンスター（2026-11-15 時点で107体：玉座の間のボス4体＋初期モンスター4体＋一般モンスター99体）。
-const MONSTERS = ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book', 'forgotten_ribbon', 'forgotten_bottle', 'forgotten_rope', 'forgotten_hand_mirror', 'forgotten_watering_can', 'forgotten_mug', 'forgotten_wristwatch', 'forgotten_plushie', 'forgotten_comb', 'forgotten_slippers', 'forgotten_earring', 'pebble_golem', 'left_backpack', 'left_water_bottle', 'tilted_signpost', 'summit_crow', 'left_lunchbox', 'forgotten_raincoat', 'left_notebook', 'forgotten_towel', 'left_binoculars', 'forgotten_hairpin', 'forgotten_wind_chime', 'left_compass', 'left_telescope', 'left_hiking_boots', 'left_radio', 'forgotten_camera', 'forgotten_socks', 'left_work_gloves', 'left_parasol', 'left_sunglasses', 'left_kite', 'left_magnifier', 'dark_mushroom', 'crystal_crab', 'icicle_snail', 'forgotten_scarf', 'forgotten_apron', 'left_trekking_pole', 'forgotten_helmet', 'forgotten_flashlight', 'forgotten_bandana', 'left_headlamp', 'forgotten_map', 'forgotten_matches', 'forgotten_lantern', 'forgotten_bucket', 'forgotten_candle', 'forgotten_yarn_ball', 'left_postcard', 'forgotten_sleeping_bag', 'forgotten_pocket_watch', 'forgotten_shovel', 'forgotten_spoon', 'forgotten_wallet', 'forgotten_fishing_rod', 'left_first_aid_kit', 'forgotten_music_box', 'forgotten_diary', 'forgotten_yutanpo', 'forgotten_blanket', 'forgotten_sandal', 'forgotten_toothbrush', 'left_whistle', 'forgotten_harmonica', 'forgotten_alarm_clock', 'forgotten_pillow', 'forgotten_soap', 'rust_armor', 'forgotten_bug_cage', 'left_bear_bell', 'forgotten_chalk', 'gatekeeper_armor', 'bill_wraith', 'rusty_messenger', 'old_notice_board', 'forgotten_tent', 'left_tenugui', 'forgotten_torch', 'sealed_gate_door', 'rusted_bell', 'tax_mimic', 'dry_fountain_spirit'];
+// 専用絵のあるモンスター（2026-11-15 時点で114体：玉座の間のボス4体＋初期モンスター4体＋一般モンスター99体）。
+const MONSTERS = ['throne_mimic', 'retired_hero', 'silent_demon_king', 'household_demon_king', 'slime', 'goblin', 'wolf', 'cave_bat', 'forest_mushroom', 'sigh_moss', 'whisper_vine', 'sleepy_mushroom', 'lost_umbrella', 'lost_picnic_basket', 'moss_turtle', 'lost_boot', 'rolling_rock', 'cliff_goat', 'shadow_rat', 'left_hat', 'left_handkerchief', 'left_gloves', 'forgotten_picture_book', 'forgotten_ribbon', 'forgotten_bottle', 'forgotten_rope', 'forgotten_hand_mirror', 'forgotten_watering_can', 'forgotten_mug', 'forgotten_wristwatch', 'forgotten_plushie', 'forgotten_comb', 'forgotten_slippers', 'forgotten_earring', 'pebble_golem', 'left_backpack', 'left_water_bottle', 'tilted_signpost', 'summit_crow', 'left_lunchbox', 'forgotten_raincoat', 'left_notebook', 'forgotten_towel', 'left_binoculars', 'forgotten_hairpin', 'forgotten_wind_chime', 'left_compass', 'left_telescope', 'left_hiking_boots', 'left_radio', 'forgotten_camera', 'forgotten_socks', 'left_work_gloves', 'left_parasol', 'left_sunglasses', 'left_kite', 'left_magnifier', 'dark_mushroom', 'crystal_crab', 'icicle_snail', 'forgotten_scarf', 'forgotten_apron', 'left_trekking_pole', 'forgotten_helmet', 'forgotten_flashlight', 'forgotten_bandana', 'left_headlamp', 'forgotten_map', 'forgotten_matches', 'forgotten_lantern', 'forgotten_bucket', 'forgotten_candle', 'forgotten_yarn_ball', 'left_postcard', 'forgotten_sleeping_bag', 'forgotten_pocket_watch', 'forgotten_shovel', 'forgotten_spoon', 'forgotten_wallet', 'forgotten_fishing_rod', 'left_first_aid_kit', 'forgotten_music_box', 'forgotten_diary', 'forgotten_yutanpo', 'forgotten_blanket', 'forgotten_sandal', 'forgotten_toothbrush', 'left_whistle', 'forgotten_harmonica', 'forgotten_alarm_clock', 'forgotten_pillow', 'forgotten_soap', 'rust_armor', 'forgotten_bug_cage', 'left_bear_bell', 'forgotten_chalk', 'gatekeeper_armor', 'bill_wraith', 'rusty_messenger', 'old_notice_board', 'forgotten_tent', 'left_tenugui', 'forgotten_torch', 'sealed_gate_door', 'rusted_bell', 'tax_mimic', 'dry_fountain_spirit', 'quiet_king', 'cracked_flagstone', 'silent_gardener', 'quiet_statue', 'moonlit_gardener', 'fountain_koi', 'throne_cat'];
 
-const entries = [];
-for (const monster of MONSTERS) {
-  const path = join(root, 'monster-web-320', `${monster}.webp`);
-  if (!existsSync(path)) {
-    console.error(`missing: ${path}`);
-    process.exit(1);
-  }
-  const b64 = readFileSync(path).toString('base64');
-  entries.push(`  ${monster}: 'data:image/webp;base64,${b64}',`);
+// 2026-11-15 22時台：push 時の MCP 413（request body too large）回避のため、
+// monsterArt.ts を 30体ずつの分割ファイル（monsterArtPartN.ts）に分け、
+// monsterArt.ts はそれらを束ねるだけの形にした。絵の内容自体は変わらない。
+// 分割しないと monsterArt.ts 単体で約4.7MBになり、他の変更ファイルと合わせた
+// スナップショットが push のリクエストサイズ上限を超えて 413 になる。
+const CHUNK_SIZE = 30;
+const chunks = [];
+for (let i = 0; i < MONSTERS.length; i += CHUNK_SIZE) {
+  chunks.push(MONSTERS.slice(i, i + CHUNK_SIZE));
 }
+const partNames = [];
+chunks.forEach((group, idx) => {
+  const partNo = idx + 1;
+  const partName = `MONSTER_ART_PART${partNo}`;
+  partNames.push(partName);
+  const entries = [];
+  for (const monster of group) {
+    const path = join(root, 'monster-web-320', `${monster}.webp`);
+    if (!existsSync(path)) {
+      console.error(`missing: ${path}`);
+      process.exit(1);
+    }
+    const b64 = readFileSync(path).toString('base64');
+    entries.push(`  ${monster}: 'data:image/webp;base64,${b64}',`);
+  }
+  const first = group[0];
+  const last = group[group.length - 1];
+  const partOut = `// このファイルは scripts/generate-monster-art.mjs による自動生成です。直接編集しないでください。
+// モンスター専用絵（ドット絵風・静止画）のうち ${group.length} 体分（${first}〜${last}）を base64 データURIで保持します。
+// 320x320・quality 75 の WebP。元画像（1920x1280 生成物）はローカルの monster-gen/ のみに置き、リポジトリには含めません。
 
-const out = `// このファイルは scripts/generate-monster-art.mjs による自動生成です。直接編集しないでください。
-// ボスモンスター＋初期モンスター専用のイラスト（ドット絵風・静止画）を base64 データURIで保持します。
+export const ${partName}: Record<string, string> = {
+${entries.join('\n')}
+};
+`;
+  writeFileSync(join(root, 'src', 'assets', `monsterArtPart${partNo}.ts`), partOut);
+  console.log(`wrote src/assets/monsterArtPart${partNo}.ts (${group.length} monsters, ${(partOut.length / 1024).toFixed(0)} KiB)`);
+});
+
+const indexOut = `// このファイルは scripts/generate-monster-art.mjs による自動生成です。直接編集しないでください。
+// モンスター専用絵（ドット絵風・静止画）を base64 データURIで保持します。
 // 従来はボスもプログラム生成スプライトで表示されていたが、専用絵のあるモンスターは
 // MonsterThumb がこの絵を使う（シルエット表示は CSS の brightness フィルターで維持）。
 // 専用絵のないモンスターは従来通りスプライトのフォールバック。
 // 320x320・quality 75 の WebP。元画像（1920x1280 生成物）はローカルの monster-gen/ のみに置き、リポジトリには含めません。
+// push 時のリクエストサイズ上限（MCP 413）回避のため、実体は 30体ずつの monsterArtPartN.ts に分け、このファイルは束ねるだけです。
+
+${partNames.map((name, idx) => `import { ${name} } from './monsterArtPart${idx + 1}';`).join('\n')}
 
 export const MONSTER_ART: Record<string, string> = {
-${entries.join('\n')}
+${partNames.map((name) => `  ...${name},`).join('\n')}
 };
 `;
-writeFileSync(join(root, 'src', 'assets', 'monsterArt.ts'), out);
-console.log(`wrote src/assets/monsterArt.ts (${(out.length / 1024).toFixed(0)} KiB)`);
+writeFileSync(join(root, 'src', 'assets', 'monsterArt.ts'), indexOut);
+console.log(`wrote src/assets/monsterArt.ts (index, ${(indexOut.length / 1024).toFixed(0)} KiB)`);
